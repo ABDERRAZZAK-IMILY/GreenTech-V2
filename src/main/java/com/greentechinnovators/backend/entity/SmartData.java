@@ -16,6 +16,7 @@ public class SmartData {
     private String unit;       // "kWh", "kg", "km", "m3"
     private String location;   // "Production", "Office"
     private String sensorId;   // "ESP32-001"
+    private String wasteType;  // "organic", "recyclable", "non-recyclable", "electronic", "dangerous"
 
     private Double co2Impact;
     private LocalDateTime timestamp;
