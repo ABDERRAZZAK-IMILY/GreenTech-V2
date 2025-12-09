@@ -1,6 +1,5 @@
 package com.greentechinnovators.backend.entity;
 
-import com.greentechinnovators.backend.Enums.TrashType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,8 +15,8 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Document("TrashMonitor")
-public class TrashMonitor {
+@Document("GasMonitor")
+public class GasMonitor {
     @Id
     private String id;
 
@@ -25,9 +24,8 @@ public class TrashMonitor {
     private String sensorId;
     private String status;
     private Double co2Impact;
-    private TrashType  trashType;
     @DBRef
-    private List<Trash> trash;
+    private List<Energy> energy;
 
     private LocalDateTime timestamp;
 }
