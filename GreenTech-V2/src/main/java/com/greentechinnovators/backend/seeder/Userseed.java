@@ -43,6 +43,7 @@ public class Userseed implements CommandLineRunner {
                     Role.USER
             );
             userRepository.save(user);
+
             System.out.println(" User created: employee@greentech.com / user123");
         }
     }
