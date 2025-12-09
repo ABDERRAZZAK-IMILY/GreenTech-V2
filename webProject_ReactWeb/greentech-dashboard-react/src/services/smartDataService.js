@@ -25,6 +25,7 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 403) {
       AuthService.logout();
+      window.location.reload();
     }
     return Promise.reject(error);
   }
