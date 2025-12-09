@@ -407,33 +407,89 @@ const AI = () => {
   };
 
   // Send chat message
-  const sendChatMessage = () => {
+  // const sendChatMessage = () => {
+  //   const message = chatInput.trim();
+  //   if (!message) return;
+
+  //   // Get current time
+  //   const now = new Date();
+  //   const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
+  //   // Add user message
+  //   setChatMessages(prev => [...prev, { sender: 'user', text: message, time }]);
+
+  //   // Clear input
+  //   setChatInput('');
+
+  //   // Show typing indicator
+  //   setIsTyping(true);
+
+  //   // Simulate AI thinking delay
+  //   setTimeout(() => {
+  //     setIsTyping(false);
+
+  //     // Get and add AI response
+  //     const response = getAIResponse(message);
+  //     const responseTime = new Date();
+  //     const responseTimeStr = responseTime.getHours().toString().padStart(2, '0') + ':' + responseTime.getMinutes().toString().padStart(2, '0');
+  //     setChatMessages(prev => [...prev, { sender: 'ai', text: response, time: responseTimeStr }]);
+  //   }, 1000 + Math.random() * 1000);
+  // };
+  // Send chat message (Connecté avec Spring Boot + DeepSeek)
+  const sendChatMessage = async () => {
     const message = chatInput.trim();
     if (!message) return;
 
-    // Get current time
+    // 1. Affiche le message de l'utilisateur tout de suite
     const now = new Date();
     const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-
-    // Add user message
+    
     setChatMessages(prev => [...prev, { sender: 'user', text: message, time }]);
+    setChatInput(''); // Khwi l'input
+    setIsTyping(true); // Afficher "Thinking..."
 
-    // Clear input
-    setChatInput('');
+    try {
+      // 2. Sift l'message l Backend (Spring Boot)
+      const response = await fetch('http://localhost:8080/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: message }),
+      });
 
-    // Show typing indicator
-    setIsTyping(true);
+      if (!response.ok) throw new Error("Erreur serveur");
 
-    // Simulate AI thinking delay
-    setTimeout(() => {
-      setIsTyping(false);
-
-      // Get and add AI response
-      const response = getAIResponse(message);
+      const data = await response.json();
+      
+      // 3. Affiche la réponse de l'AI (DeepSeek)
       const responseTime = new Date();
       const responseTimeStr = responseTime.getHours().toString().padStart(2, '0') + ':' + responseTime.getMinutes().toString().padStart(2, '0');
-      setChatMessages(prev => [...prev, { sender: 'ai', text: response, time: responseTimeStr }]);
-    }, 1000 + Math.random() * 1000);
+      
+      setChatMessages(prev => [...prev, { 
+        sender: 'ai', 
+        text: formatText(data.response), // Nsa3mlo formatText bach yban zwin
+        time: responseTimeStr 
+      }]);
+
+    } catch (error) {
+      console.error("Erreur:", error);
+      setChatMessages(prev => [...prev, { 
+        sender: 'ai', 
+        text: "Désolé, je n'arrive pas à joindre le serveur.", 
+        time: time 
+      }]);
+    } finally {
+      setIsTyping(false); // Cacher "Thinking..."
+    }
+  };
+
+  // Helper function bach t-formatter l'text (Gras, sauts de ligne...)
+  const formatText = (text) => {
+    if (!text) return "";
+    let formatted = text.replace(/\n/g, '<br>');
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong class="text-emerald-400 font-bold">$1</strong>');
+    return formatted;
   };
 
   // Handle Enter key in chat input
