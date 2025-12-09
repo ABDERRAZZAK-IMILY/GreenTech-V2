@@ -16,3 +16,11 @@ spring:
       chat:
         options:
           model: deepseek-chat
+
+
+
+app :
+   jwtSecret :
+    sqbddsjvqfhjskhlfdskjlhfdlskqgfsldbfhkdskflhsdhklfsqdhkfgqhsdklfhk
+   jwtExpirationMs :
+      36000
