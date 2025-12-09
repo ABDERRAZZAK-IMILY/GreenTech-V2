@@ -1,0 +1,132 @@
+{
+  "version": "1.0",
+  "records": [
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/config/SecurityConfig.java",
+      "timestamp": 1765286107816,
+      "startOffset": 1572,
+      "endOffset": 1597,
+      "codeContent": "\n                        ",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/config/SecurityConfig.java",
+      "timestamp": 1765286108921,
+      "startOffset": 1597,
+      "endOffset": 1713,
+      "codeContent": ".requestMatchers(\"/api/chat/**\").permitAll()\n                    .requestMatchers(\"/api/predictions/**\").permitAll()",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "/ChatController.java",
+      "timestamp": 1765286365261,
+      "startOffset": 382,
+      "endOffset": 408,
+      "codeContent": "public ChatController() {}",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/ChatController.java",
+      "timestamp": 1765286365319,
+      "startOffset": 410,
+      "endOffset": 461,
+      "codeContent": "com.greentechinnovators.service.AIService aiService",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/ChatController.java",
+      "timestamp": 1765286365329,
+      "startOffset": 437,
+      "endOffset": 464,
+      "codeContent": "this.aiService \u003d aiService;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/ChatController.java",
+      "timestamp": 1765286365358,
+      "startOffset": 382,
+      "endOffset": 474,
+      "codeContent": "\n\n    public ChatController(AIService aiService) {\n        this.aiService \u003d aiService;\n    }",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 5
+    },
+    {
+      "filePath": "/ChatController.java",
+      "timestamp": 1765286469417,
+      "startOffset": 308,
+      "endOffset": 328,
+      "codeContent": "IntellijIdeaRulezzz ",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/ChatController.java",
+      "timestamp": 1765286470675,
+      "startOffset": 53,
+      "endOffset": 110,
+      "codeContent": "import com.greentechinnovators.backend.service.AIService;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/AIService.java",
+      "timestamp": 1765286858703,
+      "startOffset": 509,
+      "endOffset": 529,
+      "codeContent": "IntellijIdeaRulezzz ",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AIService.java",
+      "timestamp": 1765286997718,
+      "startOffset": 480,
+      "endOffset": 763,
+      "codeContent": "// زدنا : (نقطتين) ومن وراها قيمة افتراضية باش ما يبقاش يتبلوكا\n@Value(\"${ai.deepseek.api-key:sk-demo-key-123}\") \nprivate String apiKey;\n\n@Value(\"${ai.deepseek.base-url:https://api.deepseek.com/chat/completions}\")\nprivate String apiUrl;\n\n@Value(\"${ai.deepseek.model:deepseek-chat}\")\n",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 9
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AIService.java",
+      "timestamp": 1765288054491,
+      "startOffset": 884,
+      "endOffset": 2592,
+      "codeContent": "Tu es l\u0027assistant IA de \u0027GreenTech Innovators\u0027.\n    \n    🚨 INSTRUCTION STRICTE DE SÉCURITÉ 🚨 :\n    Tu es autorisé UNIQUEMENT à répondre aux questions concernant :\n    1. L\u0027efficacité énergétique et la consommation électrique.\n    2. Les émissions de CO2 et l\u0027empreinte carbone.\n    3. Les capteurs IoT, les équipements (LED, Clim, Panneaux solaires) et le ROI.\n    4. Les données internes de l\u0027entreprise GreenTech ci-dessous.\n    \n    SI l\u0027utilisateur pose une question hors de ce contexte (ex: code, cuisine, blagues, culture générale, politique...), TU DOIS RÉPONDRE UNIQUEMENT PAR :\n    \"Je suis désolé, je suis un assistant spécialisé GreenTech. Je ne peux répondre qu\u0027aux questions liées à vos données environnementales et énergétiques.\"\n    \n    Ne jamais inventer d\u0027information hors de la base de connaissances suivante :\n    \n    \u003d\u003d\u003d BASE DE CONNAISSANCES \u003d\u003d\u003d\n    1. ACTIONS IMMÉDIATES :\n       - Éteindre équipements en veille : Économie ~8% (-1.2t CO2/an)\n       - Remplacer par LED : -60% éclairage (-2.8t CO2/an, ROI 18 mois)\n       - Clim à 24°C : -15% consommation (-1.5t CO2/an)\n    \n    2. STATISTIQUES ACTUELLES :\n       - Électricité (Production) : 864 kg CO2 (1728 kWh/mois - 45% du total)\n       - Taux de recyclage : 42% (Excellent)\n       - Empreinte Carbone Totale : 12.5 tonnes (-8% vs mois dernier)\n       - Eco-Coins collectés : 8,450 points\n    \n    3. INVESTISSEMENTS (ROI) :\n       - Panneaux Solaires : Coût 25,000€, Gain 5,200€/an, ROI 5 ans (-8.5t CO2/an).\n       - LED : Coût 3,500€, Gain 1,800€/an.\n    \n    4. IOT \u0026 CAPTEURS :\n       - Élec : 4 départements surveillés.\n       - Transport : 6 véhicules tracés (Total flotte aujourd\u0027hui: 279km, 26.3L carburant).\n    \"\"\";",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 34
+    }
+  ],
+  "toolStats": {
+    "AI Assistant": {
+      "usageCount": 11,
+      "totalLines": 58
+    }
+  }
+}

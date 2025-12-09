@@ -30,6 +30,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configure(http))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/chat/**").permitAll()
+                        .requestMatchers("/api/predictions/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/notifications/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
