@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,27 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { employeeData } from '../data/employeeData';
 import colors from '../styles/colors';
+import { startTracking, stopTracking } from '../services/LocationService';
 
 export default function DashboardScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [isTracking, setIsTracking] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('Prêt à démarrer');
+
+  useEffect(() => {
+    return () => stopTracking();
+  }, []);
+
+  const toggleTracking = () => {
+    if (isTracking) {
+      stopTracking();
+      setIsTracking(false);
+      setStatusMsg('Suivi arrêté');
+    } else {
+      setIsTracking(true);
+      startTracking('USER-001', setStatusMsg); 
+    }
+  };
 
   const progressPercentage = (employeeData.currentPoints / employeeData.nextLevelPoints) * 100;
   const rankPercentage = ((employeeData.totalEmployees - employeeData.rank) / employeeData.totalEmployees) * 100;
@@ -25,6 +43,25 @@ export default function DashboardScreen() {
           <Text style={styles.welcomeTitle}>Bonjour, {employeeData.name} 👋</Text>
           <Text style={styles.welcomeSubtitle}>Continuez vos actions écologiques !</Text>
         </View>
+      </View>
+
+      <View style={styles.trackingCard}>
+        <View style={styles.trackingHeader}>
+          <Ionicons name="car-sport" size={24} color={colors.accent} />
+          <Text style={styles.trackingTitle}>Mode Conducteur</Text>
+        </View>
+        
+        <Text style={styles.statusText}>{statusMsg}</Text>
+
+        <TouchableOpacity 
+          style={[styles.trackButton, isTracking ? styles.stopBtn : styles.startBtn]} 
+          onPress={toggleTracking}
+        >
+          <Ionicons name={isTracking ? "stop-circle" : "play-circle"} size={24} color="white" />
+          <Text style={styles.btnText}>
+            {isTracking ? "Arrêter le trajet" : "Commencer le trajet"}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Level Card */}
@@ -608,5 +645,57 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  // Tracking Card Styles
+  trackingCard: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  trackingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  trackingTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 10,
+    color: colors.textPrimary,
+  },
+  statusText: {
+    textAlign: 'center',
+    marginBottom: 20,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+    fontSize: 14,
+  },
+  trackButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 15,
+    borderRadius: 10,
+  },
+  startBtn: {
+    backgroundColor: '#2ecc71',
+  },
+  stopBtn: {
+    backgroundColor: '#e74c3c',
+  },
+  btnText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginLeft: 10,
   },
 });
