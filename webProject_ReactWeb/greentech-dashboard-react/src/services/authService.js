@@ -9,8 +9,16 @@ class AuthService {
       password
     });
 
+    console.log('Backend response:', response.data);
+
     if (response.data.token) {
+      const userRole = (response.data.role || response.data.userRole || 'user').toLowerCase();
+      
       localStorage.setItem('user', JSON.stringify(response.data));
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('userRole', userRole);
+      
+      console.log('Saved userRole:', userRole);
     }
 
     return response.data;
@@ -18,7 +26,8 @@ class AuthService {
 
   logout() {
     localStorage.removeItem('user');
-    window.location.href = '/login';
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userRole');
   }
 
   getCurrentUser() {
