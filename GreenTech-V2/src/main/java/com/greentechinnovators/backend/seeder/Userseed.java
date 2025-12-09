@@ -35,7 +35,7 @@ public class Userseed implements CommandLineRunner {
             System.out.println(" Admin created: admin@greentech.com / admin123");
         }
 
-        if (!userRepository.existsByEmail("employee@greentech.com")) {
+        if (!userRepository.existsByEmail("imily@greentech.com")) {
             User user = new User(
                     "imily",
                     "imily@greentech.com",
@@ -44,7 +44,7 @@ public class Userseed implements CommandLineRunner {
             );
             userRepository.save(user);
 
-            System.out.println(" User created: employee@greentech.com / user123");
+            System.out.println(" User created: imily@greentech.com / user123");
         }
     }
 }
