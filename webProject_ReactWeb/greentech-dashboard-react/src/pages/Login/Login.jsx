@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import AuthService from '../../services/authService';
 import './Login.css';
 
-const Login = () => {
+const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -22,9 +20,18 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await AuthService.login(formData.email, formData.password);
+      const response = await AuthService.login(formData.email, formData.password);
       
-      navigate('/'); 
+      console.log('Login response:', response);
+      
+
+      const userRole = (response.role || response.userRole || 'user').toLowerCase();
+      
+      console.log('Using userRole:', userRole);
+      
+      if (onLogin) {
+        onLogin(userRole);
+      }
     } catch (err) {
       console.error(err);
       const msg = err.response?.data?.message || "Email ou mot de passe incorrect";
