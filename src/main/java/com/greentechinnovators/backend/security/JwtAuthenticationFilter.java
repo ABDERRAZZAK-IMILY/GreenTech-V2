@@ -17,66 +17,59 @@ import java.io.IOException;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final  CustomUserDetailsService customUserDetailsService;
-
-    private  final  JwtUtils jwtUtils;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final JwtUtils jwtUtils;
 
     @Autowired
     public JwtAuthenticationFilter(JwtUtils jwtUtils, CustomUserDetailsService customUserDetailsService) {
-
         this.jwtUtils = jwtUtils;
         this.customUserDetailsService = customUserDetailsService;
-
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request , HttpServletResponse response , FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
-        String jwt = parsejwt(request);
+        String jwt = parseJwt(request);
 
-        if (jwt != null && jwtUtils.validateToken(jwt) && SecurityContextHolder.getContext().getAuthentication() == null){
+        try {
 
-            String username = jwtUtils.extractUsername(jwt);
+            if (jwt != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+                // validate token safely
+                if (jwtUtils.validateToken(jwt)) {
 
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
-                    );
+                    String username = jwtUtils.extractUsername(jwt);
+                    UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
 
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
 
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
 
-
-
+        } catch (Exception ex) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid or expired JWT token");
+            return;
         }
 
-
-        filterChain.doFilter(request,response);
-
-
+        filterChain.doFilter(request, response);
     }
 
+    private String parseJwt(HttpServletRequest request) {
+        String headerAuth = request.getHeader("Authorization");
 
-    private String parsejwt(HttpServletRequest request){
-
-        String haederAuth = request.getHeader("Authorization");
-
-        if(haederAuth != null && haederAuth.startsWith("Bearer ")){
-
-            return haederAuth.substring(7);
-
+        if (headerAuth != null && headerAuth.startsWith("Bearer ")) {
+            return headerAuth.substring(7);
         }
         return null;
-
-
-
     }
-
-
-
-
 }
