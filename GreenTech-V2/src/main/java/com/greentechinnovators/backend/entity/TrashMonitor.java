@@ -15,8 +15,8 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Document("EnergyMonitor")
-public class EnergyMonitor {
+@Document("TrashMonitor")
+public class TrashMonitor {
     @Id
     private String id;
 
@@ -25,8 +25,7 @@ public class EnergyMonitor {
     private String status;
     private Double co2Impact;
     @DBRef
-    private List<Energy> energy;
+    private List<Trash> trash;
 
     private LocalDateTime timestamp;
-
 }
