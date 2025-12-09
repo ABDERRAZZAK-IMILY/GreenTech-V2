@@ -1,0 +1,303 @@
+import { useEffect, useRef } from 'react';
+import { getLineChartData, getComparisonData, getEmissionsData } from '../utils/dataGenerator';
+
+export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod) => {
+  const chartsRef = useRef({});
+  const isInitialized = useRef(false);
+
+  // Initial chart creation (only once)
+  useEffect(() => {
+    if (isInitialized.current) return;
+
+    const initCharts = () => {
+      if (!window.Chart) {
+        console.error('Chart.js not loaded');
+        return;
+      }
+
+      const emissionsCanvas = document.getElementById('emissionsChart');
+      const electricityCanvas = document.getElementById('electricityChart');
+      const carbonGaugeCanvas = document.getElementById('carbonGauge');
+      const comparisonCanvas = document.getElementById('comparisonChart');
+
+      if (!emissionsCanvas || !electricityCanvas || !carbonGaugeCanvas || !comparisonCanvas) {
+        console.log('Canvas elements not ready yet');
+        return;
+      }
+
+      const emissionsCtx = emissionsCanvas.getContext('2d');
+      const electricityCtx = electricityCanvas.getContext('2d');
+      const gaugeCtx = carbonGaugeCanvas.getContext('2d');
+      const comparisonCtx = comparisonCanvas.getContext('2d');
+
+      // Get initial data
+      const emissionsData = getEmissionsData(emissionsPeriod);
+      const lineData = getLineChartData(selectedMetric, selectedPeriod);
+      const comparisonData = getComparisonData(selectedComparison);
+
+      // Emissions Doughnut Chart
+      chartsRef.current.emissions = new window.Chart(emissionsCtx, {
+        type: 'doughnut',
+        data: {
+          labels: emissionsData.labels,
+          datasets: [{
+            data: emissionsData.data,
+            backgroundColor: ['#f093fb', '#f59e0b', '#3b82f6', '#10b981'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          animation: {
+            duration: 750,
+            easing: 'easeInOutQuart'
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return `${label}: ${value} kg CO2 (${percentage}%)`;
+                }
+              }
+            }
+          }
+        },
+        plugins: [{
+          id: 'doughnutPercentages',
+          afterDatasetDraw(chart) {
+            const { ctx, data } = chart;
+            const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+
+            chart.getDatasetMeta(0).data.forEach((arc, index) => {
+              const value = data.datasets[0].data[index];
+              const percentage = ((value / total) * 100).toFixed(1);
+
+              // Calculate position at the middle of the arc
+              const angle = (arc.startAngle + arc.endAngle) / 2;
+              const radius = (arc.innerRadius + arc.outerRadius) / 2;
+              const x = arc.x + Math.cos(angle) * radius;
+              const y = arc.y + Math.sin(angle) * radius;
+
+              // Draw percentage text
+              ctx.save();
+              ctx.fillStyle = '#ffffff';
+              ctx.font = 'bold 14px Arial';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(`${percentage}%`, x, y);
+              ctx.restore();
+            });
+          }
+        }]
+      });
+
+      // Electricity/Metric Line Chart
+      chartsRef.current.electricity = new window.Chart(electricityCtx, {
+        type: 'line',
+        data: {
+          labels: lineData.labels,
+          datasets: [{
+            label: lineData.label,
+            data: lineData.data,
+            borderColor: lineData.color,
+            backgroundColor: `${lineData.color}1a`,
+            fill: true,
+            tension: 0.4,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          animation: {
+            duration: 750,
+            easing: 'easeInOutQuart'
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                color: '#e0e0e0'
+              }
+            },
+            x: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                color: '#e0e0e0'
+              }
+            }
+          }
+        }
+      });
+
+      // Carbon Gauge
+      chartsRef.current.gauge = new window.Chart(gaugeCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Utilisé', 'Restant'],
+          datasets: [{
+            data: [83, 17],
+            backgroundColor: ['#667eea', 'rgba(255, 255, 255, 0.1)'],
+            borderWidth: 0,
+            circumference: 180,
+            rotation: 270
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          animation: {
+            duration: 750,
+            easing: 'easeInOutQuart'
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              enabled: false
+            }
+          }
+        }
+      });
+
+      // Comparison Bar Chart
+      chartsRef.current.comparison = new window.Chart(comparisonCtx, {
+        type: 'bar',
+        data: {
+          labels: comparisonData.labels,
+          datasets: [
+            {
+              label: 'Mois précédent',
+              data: comparisonData.previousMonth,
+              backgroundColor: 'rgba(255, 255, 255, 0.2)'
+            },
+            {
+              label: 'Mois actuel',
+              data: comparisonData.currentMonth,
+              backgroundColor: '#667eea'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          animation: {
+            duration: 750,
+            easing: 'easeInOutQuart'
+          },
+          plugins: {
+            legend: {
+              display: true,
+              labels: {
+                color: '#e0e0e0'
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                color: '#e0e0e0'
+              }
+            },
+            x: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                color: '#e0e0e0'
+              }
+            }
+          }
+        }
+      });
+
+      isInitialized.current = true;
+      console.log('Charts initialized successfully');
+    };
+
+    const timer = setTimeout(initCharts, 100);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []); // Only run once on mount
+
+  // Update line chart when metric or period changes
+  useEffect(() => {
+    if (!isInitialized.current || !chartsRef.current.electricity) return;
+
+    const lineData = getLineChartData(selectedMetric, selectedPeriod);
+    const chart = chartsRef.current.electricity;
+
+    // Update only the data, labels, and colors
+    chart.data.labels = lineData.labels;
+    chart.data.datasets[0].label = lineData.label;
+    chart.data.datasets[0].data = lineData.data;
+    chart.data.datasets[0].borderColor = lineData.color;
+    chart.data.datasets[0].backgroundColor = `${lineData.color}1a`;
+
+    chart.update();
+  }, [selectedMetric, selectedPeriod]);
+
+  // Update comparison chart when comparison metric changes
+  useEffect(() => {
+    if (!isInitialized.current || !chartsRef.current.comparison) return;
+
+    const comparisonData = getComparisonData(selectedComparison);
+    const chart = chartsRef.current.comparison;
+
+    // Update only the data and labels
+    chart.data.labels = comparisonData.labels;
+    chart.data.datasets[0].data = comparisonData.previousMonth;
+    chart.data.datasets[1].data = comparisonData.currentMonth;
+
+    chart.update();
+  }, [selectedComparison]);
+
+  // Update emissions chart when period changes
+  useEffect(() => {
+    if (!isInitialized.current || !chartsRef.current.emissions) return;
+
+    const emissionsData = getEmissionsData(emissionsPeriod);
+    const chart = chartsRef.current.emissions;
+
+    // Update only the data
+    chart.data.datasets[0].data = emissionsData.data;
+    chart.data.labels = emissionsData.labels;
+
+    chart.update();
+  }, [emissionsPeriod]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (chartsRef.current.emissions) chartsRef.current.emissions.destroy();
+      if (chartsRef.current.electricity) chartsRef.current.electricity.destroy();
+      if (chartsRef.current.gauge) chartsRef.current.gauge.destroy();
+      if (chartsRef.current.comparison) chartsRef.current.comparison.destroy();
+    };
+  }, []);
+};
