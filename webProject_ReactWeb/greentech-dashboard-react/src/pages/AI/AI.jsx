@@ -42,81 +42,7 @@ const AI = () => {
   });
   const hasInitialized = useRef(false);
 
-  // AI Knowledge Base
-  // const aiKnowledgeBase = {
-  //   "bonjour": {
-  //     keywords: ["bonjour", "salut", "hello", "hi"],
-  //     response: "Bonjour ! Je suis l'assistant IA GreenTech. Je peux vous aider à optimiser votre consommation énergétique et réduire votre empreinte carbone. Comment puis-je vous aider aujourd'hui ?"
-  //   },
-  //   "économiser": {
-  //     keywords: ["économiser", "économie", "réduire", "baisser", "diminuer"],
-  //     response: "Voici 3 actions immédiates pour réduire votre consommation :\n\n1️⃣ Éteindre les équipements en veille → Économie de ~8%\n2️⃣ Remplacer vos ampoules par des LED → -60% sur l'éclairage\n3️⃣ Régler la climatisation à 24°C au lieu de 22°C → -15%\n\nVoulez-vous plus de détails sur l'une de ces actions ?"
-  //   },
-  //   "empreinte": {
-  //     keywords: ["empreinte", "carbone", "co2", "émissions"],
-  //     response: "Émissions CO2 totales actuelles :\n\n🔌 Électricité (Production) : 864 kg CO2\n🔌 Électricité (Bureaux) : 432 kg CO2\n🔌 Électricité (Entrepôt) : 345 kg CO2\n🚗 Transport : Voir par type de véhicule\n🗑️ Déchets (Organique) : 92.5 kg CO2\n🗑️ Déchets (Recyclable) : 40.6 kg CO2\n🔥 Gaz (Cuisine/Chauffage) : Butane 3kg CO2/bouteille\n\nVotre taux de recyclage de 42% est excellent !"
-  //   },
-  //   "bilan": {
-  //     keywords: ["bilan", "rapport", "stats", "statistiques"],
-  //     response: "📊 Bilan du mois en cours :\n\n✅ Consommation électrique : 2,450 kWh (stable)\n✅ Empreinte carbone : 12.5 tonnes CO2 (-8% vs mois dernier)\n✅ Économies réalisées : 380€\n✅ Eco-Coins collectés : 8,450 points (+250 cette semaine)\n\nTrès bonne performance ! Continuez comme ça !"
-  //   },
-  //   "suggestions": {
-  //     keywords: ["suggestions", "actions", "recommandations", "conseils"],
-  //     response: "Mes meilleures recommandations pour vous :\n\n⭐⭐⭐ Installer éclairage LED → -2.8 tonnes CO2/an, -1,800€/an\n⭐⭐⭐ Panneaux solaires → -8.5 tonnes CO2/an, -5,200€/an\n⭐⭐ Optimiser climatisation → -1.5 tonnes CO2/an, -680€/an\n\nVoulez-vous plus de détails sur l'une de ces actions ?"
-  //   },
-  //   "réglementations": {
-  //     keywords: ["réglementation", "loi", "normes", "conformité", "légal"],
-  //     response: "📋 Principales réglementations environnementales :\n\n• Directive européenne sur l'efficacité énergétique\n• Norme ISO 14001 pour le management environnemental\n• Obligation de reporting carbone (>500 employés)\n• Réglementation RE2020 pour les bâtiments\n\nVotre entreprise est actuellement conforme à 4/4 réglementations ✅"
-  //   },
-  //   "led": {
-  //     keywords: ["led", "éclairage", "ampoules", "lumière"],
-  //     response: "💡 Installation LED - Détails :\n\n📊 Impact : -18% consommation électrique\n💰 ROI : 18 mois (investissement 3,500€)\n🌱 CO2 économisé : 2.8 tonnes/an\n💵 Économies : 1,800€/an\n\nC'est l'une de nos recommandations prioritaires ! Souhaitez-vous lancer cette action ?"
-  //   },
-  //   "solaire": {
-  //     keywords: ["solaire", "panneaux", "photovoltaïque"],
-  //     response: "☀️ Panneaux Solaires - Détails :\n\n📊 Impact maximum : -8.5 tonnes CO2/an\n💰 Investissement : 25,000€\n💵 Économies annuelles : 5,200€/an\n📅 ROI : 5 ans\n🔋 Production estimée : ~15,000 kWh/an\n\nC'est un investissement important mais très rentable à long terme !"
-  //   },
-  //   "climatisation": {
-  //     keywords: ["climatisation", "clim", "chauffage", "température"],
-  //     response: "❄️ Optimisation Climatisation - Conseils :\n\n🌡️ Régler à 24°C (au lieu de 22°C) → -15% consommation\n⏰ Programmer arrêt automatique la nuit\n🚪 Vérifier l'isolation des locaux\n🔧 Maintenance régulière des filtres\n\n💰 Économies potentielles : 680€/an\n🌱 Réduction CO2 : 1.5 tonnes/an"
-  //   },
-  //   "budget": {
-  //     keywords: ["budget", "coût", "prix", "dépense"],
-  //     response: "💰 Budget Énergie - Situation actuelle :\n\n📊 Dépense ce mois : 1,850€ / 2,000€ budget\n⚠️ Risque dépassement : 78%\n📉 Recommandation : Réduire consommation de 10%\n\n💡 Actions rapides :\n• Éteindre équipements la nuit\n• Optimiser climatisation\n• Sensibiliser les employés"
-  //   },
-  //   "capteurs": {
-  //     keywords: ["capteur", "iot", "sensor", "mesure"],
-  //     response: "🔌 État des Capteurs IoT :\n\n⚡ Électricité (SCT013) : 4 départements surveillés\n⚖️ Déchets (HX711) : 5 types de déchets mesurés\n🔥 Gaz : Suivi manuel par usage (Cuisine, Chauffage, Climatisation, Eau, Production)\n🚗 Transport : 6 véhicules tracés en temps réel (GPS)\n\nTypes de déchets :\n♻️ Recyclable : 3 capteurs actifs\n🍃 Organique : 3 capteurs actifs\n🗑️ Non-recyclable : 2 capteurs actifs\n💻 Électronique & ☢️ Dangereux : capteurs dédiés"
-  //   },
-  //   "département": {
-  //     keywords: ["département", "production", "bureaux", "entrepôt", "cafétéria"],
-  //     response: "📍 Consommation par département :\n\n🏭 Production : ~1728 kWh/mois (45%)\n🏢 Bureaux : ~864 kWh/mois (25%)\n📦 Entrepôt : ~691 kWh/mois (20%)\n☕ Cafétéria : ~345 kWh/mois (10%)\n\nLe département Production est le plus énergivore. Recommandation : Optimiser les horaires des machines lourdes."
-  //   },
-  //   "véhicule": {
-  //     keywords: ["véhicule", "transport", "camion", "voiture", "moto"],
-  //     response: "🚗 Flotte de véhicules :\n\n🚐 Camionnette : 1 véhicule (67 km, 6.7L)\n🚗 Voiture : 2 véhicules (68 km total, 6.8L)\n🚚 Camion : 1 véhicule (89 km, 8.9L)\n🚙 Utilitaire : 1 véhicule (23 km, 2.3L)\n🏍️ Moto : 1 véhicule (32 km, 1.6L)\n\nTotal flotte : 279 km, 26.3L carburant, ~62 kg CO2 aujourd'hui"
-  //   },
-  //   "gaz": {
-  //     keywords: ["gaz", "butane", "réfrigérant", "cuisine", "chauffage"],
-  //     response: "🔥 Gestion du gaz par usage :\n\n🍳 Cuisine : Butane (consommation bouteilles)\n🌡️ Chauffage : Butane\n❄️ Climatisation : Gaz Réfrigérant (en kg)\n💧 Eau Chaude : Butane\n🏭 Production : Butane\n\nEmissions : Butane ~3kg CO2/bouteille, Réfrigérant ~2kg CO2/kg"
-  //   },
-  //   "déchet": {
-  //     keywords: ["déchet", "recyclage", "poubelle", "organique"],
-  //     response: "♻️ Types de déchets surveillés :\n\n♻️ Recyclable : 42% (meilleur taux!)\n🍃 Organique : 35%\n🗑️ Non-recyclable : 23%\n💻 Électronique : Capteurs dédiés\n☢️ Dangereux : Traitement spécial\n\nObjectif : Atteindre 60% de recyclage d'ici 3 mois"
-  //   },
-  //   "merci": {
-  //     keywords: ["merci", "thanks", "super", "parfait", "excellent"],
-  //     response: "Avec plaisir ! N'hésitez pas si vous avez d'autres questions. Je suis là pour vous aider à optimiser votre performance environnementale ! 😊"
-  //   },
-  //   "aide": {
-  //     keywords: ["aide", "help", "?", "comment"],
-  //     response: "Je peux vous aider sur les sujets suivants :\n\n💡 Économies d'énergie\n🌍 Empreinte carbone\n📊 Bilans et statistiques\n🎯 Recommandations d'actions\n📋 Réglementations\n🔌 État des capteurs\n💰 Budget et ROI\n\nPosez-moi simplement votre question !"
-  //   },
-  //   "default": {
-  //     keywords: [],
-  //     response: "Je ne suis pas sûr de comprendre votre question. Voici ce que je peux faire pour vous :\n\n• Analyser votre consommation énergétique\n• Calculer votre empreinte carbone\n• Suggérer des actions d'optimisation\n• Vous informer sur les réglementations\n\nPouvez-vous reformuler votre question ?"
-  //   }
-  // };
+  
 
   // Recommendation Details Data
   const recommendationDetails = {
@@ -350,32 +276,7 @@ const AI = () => {
     executeStep();
   };
 
-  // // Initialize chatbot with pre-loaded messages
-  // useEffect(() => {
-  //   const initialMessages = [
-  //     {
-  //       sender: 'user',
-  //       text: 'Quel département consomme le plus d\'électricité ?',
-  //       time: '10:30'
-  //     },
-  //     {
-  //       sender: 'ai',
-  //       text: 'Voici la répartition de consommation électrique par département :\n\n🏭 Production : 45% (département le plus énergivore)\n🏢 Bureaux : 25%\n📦 Entrepôt : 20%\n☕ Cafétéria : 10%\n\nRecommandation : Optimiser les horaires des machines en Production pourrait réduire jusqu\'à 15% votre facture !',
-  //       time: '10:30'
-  //     },
-  //     {
-  //       sender: 'user',
-  //       text: 'Et pour les déchets, quel type produit-on le plus ?',
-  //       time: '10:32'
-  //     },
-  //     {
-  //       sender: 'ai',
-  //       text: 'Répartition de vos déchets actuels :\n\n♻️ Recyclable : 42% (203 kg)\n🍃 Organique : 35% (185 kg)\n🗑️ Non-recyclable : 23% (138 kg)\n💻 Électronique : capteurs actifs\n☢️ Dangereux : traitement spécial\n\nBonne nouvelle : Votre taux de recyclage de 42% est au-dessus de la moyenne ! Objectif : atteindre 60% d\'ici 3 mois.',
-  //       time: '10:32'
-  //     }
-  //   ];
-  //   setChatMessages(initialMessages);
-  // }, []);
+
 
   // Initialize prediction charts when predictions tab is shown and predictions are generated
   useEffect(() => {
@@ -401,18 +302,7 @@ const AI = () => {
     setActiveSubTab(tabName);
   };
 
-  // // Get AI response based on message
-  // const getAIResponse = (message) => {
-  //   const lowerMessage = message.toLowerCase();
-
-  //   for (const [key, data] of Object.entries(aiKnowledgeBase)) {
-  //     if (data.keywords.some(keyword => lowerMessage.includes(keyword))) {
-  //       return data.response;
-  //     }
-  //   }
-
-  //   return aiKnowledgeBase.default.response;
-  // };
+ 
 useEffect(() => {
     setChatMessages([{
         sender: 'ai',
@@ -426,9 +316,6 @@ useEffect(() => {
     }
   }, [chatMessages, isTyping]);
   // Send chat message
-
- // AI.jsx
-
 const sendChatMessage = async () => {
     if (!chatInput.trim()) return;
     

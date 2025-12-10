@@ -30,8 +30,5 @@ public class AiController {
         return ResponseEntity.ok(Map.of("response", aiResponse));
     }
 
-    @GetMapping("/stats")
-    public ResponseEntity<AISummaryDTO> getAIStats() {
-        return ResponseEntity.ok(aiService.generateDashboardStats());
-    }
+
 }
