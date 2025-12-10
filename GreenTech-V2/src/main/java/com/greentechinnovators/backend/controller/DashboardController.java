@@ -1,9 +1,9 @@
 package com.greentechinnovators.backend.controller;
 
-import com.greentechinnovators.backend.dto.EnergyDtoRequest;
-import com.greentechinnovators.backend.dto.EnergyDtoResponse;
-import com.greentechinnovators.backend.dto.TrashDtoRequest;
-import com.greentechinnovators.backend.dto.TrashDtoResponse;
+import com.greentechinnovators.backend.dto.Energy.Request.EnergyRequestDTO;
+import com.greentechinnovators.backend.dto.Energy.Responce.EnergyResponseDTO;
+import com.greentechinnovators.backend.dto.trash.request.TrashRequestDTO;
+import com.greentechinnovators.backend.dto.trash.response.TrashResponseDTO;
 import com.greentechinnovators.backend.service.EnergyService;
 import com.greentechinnovators.backend.service.TrashService;
 import lombok.RequiredArgsConstructor;
@@ -22,23 +22,23 @@ public class DashboardController {
 
     // Energy endpoints
     @PostMapping("/energy/ingest")
-    public EnergyDtoResponse ingestEnergyData(@RequestBody EnergyDtoRequest dto) {
+    public EnergyResponseDTO ingestEnergyData(@RequestBody EnergyRequestDTO dto) {
         return energyService.createReading(dto);
     }
 
     @GetMapping("/energy/metrics")
-    public List<EnergyDtoResponse> getEnergyMetrics() {
+    public List<EnergyResponseDTO> getEnergyMetrics() {
         return energyService.getAllReadings();
     }
 
     // Trash endpoints
     @PostMapping("/trash/ingest")
-    public TrashDtoResponse ingestTrashData(@RequestBody TrashDtoRequest dto) {
+    public TrashResponseDTO ingestTrashData(@RequestBody TrashRequestDTO dto) {
         return trashService.saveReading(dto);
     }
 
     @GetMapping("/trash/metrics")
-    public List<TrashDtoResponse> getTrashMetrics() {
+    public List<TrashResponseDTO> getTrashMetrics() {
         return trashService.getAllReadings();
     }
 }

@@ -25,7 +25,7 @@ public class GasMonitor {
     private String status;
     private Double co2Impact;
     @DBRef
-    private List<Energy> energy;
+    private List<Gas> gas;
 
     private LocalDateTime timestamp;
 }
