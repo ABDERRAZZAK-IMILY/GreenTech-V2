@@ -28,5 +28,4 @@ public class EnergyMonitor {
     private List<Energy> energy;
 
     private LocalDateTime timestamp;
-
 }
