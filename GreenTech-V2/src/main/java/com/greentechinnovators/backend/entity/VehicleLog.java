@@ -13,13 +13,12 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Document("Vehicle")
-public class Vehicle {
+@Document("VehicleLog")
+public class VehicleLog {
     @Id
     private String id;
-    private String licensePlate;
-    private String model;
-    private User user;
-
-    private LocalDateTime lastSignalTime;
+    private Vehicle vehicle;
+    private Double latitude;
+    private Double longitude;
+    private LocalDateTime createdAt;
 }
