@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Document("VehicleLog")
+@Document("VehicleLogRepository")
 public class VehicleLog {
     @Id
     private String id;
