@@ -36,23 +36,15 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     }
 }
 
-void sendReading(String type, float value, String unit, String id, String loc, String wasteType = "") {
-    StaticJsonDocument<300> doc;
-    doc["dataType"] = type;       // "ENERGY" or "WASTE"
-    doc["value"] = value;
-    doc["unit"] = unit;
-    doc["sensorId"] = id;
-    doc["location"] = loc;
-    
-    if (type == "WASTE" && wasteType != "") {
-        doc["wasteType"] = wasteType;  // organic, recyclable, non-recyclable, electronic, dangerous
-    }
+void sendEnergy(float energyValue) {
+    StaticJsonDocument<200> doc;
+    doc["energyConsumed"] = energyValue;
 
     String jsonString;
     serializeJson(doc, jsonString);
 
     webSocket.sendTXT(jsonString);
-    Serial.println("Sent (" + type + "): " + jsonString);
+    Serial.println("Sent Energy: " + jsonString);
 }
 
 void setup() {
@@ -87,31 +79,22 @@ void loop() {
     webSocket.loop();
 
     unsigned long now = millis();
-    if(now - lastSendTime > sendInterval) {
+    if (now - lastSendTime > sendInterval) {
         lastSendTime = now;
 
         float energy = random(100, 400) / 10.0;
-        sendReading("ENERGY", energy, "kWh", "ESP32-ELEC-01", "production");
 
-        float waste = random(5, 50) / 10.0;
-        String wasteTypes[] = {"organic", "recyclable", "non-recyclable", "electronic", "dangerous"};
-        String selectedWasteType = wasteTypes[random(0, 5)];
-        sendReading("WASTE", waste, "kg", "ESP32-WASTE-01", "Cafeteria", selectedWasteType);
+        sendEnergy(energy);
 
         display.clearDisplay();
         display.setCursor(0,0);
-        display.println(">> Sending Data <<");
-        
-        display.setCursor(0, 20);
-        display.print("Elec: "); 
-        display.print(energy); 
+        display.println(">> Sending Energy <<");
+
+        display.setCursor(0, 30);
+        display.print("Energy: ");
+        display.print(energy);
         display.println(" kWh");
 
-        display.setCursor(0, 40);
-        display.print("Waste: "); 
-        display.print(waste); 
-        display.print(" kg");
-        
         display.display();
     }
 }
