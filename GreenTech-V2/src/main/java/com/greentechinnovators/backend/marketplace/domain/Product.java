@@ -19,4 +19,6 @@ public class Product {
     private String imageUrl;
     private int stockQuantity;
     private boolean isActive;
+    private String category; // Product category (e.g., ECO_PRODUCTS, ENERGY_SAVING, RECYCLING)
+    private double rating;   // Product rating (0.0 to 5.0)
 }
