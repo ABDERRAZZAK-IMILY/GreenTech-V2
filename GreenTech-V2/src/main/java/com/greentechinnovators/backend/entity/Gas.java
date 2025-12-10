@@ -17,6 +17,6 @@ import java.time.LocalDateTime;
 public class Gas {
     @Id
     private String id;
-    private Double energyConsumed;
+    private Double consumedGas;
     private LocalDateTime createdAt =  LocalDateTime.now();
 }

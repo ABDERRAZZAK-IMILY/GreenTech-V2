@@ -11,6 +11,6 @@ public class EnergyMonitorResponseDTO {
     private String status;
     private Double co2Impact;
     private LocalDateTime timestamp;
-    
+
     private List<EnergyResponseDTO> energy;
 }
