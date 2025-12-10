@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 public class VehicleLog {
     @Id
     private String id;
-    private Vehicle vehicle;
     private Double latitude;
     private Double longitude;
     private LocalDateTime createdAt;
