@@ -1,6 +1,5 @@
 package com.greentechinnovators.backend.mapper;
 
-import com.greentechinnovators.backend.dto.TransportDataDto;
 import com.greentechinnovators.backend.entity.TransportData;
 import org.springframework.stereotype.Component;
 
