@@ -1,6 +1,5 @@
 package com.greentechinnovators.backend.service;
 
-import com.greentechinnovators.backend.dto.TransportDataDto;
 import com.greentechinnovators.backend.entity.TransportData;
 import com.greentechinnovators.backend.mapper.TransportMapper;
 import com.greentechinnovators.backend.repository.TransportRepository;
