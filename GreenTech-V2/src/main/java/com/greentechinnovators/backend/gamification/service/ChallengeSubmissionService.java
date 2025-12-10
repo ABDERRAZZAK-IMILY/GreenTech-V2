@@ -4,6 +4,7 @@ import com.greentechinnovators.backend.gamification.domain.Challenge;
 import com.greentechinnovators.backend.gamification.domain.ChallengeSubmission;
 import com.greentechinnovators.backend.gamification.domain.SubmissionStatus;
 import com.greentechinnovators.backend.gamification.dto.request.SubmitChallengeRequestDTO;
+import com.greentechinnovators.backend.gamification.dto.response.SubmissionResponseDTO;
 import com.greentechinnovators.backend.gamification.repository.ChallengeRepository;
 import com.greentechinnovators.backend.gamification.repository.ChallengeSubmissionRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -65,5 +67,29 @@ public class ChallengeSubmissionService {
 
     public List<ChallengeSubmission> getUserSubmissions(String userId) {
         return submissionRepository.findByUserId(userId);
+    }
+
+    /**
+     * Get user submissions with detailed information
+     */
+    public List<SubmissionResponseDTO> getUserSubmissionsDetailed(String userId) {
+        List<ChallengeSubmission> submissions = submissionRepository.findByUserId(userId);
+        
+        return submissions.stream().map(submission -> {
+            Challenge challenge = challengeRepository.findById(submission.getChallengeId())
+                    .orElse(null);
+            
+            return SubmissionResponseDTO.builder()
+                    .id(submission.getId())
+                    .challengeId(submission.getChallengeId())
+                    .challengeTitle(challenge != null ? challenge.getTitle() : "Unknown Challenge")
+                    .proofImageUrl(submission.getProofImageUrl())
+                    .status(submission.getStatus())
+                    .submissionDate(submission.getSubmissionDate())
+                    .adminComment(submission.getAdminComment())
+                    .pointsAwarded(challenge != null && submission.getStatus() == SubmissionStatus.APPROVED 
+                            ? challenge.getPointsReward() : 0)
+                    .build();
+        }).collect(Collectors.toList());
     }
 }
