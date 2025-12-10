@@ -23,8 +23,12 @@ public class EnergyService {
 
     public EnergyResponseDTO createReading(EnergyRequestDTO dto) {
         Energy energy = mapper.toEntity(dto);
-//        EnergyMonitor monitor = monitorRepository.findBy
+        EnergyMonitor monitor = monitorRepository.findByMacAddress(dto.getMacAddress()).orElseThrow(()->{
+            throw new RuntimeException("Mac address not found");
+        });
         Energy res =  repository.save(energy);
+        monitor.getEnergy().add(res);
+        monitorRepository.save(monitor);
         return mapper.toResponse(res);
     }
 
@@ -32,8 +36,6 @@ public class EnergyService {
 
     public List<EnergyResponseDTO> getAllReadings() {
         List<Energy> energyList =  repository.findAllByOrderByTimestampDesc();
-
         return energyList.stream().map(mapper::toResponse).toList();
-
     }
 }
