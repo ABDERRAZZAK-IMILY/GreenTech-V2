@@ -2,8 +2,8 @@ package com.greentechinnovators.backend.handler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.greentechinnovators.backend.dto.EnergyDtoRequest;
-import com.greentechinnovators.backend.dto.TrashDtoRequest;
+import com.greentechinnovators.backend.dto.Energy.Request.EnergyRequestDTO;
+import com.greentechinnovators.backend.dto.trash.request.TrashRequestDTO;
 import com.greentechinnovators.backend.service.EnergyService;
 import com.greentechinnovators.backend.service.TrashService;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ public class Esp32WebSocketHandler extends TextWebSocketHandler {
 
             if (jsonNode.has("energyConsumed")) {
                 Double value = jsonNode.get("energyConsumed").asDouble();
-                EnergyDtoRequest dto = EnergyDtoRequest.builder()
+                EnergyRequestDTO dto = EnergyRequestDTO.builder()
                         .energyConsumed(value)
                         .build();
                 energyService.createReading(dto);
@@ -40,8 +40,8 @@ public class Esp32WebSocketHandler extends TextWebSocketHandler {
             }
             else if (jsonNode.has("weight")) {
                 Double value = jsonNode.get("weight").asDouble();
-                TrashDtoRequest dto = TrashDtoRequest.builder()
-                        .wight(value)
+                TrashRequestDTO dto = TrashRequestDTO.builder()
+                        .weight(value)
                         .build();
                 trashService.saveReading(dto);
                 log.info("Saved Trash reading via WebSocket: {}", value);
