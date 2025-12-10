@@ -10,13 +10,10 @@ spring:
       uri: mongodb://localhost:27017/greentech_db
 
   ai:
-    openai:
-      api-key: ${DEEPSEEK_API_KEY}
-      base-url: https://api.deepseek.com
-      chat:
-        options:
-          model: deepseek-chat
-
+    deepseek:
+      api-key: sk-435906190b884e668ac1e16c72634c17
+      base-url: https://api.deepseek.com/chat/completions
+      model: deepseek-chat
 
 
 app :
