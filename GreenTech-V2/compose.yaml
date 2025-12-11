@@ -1,3 +1,5 @@
+version: '3.9'
+
 services:
   app:
     build: .
@@ -5,16 +7,31 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - 'MONGO_INITDB_DATABASE=greenThickDB'
-      - 'MONGO_INITDB_ROOT_PASSWORD=secret'
-      - 'MONGO_INITDB_ROOT_USERNAME=root'
+      SPRING_DATA_MONGODB_URI: mongodb://root:secret@mongodb:27017/greentech_db?authSource=admin
     depends_on:
       - mongodb
+    restart: unless-stopped
+    networks:
+      - greentech-network
+
   mongodb:
-    image: 'mongo:latest'
+    image: mongo:6.0
+    container_name: greentech-mongo
     environment:
-      - 'MONGO_INITDB_DATABASE=mydatabase'
-      - 'MONGO_INITDB_ROOT_PASSWORD=secret'
-      - 'MONGO_INITDB_ROOT_USERNAME=root'
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: secret
+      MONGO_INITDB_DATABASE: greentech_db
     ports:
-      - '27017'
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+    networks:
+      - greentech-network
+
+networks:
+  greentech-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
