@@ -15,6 +15,8 @@ import com.greentechinnovators.backend.repository.TrashMonitorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class TrashMonitorService {
@@ -31,5 +33,8 @@ public class TrashMonitorService {
         });
         trashMonitor.setStatus(dto.getStatus());
         return trashMapper.toResponse(trashMonitorRepository.save(trashMonitor));
+    }
+    public List<TrashMonitorResponseDTO> findAll() {
+        return trashMonitorRepository.findAll().stream().map(trashMapper::toResponse).toList();
     }
 }
