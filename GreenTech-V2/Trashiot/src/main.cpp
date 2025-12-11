@@ -11,7 +11,7 @@ const char* password = "Youcode@2024";
 
 const char* ws_host = "192.168.8.101";
 const int ws_port = 8080;
-const char* ws_path = "/ws/trash";  // Updated to use dedicated trash endpoint
+const char* ws_path = "/iot/trash";  // Updated to use dedicated trash endpoint
 const char* mac_address = "ESP32-TRASH-001";  // Unique MAC address for this device
 
 WebSocketsClient webSocket;
