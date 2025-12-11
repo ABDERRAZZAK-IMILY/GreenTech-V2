@@ -1,5 +1,6 @@
 package com.greentechinnovators.backend.dto.gas.responce;
 
+import com.greentechinnovators.backend.Enums.Status;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -10,7 +11,7 @@ public class GasMonitorResponseDTO {
     private String id;
     private String location;
     private String sensorId;
-    private String status;
+    private Status status;
     private Double co2Impact;
     private LocalDateTime timestamp;
 

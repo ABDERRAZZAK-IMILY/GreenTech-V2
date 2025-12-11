@@ -1,4 +1,4 @@
-package com.greentechinnovators.backend.dto;
+package com.greentechinnovators.backend.dto.AI;
 
 import lombok.Builder;
 import lombok.Data;

@@ -15,9 +15,10 @@ spring:
       base-url: https://api.deepseek.com/chat/completions
       model: deepseek-chat
 
+  docker:
+    compose:
+      enabled: false
 
-app :
-   jwtSecret :
-    sqbddsjvqfhjskhlfdskjlhfdlskqgfsldbfhkdskflhsdhklfsqdhkfgqhsdklfhk
-   jwtExpirationMs :
-      36000
+app:
+  jwtSecret: sqbddsjvqfhjskhlfdskjlhfdlskqgfsldbfhkdskflhsdhklfsqdhkfgqhsdklfhk
+  jwtExpirationMs: 36000
