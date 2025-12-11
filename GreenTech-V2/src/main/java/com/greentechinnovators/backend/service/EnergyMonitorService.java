@@ -10,6 +10,8 @@ import com.greentechinnovators.backend.repository.EnergyMonitorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class EnergyMonitorService {
@@ -27,6 +29,9 @@ public class EnergyMonitorService {
         });
         energyMonitor.setStatus(dto.getStatus());
         return energyMapper.toResponse(energyMonitorRepository.save(energyMonitor));
+    }
+    public List<EnergyMonitorResponseDTO> findAll() {
+        return energyMonitorRepository.findAll().stream().map(energyMapper::toResponse).toList();
     }
 
 }
