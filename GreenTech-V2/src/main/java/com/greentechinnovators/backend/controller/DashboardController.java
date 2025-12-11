@@ -26,10 +26,10 @@ public class DashboardController {
         return energyService.createReading(dto);
     }
 
-    @GetMapping("/energy/metrics")
-    public List<EnergyResponseDTO> getEnergyMetrics() {
-        return energyService.getAllReadings();
-    }
+//    @GetMapping("/energy/metrics")
+//    public List<EnergyResponseDTO> getEnergyMetrics() {
+//        return energyService.getAllReadings();
+//    }
 
     // Trash endpoints
     @PostMapping("/trash/ingest")
@@ -37,8 +37,8 @@ public class DashboardController {
         return trashService.saveReading(dto);
     }
 
-    @GetMapping("/trash/metrics")
-    public List<TrashResponseDTO> getTrashMetrics() {
-        return trashService.getAllReadings();
-    }
+//    @GetMapping("/trash/metrics")
+//    public List<TrashResponseDTO> getTrashMetrics() {
+//        return trashService.getAllReadings();
+//    }
 }
