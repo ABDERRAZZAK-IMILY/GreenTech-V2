@@ -11,7 +11,8 @@ const char* password = "Youcode@2024";
 
 const char* ws_host = "192.168.1.5";
 const int ws_port = 8080;
-const char* ws_path = "/ws";
+const char* ws_path = "/ws/energy";  // Updated to use dedicated energy endpoint
+const char* mac_address = "ESP32-ENERGY-001";  // Unique MAC address for this device
 
 WebSocketsClient webSocket;
 
@@ -39,6 +40,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 void sendEnergy(float energyValue) {
     StaticJsonDocument<200> doc;
     doc["energyConsumed"] = energyValue;
+    doc["macAddress"] = mac_address;  // Include MAC address
 
     String jsonString;
     serializeJson(doc, jsonString);
