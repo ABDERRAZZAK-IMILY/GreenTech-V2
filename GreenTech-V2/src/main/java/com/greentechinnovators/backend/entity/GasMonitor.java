@@ -1,5 +1,6 @@
 package com.greentechinnovators.backend.entity;
 
+import com.greentechinnovators.backend.Enums.Status;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,7 +23,7 @@ public class GasMonitor {
 
     private String location;
     private String sensorId;
-    private String status;
+    private Status status;
     private Double co2Impact;
     @DBRef
     private List<Gas> gas;

@@ -1,5 +1,6 @@
 package com.greentechinnovators.backend.entity;
 
+import com.greentechinnovators.backend.Enums.Status;
 import com.greentechinnovators.backend.Enums.TrashType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,7 +25,7 @@ public class TrashMonitor {
 
     private String location;
     private String sensorId;
-    private String status;
+    private Status status;
     private Double co2Impact;
     private TrashType  trashType;
     @DBRef
