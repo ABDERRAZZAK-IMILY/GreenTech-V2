@@ -13,21 +13,26 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                checkout scm
                 echo 'Checking out source code...'
             }
         }
 
         stage('Build') {
             steps {
-                echo 'Building the application...'
-                sh 'mvn clean package -DskipTests'
+                dir('GreenTech-V2') {
+                    echo 'Building the application...'
+                    sh 'mvn clean package -DskipTests'
+                }
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Running Unit Tests...'
-                sh 'mvn test'
+                dir('GreenTech-V2') {
+                    echo 'Running Unit Tests...'
+                    sh 'mvn test'
+                }
             }
         }
     }
