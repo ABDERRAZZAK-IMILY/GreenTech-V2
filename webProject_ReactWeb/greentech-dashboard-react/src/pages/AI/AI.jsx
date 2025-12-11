@@ -2,21 +2,39 @@ import React, { useState, useEffect, useRef } from 'react';
 import { showNotification } from '../../utils/notifications';
 import Chart from 'chart.js/auto';
 import { useLoading } from '../../contexts/LoadingContext';
-import api from '../../services/AI/AiService'; 
-import useAIStats from '../../hooks/useAIStats'; 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import useChatbot from '../../hooks/useChatBot';
+import remarkBreaks from 'remark-breaks'; 
 
 // npm install react-markdown remark-gfm
+
 const AI = () => {
   const [activeSubTab, setActiveSubTab] = useState('chatbot');
-  const [chatMessages, setChatMessages] = useState([]);
-  const [chatInput, setChatInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRecommendation, setSelectedRecommendation] = useState(null);
-     const { stats: aiStats, loading } = useAIStats();
- 
+
+ const {
+        chatMessages,
+        chatInput,
+        setChatInput,
+        isTyping,
+        sendChatMessage,
+        handleChatEnter,
+        quickAction,
+        chatMessagesRef
+    } = useChatbot();
+    
+const formatStreamText = (text) => {
+  if (!text) return "";
+  
+  return text
+    .replace(/\\n/g, '\n') 
+    .replace(/([^\n])\s*-\s/g, '$1\n- ')
+    .replace(/([a-zA-Z])\n([a-zA-Z])/g, '$1 $2')
+    .replace(/([^\n])\s*---\s*/g, '$1\n\n---\n\n')
+    .replace(/\n{3,}/g, '\n\n').trim();
+};
   const chartRef = useRef(null);
 
   // Use loading context instead of local state
@@ -33,7 +51,10 @@ const AI = () => {
     setIsRecommendationsGenerated
   } = useLoading();
 
-  const chatMessagesRef = useRef(null);
+
+
+
+
   const chartsRef = useRef({
     electricity: null,
     gas: null,
@@ -42,81 +63,7 @@ const AI = () => {
   });
   const hasInitialized = useRef(false);
 
-  // AI Knowledge Base
-  // const aiKnowledgeBase = {
-  //   "bonjour": {
-  //     keywords: ["bonjour", "salut", "hello", "hi"],
-  //     response: "Bonjour ! Je suis l'assistant IA GreenTech. Je peux vous aider à optimiser votre consommation énergétique et réduire votre empreinte carbone. Comment puis-je vous aider aujourd'hui ?"
-  //   },
-  //   "économiser": {
-  //     keywords: ["économiser", "économie", "réduire", "baisser", "diminuer"],
-  //     response: "Voici 3 actions immédiates pour réduire votre consommation :\n\n1️⃣ Éteindre les équipements en veille → Économie de ~8%\n2️⃣ Remplacer vos ampoules par des LED → -60% sur l'éclairage\n3️⃣ Régler la climatisation à 24°C au lieu de 22°C → -15%\n\nVoulez-vous plus de détails sur l'une de ces actions ?"
-  //   },
-  //   "empreinte": {
-  //     keywords: ["empreinte", "carbone", "co2", "émissions"],
-  //     response: "Émissions CO2 totales actuelles :\n\n🔌 Électricité (Production) : 864 kg CO2\n🔌 Électricité (Bureaux) : 432 kg CO2\n🔌 Électricité (Entrepôt) : 345 kg CO2\n🚗 Transport : Voir par type de véhicule\n🗑️ Déchets (Organique) : 92.5 kg CO2\n🗑️ Déchets (Recyclable) : 40.6 kg CO2\n🔥 Gaz (Cuisine/Chauffage) : Butane 3kg CO2/bouteille\n\nVotre taux de recyclage de 42% est excellent !"
-  //   },
-  //   "bilan": {
-  //     keywords: ["bilan", "rapport", "stats", "statistiques"],
-  //     response: "📊 Bilan du mois en cours :\n\n✅ Consommation électrique : 2,450 kWh (stable)\n✅ Empreinte carbone : 12.5 tonnes CO2 (-8% vs mois dernier)\n✅ Économies réalisées : 380€\n✅ Eco-Coins collectés : 8,450 points (+250 cette semaine)\n\nTrès bonne performance ! Continuez comme ça !"
-  //   },
-  //   "suggestions": {
-  //     keywords: ["suggestions", "actions", "recommandations", "conseils"],
-  //     response: "Mes meilleures recommandations pour vous :\n\n⭐⭐⭐ Installer éclairage LED → -2.8 tonnes CO2/an, -1,800€/an\n⭐⭐⭐ Panneaux solaires → -8.5 tonnes CO2/an, -5,200€/an\n⭐⭐ Optimiser climatisation → -1.5 tonnes CO2/an, -680€/an\n\nVoulez-vous plus de détails sur l'une de ces actions ?"
-  //   },
-  //   "réglementations": {
-  //     keywords: ["réglementation", "loi", "normes", "conformité", "légal"],
-  //     response: "📋 Principales réglementations environnementales :\n\n• Directive européenne sur l'efficacité énergétique\n• Norme ISO 14001 pour le management environnemental\n• Obligation de reporting carbone (>500 employés)\n• Réglementation RE2020 pour les bâtiments\n\nVotre entreprise est actuellement conforme à 4/4 réglementations ✅"
-  //   },
-  //   "led": {
-  //     keywords: ["led", "éclairage", "ampoules", "lumière"],
-  //     response: "💡 Installation LED - Détails :\n\n📊 Impact : -18% consommation électrique\n💰 ROI : 18 mois (investissement 3,500€)\n🌱 CO2 économisé : 2.8 tonnes/an\n💵 Économies : 1,800€/an\n\nC'est l'une de nos recommandations prioritaires ! Souhaitez-vous lancer cette action ?"
-  //   },
-  //   "solaire": {
-  //     keywords: ["solaire", "panneaux", "photovoltaïque"],
-  //     response: "☀️ Panneaux Solaires - Détails :\n\n📊 Impact maximum : -8.5 tonnes CO2/an\n💰 Investissement : 25,000€\n💵 Économies annuelles : 5,200€/an\n📅 ROI : 5 ans\n🔋 Production estimée : ~15,000 kWh/an\n\nC'est un investissement important mais très rentable à long terme !"
-  //   },
-  //   "climatisation": {
-  //     keywords: ["climatisation", "clim", "chauffage", "température"],
-  //     response: "❄️ Optimisation Climatisation - Conseils :\n\n🌡️ Régler à 24°C (au lieu de 22°C) → -15% consommation\n⏰ Programmer arrêt automatique la nuit\n🚪 Vérifier l'isolation des locaux\n🔧 Maintenance régulière des filtres\n\n💰 Économies potentielles : 680€/an\n🌱 Réduction CO2 : 1.5 tonnes/an"
-  //   },
-  //   "budget": {
-  //     keywords: ["budget", "coût", "prix", "dépense"],
-  //     response: "💰 Budget Énergie - Situation actuelle :\n\n📊 Dépense ce mois : 1,850€ / 2,000€ budget\n⚠️ Risque dépassement : 78%\n📉 Recommandation : Réduire consommation de 10%\n\n💡 Actions rapides :\n• Éteindre équipements la nuit\n• Optimiser climatisation\n• Sensibiliser les employés"
-  //   },
-  //   "capteurs": {
-  //     keywords: ["capteur", "iot", "sensor", "mesure"],
-  //     response: "🔌 État des Capteurs IoT :\n\n⚡ Électricité (SCT013) : 4 départements surveillés\n⚖️ Déchets (HX711) : 5 types de déchets mesurés\n🔥 Gaz : Suivi manuel par usage (Cuisine, Chauffage, Climatisation, Eau, Production)\n🚗 Transport : 6 véhicules tracés en temps réel (GPS)\n\nTypes de déchets :\n♻️ Recyclable : 3 capteurs actifs\n🍃 Organique : 3 capteurs actifs\n🗑️ Non-recyclable : 2 capteurs actifs\n💻 Électronique & ☢️ Dangereux : capteurs dédiés"
-  //   },
-  //   "département": {
-  //     keywords: ["département", "production", "bureaux", "entrepôt", "cafétéria"],
-  //     response: "📍 Consommation par département :\n\n🏭 Production : ~1728 kWh/mois (45%)\n🏢 Bureaux : ~864 kWh/mois (25%)\n📦 Entrepôt : ~691 kWh/mois (20%)\n☕ Cafétéria : ~345 kWh/mois (10%)\n\nLe département Production est le plus énergivore. Recommandation : Optimiser les horaires des machines lourdes."
-  //   },
-  //   "véhicule": {
-  //     keywords: ["véhicule", "transport", "camion", "voiture", "moto"],
-  //     response: "🚗 Flotte de véhicules :\n\n🚐 Camionnette : 1 véhicule (67 km, 6.7L)\n🚗 Voiture : 2 véhicules (68 km total, 6.8L)\n🚚 Camion : 1 véhicule (89 km, 8.9L)\n🚙 Utilitaire : 1 véhicule (23 km, 2.3L)\n🏍️ Moto : 1 véhicule (32 km, 1.6L)\n\nTotal flotte : 279 km, 26.3L carburant, ~62 kg CO2 aujourd'hui"
-  //   },
-  //   "gaz": {
-  //     keywords: ["gaz", "butane", "réfrigérant", "cuisine", "chauffage"],
-  //     response: "🔥 Gestion du gaz par usage :\n\n🍳 Cuisine : Butane (consommation bouteilles)\n🌡️ Chauffage : Butane\n❄️ Climatisation : Gaz Réfrigérant (en kg)\n💧 Eau Chaude : Butane\n🏭 Production : Butane\n\nEmissions : Butane ~3kg CO2/bouteille, Réfrigérant ~2kg CO2/kg"
-  //   },
-  //   "déchet": {
-  //     keywords: ["déchet", "recyclage", "poubelle", "organique"],
-  //     response: "♻️ Types de déchets surveillés :\n\n♻️ Recyclable : 42% (meilleur taux!)\n🍃 Organique : 35%\n🗑️ Non-recyclable : 23%\n💻 Électronique : Capteurs dédiés\n☢️ Dangereux : Traitement spécial\n\nObjectif : Atteindre 60% de recyclage d'ici 3 mois"
-  //   },
-  //   "merci": {
-  //     keywords: ["merci", "thanks", "super", "parfait", "excellent"],
-  //     response: "Avec plaisir ! N'hésitez pas si vous avez d'autres questions. Je suis là pour vous aider à optimiser votre performance environnementale ! 😊"
-  //   },
-  //   "aide": {
-  //     keywords: ["aide", "help", "?", "comment"],
-  //     response: "Je peux vous aider sur les sujets suivants :\n\n💡 Économies d'énergie\n🌍 Empreinte carbone\n📊 Bilans et statistiques\n🎯 Recommandations d'actions\n📋 Réglementations\n🔌 État des capteurs\n💰 Budget et ROI\n\nPosez-moi simplement votre question !"
-  //   },
-  //   "default": {
-  //     keywords: [],
-  //     response: "Je ne suis pas sûr de comprendre votre question. Voici ce que je peux faire pour vous :\n\n• Analyser votre consommation énergétique\n• Calculer votre empreinte carbone\n• Suggérer des actions d'optimisation\n• Vous informer sur les réglementations\n\nPouvez-vous reformuler votre question ?"
-  //   }
-  // };
+  
 
   // Recommendation Details Data
   const recommendationDetails = {
@@ -312,6 +259,8 @@ const AI = () => {
 
     executeStep();
   };
+  
+
 
   // Generate Recommendations
   const generateRecommendations = () => {
@@ -350,34 +299,8 @@ const AI = () => {
     executeStep();
   };
 
-  // // Initialize chatbot with pre-loaded messages
-  // useEffect(() => {
-  //   const initialMessages = [
-  //     {
-  //       sender: 'user',
-  //       text: 'Quel département consomme le plus d\'électricité ?',
-  //       time: '10:30'
-  //     },
-  //     {
-  //       sender: 'ai',
-  //       text: 'Voici la répartition de consommation électrique par département :\n\n🏭 Production : 45% (département le plus énergivore)\n🏢 Bureaux : 25%\n📦 Entrepôt : 20%\n☕ Cafétéria : 10%\n\nRecommandation : Optimiser les horaires des machines en Production pourrait réduire jusqu\'à 15% votre facture !',
-  //       time: '10:30'
-  //     },
-  //     {
-  //       sender: 'user',
-  //       text: 'Et pour les déchets, quel type produit-on le plus ?',
-  //       time: '10:32'
-  //     },
-  //     {
-  //       sender: 'ai',
-  //       text: 'Répartition de vos déchets actuels :\n\n♻️ Recyclable : 42% (203 kg)\n🍃 Organique : 35% (185 kg)\n🗑️ Non-recyclable : 23% (138 kg)\n💻 Électronique : capteurs actifs\n☢️ Dangereux : traitement spécial\n\nBonne nouvelle : Votre taux de recyclage de 42% est au-dessus de la moyenne ! Objectif : atteindre 60% d\'ici 3 mois.',
-  //       time: '10:32'
-  //     }
-  //   ];
-  //   setChatMessages(initialMessages);
-  // }, []);
 
-  // Initialize prediction charts when predictions tab is shown and predictions are generated
+
   useEffect(() => {
     if (activeSubTab === 'predictions' && isPredictionsGenerated) {
       // Use requestAnimationFrame to ensure DOM is fully rendered
@@ -389,7 +312,6 @@ const AI = () => {
     }
   }, [activeSubTab, isPredictionsGenerated]);
 
-  // Scroll chat to bottom when messages change
   useEffect(() => {
     if (chatMessagesRef.current) {
       chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
@@ -401,104 +323,46 @@ const AI = () => {
     setActiveSubTab(tabName);
   };
 
-  // // Get AI response based on message
-  // const getAIResponse = (message) => {
-  //   const lowerMessage = message.toLowerCase();
-
-  //   for (const [key, data] of Object.entries(aiKnowledgeBase)) {
-  //     if (data.keywords.some(keyword => lowerMessage.includes(keyword))) {
-  //       return data.response;
-  //     }
-  //   }
-
-  //   return aiKnowledgeBase.default.response;
-  // };
-useEffect(() => {
-    setChatMessages([{
-        sender: 'ai',
-        text: "Bonjour ! Je suis l'IA GreenTech connectée à vos données. Posez-moi une question !",
-        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-    }]);
-  }, []);
   useEffect(() => {
     if (chatMessagesRef.current) {
         chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
     }
   }, [chatMessages, isTyping]);
-  // Send chat message
 
- // AI.jsx
 
-const sendChatMessage = async () => {
-    if (!chatInput.trim()) return;
-    
-    const userMsg = chatInput;
-    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-  
-    const history = chatMessages.slice(-6).map(msg => ({
-        role: msg.sender === 'user' ? 'user' : 'assistant',
-        content: msg.text
-    }));
 
-    setChatMessages(prev => [...prev, { sender: 'user', text: userMsg, time }]);
-    setChatInput('');
-    setIsTyping(true);
+  // useEffect(() => {
+  //   if (!aiStats || loading) return;
+  //   const canvasElement = document.getElementById('energyChart');
+  //   if (!canvasElement) return;
+  //   if (chartRef.current) chartRef.current.destroy();
 
-    try {
-        const response = await api.post('/api/chat', { 
-            message: userMsg,
-            history: history 
-        });
-        
-        const aiReply = response.data.response; 
-        setChatMessages(prev => [...prev, { sender: 'ai', text: aiReply, time }]);
-    } catch (error) {
-        console.error("Erreur Chatbot:", error);
-        setChatMessages(prev => [...prev, { sender: 'ai', text: "Erreur connexion.", time }]);
-    } finally {
-        setIsTyping(false);
-    }
-};
+  //   const ctx = canvasElement.getContext('2d');
+  //   chartRef.current = new Chart(ctx, {
+  //       type: 'doughnut',
+  //       data: {
+  //           labels: ['Consommation', 'Reste'],
+  //           datasets: [{
+  //               data: [aiStats.currentMonthEnergy, aiStats.currentMonthEnergy * 0.2], 
+  //               backgroundColor: ['#feca57', '#333'],
+  //               borderWidth: 0
+  //           }]
+  //       },
+  //       options: {
+  //           responsive: true,
+  //           plugins: { legend: { position: 'bottom', labels: { color: 'white' } } }
+  //       }
+  //   });
 
-  useEffect(() => {
-    if (!aiStats || loading) return;
-    const canvasElement = document.getElementById('energyChart');
-    if (!canvasElement) return;
-    if (chartRef.current) chartRef.current.destroy();
-
-    const ctx = canvasElement.getContext('2d');
-    chartRef.current = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Consommation', 'Reste'],
-            datasets: [{
-                data: [aiStats.currentMonthEnergy, aiStats.currentMonthEnergy * 0.2], 
-                backgroundColor: ['#feca57', '#333'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { position: 'bottom', labels: { color: 'white' } } }
-        }
-    });
-
-    return () => { if (chartRef.current) chartRef.current.destroy(); };
-  }, [aiStats, loading]);
+  //   return () => { if (chartRef.current) chartRef.current.destroy(); };
+  // }, [aiStats, loading]);
 
   // Handle Enter key in chat input
-  const handleChatEnter = (event) => {
-    if (event.key === 'Enter') {
-      sendChatMessage();
-    }
-  };
+  
 
   // Quick action button click
-  const quickAction = (question) => {
-    setChatInput(question);
-    setTimeout(() => sendChatMessage(), 100);
-  };
+
 
   // Start recommended action
   const startAction = (actionId) => {
@@ -827,63 +691,15 @@ const sendChatMessage = async () => {
               gap: '15px',
               background: 'rgba(0, 0, 0, 0.1)'
             }}>
-              {/* {chatMessages.map((msg, index) => (
-                <div key={index} className={`chat-message ${msg.sender}`} style={{
-                  display: 'flex',
-                  gap: '12px',
-                  alignItems: 'flex-start',
-                  flexDirection: msg.sender === 'user' ? 'row-reverse' : 'row',
-                  animation: 'fadeInUp 0.3s ease'
-                }}>
-                  <div className="message-avatar" style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    background: msg.sender === 'user'
-                      ? `linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)`
-                      : `var(--accent-color)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '16px',
-                    flexShrink: 0
-                  }}>
-                    <i className={msg.sender === 'user' ? 'fas fa-user' : 'fas fa-robot'} />
-                  </div>
-                  <div style={{ flex: 1, maxWidth: '70%' }}>
-                    <div className="message-bubble" style={{
-                      padding: '12px 16px',
-                      borderRadius: msg.sender === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                      background: msg.sender === 'user'
-                        ? `linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)`
-                        : 'rgba(255, 255, 255, 0.08)',
-                      whiteSpace: 'pre-line',
-                      lineHeight: '1.6',
-                      fontSize: '14px',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
-                    }}>
-                      {msg.text}
-                    </div>
-                    <div className="message-time" style={{
-                      fontSize: '11px',
-                      color: 'var(--text-secondary)',
-                      marginTop: '6px',
-                      paddingLeft: msg.sender === 'user' ? '0' : '4px',
-                      textAlign: msg.sender === 'user' ? 'right' : 'left'
-                    }}>
-                      {msg.time}
-                    </div>
-                  </div>
-                </div>
-              ))} */}
-              {chatMessages.map((msg, index) => (
+              
+{chatMessages.map((msg, index) => (
   <div key={index} className={`chat-message ${msg.sender}`} style={{
     display: 'flex',
     gap: '12px',
     alignItems: 'flex-start',
     flexDirection: msg.sender === 'user' ? 'row-reverse' : 'row',
     animation: 'fadeInUp 0.3s ease',
-    marginBottom: '15px'
+    marginBottom: '20px'
   }}>
     {/* Avatar */}
     <div className="message-avatar" style={{
@@ -891,58 +707,182 @@ const sendChatMessage = async () => {
       height: '36px',
       borderRadius: '50%',
       background: msg.sender === 'user'
-        ? `linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)`
-        : `var(--accent-color)`,
+        ? `linear-gradient(135deg, #0984e3 0%, #00cec9 100%)`
+        : `#2f3640`,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       fontSize: '16px',
+      color: 'white',
       flexShrink: 0,
-      boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+      boxShadow: '0 4px 6px rgba(0,0,0,0.2)'
     }}>
       <i className={msg.sender === 'user' ? 'fas fa-user' : 'fas fa-robot'} />
     </div>
 
-    <div style={{ flex: 1, maxWidth: '75%' }}>
+    {/* Message Body */}
+    <div style={{ flex: 1, maxWidth: '85%' }}>
       <div className="message-bubble" style={{
-        padding: '12px 18px',
+        padding: '15px 20px',
         borderRadius: msg.sender === 'user' ? '20px 20px 5px 20px' : '20px 20px 20px 5px',
         background: msg.sender === 'user'
-          ? `linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)`
-          : 'rgba(255, 255, 255, 0.08)',
+          ? `linear-gradient(135deg, #0984e3 0%, #00cec9 100%)`
+          : '#353b48', // Professional dark grey for AI
         color: 'white',
         fontSize: '14px',
         lineHeight: '1.6',
-        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-        border: msg.sender === 'ai' ? '1px solid rgba(255,255,255,0.1)' : 'none'
+        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+        position: 'relative',
+        wordWrap: 'break-word'
       }}>
         
-        {msg.sender === 'user' ? (
-          msg.text
-        ) : (
-          <ReactMarkdown 
-            remarkPlugins={[remarkGfm]}
-            components={{
-              strong: ({node, ...props}) => <span style={{color: '#feca57', fontWeight: '700'}} {...props} />, 
-              em: ({node, ...props}) => <span style={{color: '#00d2d3', fontStyle: 'italic'}} {...props} />, 
-              p: ({node, ...props}) => <p style={{margin: '0 0 8px 0'}} {...props} />,
-              ul: ({node, ...props}) => <ul style={{paddingLeft: '20px', margin: '5px 0'}} {...props} />,
-              li: ({node, ...props}) => <li style={{marginBottom: '4px'}} {...props} />,
-              h1: ({node, ...props}) => <h3 style={{margin: '10px 0', fontSize: '16px', color:'#feca57'}} {...props} />,
-              h2: ({node, ...props}) => <h4 style={{margin: '8px 0', fontSize: '15px', color:'#feca57'}} {...props} />,
-              h3: ({node, ...props}) => <strong style={{display:'block', margin: '5px 0', color:'#feca57'}} {...props} />
-            }}
-          >
-            {msg.text}
-          </ReactMarkdown>
-        )}
+{msg.sender === 'user' ? (
+  msg.text
+) : (
+  <div className="markdown-content" style={{ 
+      lineHeight: '1.6',
+      fontSize: '14px',
+      color: '#e0e0e0' // Couleur bach tban mzyan fou9 l-k7el
+  }}>
+<ReactMarkdown 
+  remarkPlugins={[remarkGfm, remarkBreaks]} 
+  components={{
+    // 1. PARAGRAPHES: Zidna fihom Tisa3 w couleur mri7 l l-3in
+    p: ({node, ...props}) => (
+        <p style={{ 
+            fontSize: '15px',
+            lineHeight: '1.8',        // Espacement bin satora
+            color: '#e2e8f0',         // Gris fate7 (machi abyad 100% bach maydrch f rras)
+            marginBottom: '12px',
+            whiteSpace: 'pre-wrap'
+        }} {...props} />
+    ),
 
-      </div>
+    // 2. LISTES: N9ado les puces (points)
+    ul: ({node, ...props}) => (
+        <ul style={{ paddingLeft: '25px', marginBottom: '15px' }} {...props} />
+    ),
+    li: ({node, ...props}) => (
+        <li style={{ 
+            marginBottom: '8px', 
+            color: '#cbd5e1',         // Gris chwiya fonçé 3la paragraph
+            whiteSpace: 'pre-wrap',
+            paddingLeft: '5px'
+        }} {...props} />
+    ),
+
+    // 3. TITRES: Nzidou lihom Gradient wla couleur GreenTech
+    h1: ({node, ...props}) => (
+        <h1 style={{ 
+            fontSize: '22px', 
+            fontWeight: '700', 
+            background: 'linear-gradient(to right, #43e97b, #38f9d7)', 
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            margin: '25px 0 15px 0',
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            paddingBottom: '10px'
+        }} {...props} />
+    ),
+    h2: ({node, ...props}) => (
+        <h2 style={{ 
+            fontSize: '18px', 
+            fontWeight: '600', 
+            color: '#feca57',         // Couleur Jaune dyal GreenTech
+            margin: '20px 0 10px 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+        }} {...props} />
+    ),
+    h3: ({node, ...props}) => (
+        <h3 style={{ 
+            fontSize: '16px', 
+            fontWeight: '600', 
+            color: '#ffffff', 
+            margin: '15px 0 8px 0',
+            textDecoration: 'underline',
+            textDecorationColor: '#43e97b'
+        }} {...props} />
+    ),
+
+    // 4. GRAS (Strong): N-meyzoh b couleur
+    strong: ({node, ...props}) => (
+        <span style={{ 
+            color: '#feca57', 
+            fontWeight: '700',
+            backgroundColor: 'rgba(254, 202, 87, 0.1)', // Highlight khfif
+            padding: '0 4px',
+            borderRadius: '4px'
+        }} {...props} />
+    ),
+
+    // 5. CITATIONS (Blockquote): Bhal l-Mola7adat l-mohimma
+    blockquote: ({node, ...props}) => (
+        <blockquote style={{
+            borderLeft: '4px solid #43e97b',
+            background: 'rgba(67, 233, 123, 0.1)',
+            padding: '10px 15px',
+            margin: '15px 0',
+            borderRadius: '0 8px 8px 0',
+            fontStyle: 'italic',
+            color: '#a7f3d0'
+        }} {...props} />
+    ),
+
+    // 6. CODE BLOCKS: Ila l-IA 3tatk chi code awla chiffre technique
+    code: ({node, inline, className, children, ...props}) => {
+        return inline ? (
+            <code style={{
+                background: 'rgba(0,0,0,0.3)',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontFamily: 'monospace',
+                color: '#ff9ff3',
+                fontSize: '0.9em'
+            }} {...props}>{children}</code>
+        ) : (
+            <div style={{
+                background: '#1e1e2e',
+                padding: '15px',
+                borderRadius: '8px',
+                margin: '15px 0',
+                border: '1px solid rgba(255,255,255,0.1)',
+                overflowX: 'auto'
+            }}>
+                <code style={{ fontFamily: 'monospace', color: '#a6accd' }} {...props}>
+                    {children}
+                </code>
+            </div>
+        )
+    },
+
+    // 7. TABLES: Ila l-IA daret tableau
+    table: ({node, ...props}) => (
+        <div style={{ overflowX: 'auto', margin: '20px 0' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }} {...props} />
+        </div>
+    ),
+    thead: ({node, ...props}) => (
+        <thead style={{ background: 'rgba(255,255,255,0.1)' }} {...props} />
+    ),
+    th: ({node, ...props}) => (
+        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid rgba(255,255,255,0.1)', color: '#feca57' }} {...props} />
+    ),
+    td: ({node, ...props}) => (
+        <td style={{ padding: '10px', borderBottom: '1px solid rgba(255,255,255,0.05)' }} {...props} />
+    )
+  }}
+>
+  {formatStreamText(msg.text)}
+</ReactMarkdown>
+  </div>
+)}      </div>
       
-      {/* Time */}
+      {/* Time Stamp */}
       <div className="message-time" style={{
         fontSize: '11px',
-        color: 'rgba(255,255,255,0.5)',
+        color: 'rgba(255,255,255,0.4)',
         marginTop: '6px',
         paddingLeft: msg.sender === 'user' ? '0' : '4px',
         textAlign: msg.sender === 'user' ? 'right' : 'left'
@@ -952,7 +892,6 @@ const sendChatMessage = async () => {
     </div>
   </div>
 ))}
-
               {isTyping && (
                 <div className="chat-message ai" style={{
                   display: 'flex',
@@ -1203,7 +1142,6 @@ const sendChatMessage = async () => {
           gap: '20px',
           marginTop: '20px'
         }}>
-          {/* Electricity Prediction */}
           <div className="prediction-card" style={{
             background: 'rgba(255, 255, 255, 0.05)',
             backdropFilter: 'blur(10px)',
@@ -1212,7 +1150,6 @@ const sendChatMessage = async () => {
             border: '1px solid rgba(254, 202, 87, 0.2)',
             boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)'
           }}>
-            {/* Grid avec largeurs fixes pour alignement parfait */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '70px 230px 170px 300px 260px 1fr',

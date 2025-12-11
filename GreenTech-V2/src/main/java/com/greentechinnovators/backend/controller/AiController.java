@@ -1,9 +1,9 @@
 package com.greentechinnovators.backend.controller;
 
-import com.greentechinnovators.backend.dto.AISummaryDTO;
 import com.greentechinnovators.backend.service.AIService;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Map;
@@ -19,19 +19,13 @@ public class AiController {
     }
 
 
-    @PostMapping
-    public ResponseEntity<Map<String, String>> chat(@RequestBody Map<String, Object> payload) {
+    @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> chatStream(@RequestBody Map<String, Object> payload) {
         String userMessage = (String) payload.get("message");
-
         List<Map<String, String>> history = (List<Map<String, String>>) payload.get("history");
 
-        String aiResponse = aiService.askAI(userMessage, history);
-
-        return ResponseEntity.ok(Map.of("response", aiResponse));
+        return aiService.askAIStream(userMessage, history);
     }
 
-    @GetMapping("/stats")
-    public ResponseEntity<AISummaryDTO> getAIStats() {
-        return ResponseEntity.ok(aiService.generateDashboardStats());
-    }
+
 }
