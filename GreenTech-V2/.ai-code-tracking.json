@@ -583,12 +583,210 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/config/SecurityConfig.java",
+      "timestamp": 1765365863402,
+      "startOffset": 1616,
+      "endOffset": 1761,
+      "codeContent": "api/chat/**\").permitAll()\n                        .requestMatchers(\"/api/predictions/**\").permitAll()\n                        .requestMatchers(\"/",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 3
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/repository/SmartDataRepository.java",
+      "timestamp": 1765365863426,
+      "startOffset": 92,
+      "endOffset": 2138,
+      "codeContent": "dto.TopConsumerStats;\nimport com.greentechinnovators.backend.entity.SmartData;\nimport org.springframework.data.mongodb.repository.Aggregation;\nimport org.springframework.data.mongodb.repository.MongoRepository;\nimport org.springframework.stereotype.Repository;\n\nimport org.bson.Document;\nimport java.time.LocalDateTime;\nimport java.util.List;\n\n@Repository\npublic interface SmartDataRepository extends MongoRepository\u003cSmartData, String\u003e {\n    List\u003cSmartData\u003e findByDataTypeOrderByTimestampDesc(String dataType);\n\n    SmartData findTopBySensorIdOrderByTimestampDesc(String sensorId);\n\n\n\n    /**\n     * Calcule la somme totale des valeurs pour un type de donnée spécifique\n     * sur une période donnée.\n     * * @param dataType Le type de donnée (ex: \"ENERGY\", \"GAS\")\n     * @param start Date de début\n     * @param end Date de fin\n     * @return La somme totale (ou null si aucune donnée)\n     */\n    @Aggregation(pipeline \u003d {\n            \"{ $match: { dataType: ?0, timestamp: { $gte: ?1, $lte: ?2 } } }\", // Filtrer par type et date\n            \"{ $group: { _id: null, total: { $sum: \u0027$value\u0027 } } }\"             // Additionner la colonne \u0027value\u0027\n    })\n    Double sumValueByDataTypeAndDateRange(String dataType, LocalDateTime start, LocalDateTime end);\n\n\n    /**\n     * Calcule l\u0027impact CO2 total accumulé depuis le début de l\u0027historique.\n     * * @return Somme totale de l\u0027impact CO2\n     */\n    @Aggregation(pipeline \u003d {\n            \"{ $group: { _id: null, total: { $sum: \u0027$co2Impact\u0027 } } }\"\n    })\n    Double sumTotalCo2Impact();\n\n    long countByDataTypeAndTimestampAfter(String dataType, LocalDateTime date);\n    long countByDataTypeAndWasteTypeAndTimestampAfter(String dataType, String wasteType, LocalDateTime date);\n\n    @Aggregation(pipeline \u003d {\n            \"{ $match: { dataType: \u0027ENERGY\u0027, timestamp: { $gte: ?0 } } }\",\n            \"{ $group: { _id: \u0027$location\u0027, total: { $sum: \u0027$value\u0027 } } }\",\n            \"{ $sort: { total: -1 } }\",\n            \"{ $limit: 1 }\"\n    })\n    List\u003cTopConsumerStats\u003e findTopConsumer(LocalDateTime startDate",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 52
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AIService.java",
+      "timestamp": 1765367245030,
+      "startOffset": 0,
+      "endOffset": 5792,
+      "codeContent": "package com.greentechinnovators.backend.service;\n\nimport com.greentechinnovators.backend.dto.TopConsumerStats;\nimport com.greentechinnovators.backend.repository.SmartDataRepository;\nimport lombok.RequiredArgsConstructor;\nimport org.springframework.beans.factory.annotation.Value;\nimport org.springframework.http.*;\nimport org.springframework.stereotype.Service;\nimport org.springframework.web.client.RestTemplate;\n\nimport java.time.LocalDateTime;\nimport java.util.*;\n\n@Service\n@RequiredArgsConstructor\npublic class AIService {\n\n    @Value(\"${ai.deepseek.api-key:sk-435906190b884e668ac1e16c72634c17}\")\n    private String apiKey;\n\n    @Value(\"${ai.deepseek.base-url:https://api.deepseek.com/chat/completions}\")\n    private String apiUrl;\n\n    @Value(\"${ai.deepseek.model:deepseek-chat}\")\n    private String model;\n\n    private final SmartDataRepository repository;\n    private final RestTemplate restTemplate \u003d new RestTemplate();\n\n    // 1. برومبت ذكي كيقبل أي داتا (JSON)\n    private static final String SYSTEM_PROMPT_TEMPLATE \u003d \"\"\"\n    Tu es l\u0027assistant IA de \u0027GreenTech Innovators\u0027.\n    \n    🚨 RÔLE : Tu es un expert en analyse de données énergétiques.\n    \n    📊 VOICI LES DONNÉES DE L\u0027ENTREPRISE (MOIS EN COURS) :\n    %s\n    \n    📝 INSTRUCTIONS :\n    1. Utilise CES données pour répondre. Ne jamais inventer de chiffres.\n    2. Si l\u0027utilisateur demande le \"Total Gaz\", regarde dans le JSON sous \u0027GAS\u0027.\n    3. Si l\u0027utilisateur demande le \"Transport\", regarde \u0027TRANSPORT\u0027.\n    4. Pour l\u0027électricité, commente la tendance et le coût.\n    5. Sois professionnel, concis et utilise des émojis.\n    \n    Si la question n\u0027a rien à voir avec ces données (ex: sport, cuisine), refuse poliment.\n    \"\"\";\n\n    public String askAI(String userMessage, List\u003cMap\u003cString, String\u003e\u003e history) {\n        // 1. جمع الداتا كاملة من DB\n        String globalContext \u003d getGlobalContextJson();\n\n        // 2. حطها فالـ Prompt\n        String dynamicPrompt \u003d String.format(SYSTEM_PROMPT_TEMPLATE, globalContext);\n\n        // 3. صيفط لـ DeepSeek\n        return callDeepSeek(dynamicPrompt, userMessage, history);\n    }\n\n    // 🧠 هاد الميطود هي العقل: كتجمع كلشي فـ نص واحد\n    private String getGlobalContextJson() {\n        LocalDateTime now \u003d LocalDateTime.now();\n        LocalDateTime startOfMonth \u003d now.withDayOfMonth(1).withHour(0).withMinute(0);\n\n        // A. جيب الاستهلاك ديال كل نوع\n        double elec \u003d getSum(\"ENERGY\", startOfMonth, now);\n        double gas \u003d getSum(\"GAS\", startOfMonth, now);\n        double transport \u003d getSum(\"TRANSPORT\", startOfMonth, now);\n        double waste \u003d getSum(\"WASTE\", startOfMonth, now);\n\n        // B. جيب أكبر مستهلك للضو\n        String topConsumer \u003d \"Inconnu\";\n        List\u003cTopConsumerStats\u003e tops \u003d repository.findTopConsumer(startOfMonth);\n        if (!tops.isEmpty()) topConsumer \u003d tops.get(0).getLocation();\n\n        // C. صاوب JSON String بيدك (باش يكون ساهل ومفهوم للـ AI)\n        return String.format(\"\"\"\n            {\n                \"ELECTRICITE\": {\n                    \"Consommation\": \"%.2f kWh\",\n                    \"Coût_Estime\": \"%.2f MAD\",\n                    \"Top_Consommateur\": \"%s\"\n                },\n                \"GAZ\": {\n                    \"Consommation\": \"%.2f m3\",\n                    \"Coût_Estime\": \"%.2f MAD\"\n                },\n                \"TRANSPORT\": {\n                    \"Distance_Parcourue\": \"%.2f km\",\n                    \"Carburant_Estime\": \"%.2f Litres\"\n                },\n                \"DECHETS\": {\n                    \"Total_Genere\": \"%.2f kg\"\n                }\n            }\n            \"\"\", \n            elec, (elec * 1.2), topConsumer, // Elec info\n            gas, (gas * 10.5),               // Gas info (Ex: 10.5dh/m3)\n            transport, (transport * 0.08),   // Transport info\n            waste                            // Waste info\n        );\n    }\n\n    // Helper باش نتفاداو Null\n    private double getSum(String type, LocalDateTime start, LocalDateTime end) {\n        Double val \u003d repository.sumValueByDataTypeAndDateRange(type, start, end);\n        return val !\u003d null ? val : 0.0;\n    }\n\n    // Helper للاتصال بـ API\n    private String callDeepSeek(String systemPrompt, String userMsg, List\u003cMap\u003cString, String\u003e\u003e history) {\n        HttpHeaders headers \u003d new HttpHeaders();\n        headers.setContentType(MediaType.APPLICATION_JSON);\n        headers.setBearerAuth(apiKey);\n\n        Map\u003cString, Object\u003e body \u003d new HashMap\u003c\u003e();\n        body.put(\"model\", model);\n        body.put(\"stream\", false);\n\n        List\u003cMap\u003cString, String\u003e\u003e messages \u003d new ArrayList\u003c\u003e();\n        messages.add(Map.of(\"role\", \"system\", \"content\", systemPrompt));\n        \n        if (history !\u003d null) {\n            for (Map\u003cString, String\u003e msg : history) {\n                messages.add(Map.of(\"role\", msg.get(\"role\"), \"content\", msg.get(\"content\")));\n            }\n        }\n        \n        messages.add(Map.of(\"role\", \"user\", \"content\", userMsg));\n        body.put(\"messages\", messages);\n\n        try {\n            HttpEntity\u003cMap\u003cString, Object\u003e\u003e entity \u003d new HttpEntity\u003c\u003e(body, headers);\n            Map\u003cString, Object\u003e response \u003d restTemplate.postForObject(apiUrl, entity, Map.class);\n            \n            if (response !\u003d null \u0026\u0026 response.containsKey(\"choices\")) {\n                List\u003cMap\u003cString, Object\u003e\u003e choices \u003d (List\u003cMap\u003cString, Object\u003e\u003e) response.get(\"choices\");\n                if (!choices.isEmpty()) {\n                    Map\u003cString, Object\u003e messageObj \u003d (Map\u003cString, Object\u003e) choices.get(0).get(\"message\");\n                    return (String) messageObj.get(\"content\");\n                }\n            }\n            return \"Désolé, pas de réponse.\";\n        } catch (Exception e) {\n            return \"Erreur API: \" + e.getMessage();\n        }\n    }\n    \n    // خلي generateDashboardStats للـ Frontend (Cards)\n    // ...\n}",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 151
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/repository/SmartDataRepository.java",
+      "timestamp": 1765367281109,
+      "startOffset": 2150,
+      "endOffset": 2454,
+      "codeContent": "// SmartDataRepository.java (تأكد بلي هادي كاينة)\n@Aggregation(pipeline \u003d {\n    \"{ $match: { dataType: ?0, timestamp: { $gte: ?1, $lte: ?2 } } }\",\n    \"{ $group: { _id: null, total: { $sum: \u0027$value\u0027 } } }\"\n})\nDouble sumValueByDataTypeAndDateRange(String dataType, LocalDateTime start, LocalDateTime end);",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 6
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AIService.java",
+      "timestamp": 1765369497436,
+      "startOffset": 5707,
+      "endOffset": 7761,
+      "codeContent": "\n    public AISummaryDTO generateDashboardStats() {\n        LocalDateTime now \u003d LocalDateTime.now();\n        LocalDateTime startOfCurrentMonth \u003d now.withDayOfMonth(1).withHour(0).withMinute(0);\n        LocalDateTime startOfLastMonth \u003d startOfCurrentMonth.minusMonths(1);\n        LocalDateTime endOfLastMonth \u003d startOfCurrentMonth.minusSeconds(1);\n\n        Double currentEnergy \u003d repository.sumValueByDataTypeAndDateRange(\"ENERGY\", startOfCurrentMonth, now);\n        Double lastEnergy \u003d repository.sumValueByDataTypeAndDateRange(\"ENERGY\", startOfLastMonth, endOfLastMonth);\n\n        double current \u003d (currentEnergy !\u003d null) ? currentEnergy : 0.0;\n        double last \u003d (lastEnergy !\u003d null) ? lastEnergy : 0.0;\n\n        String trend;\n        if (last \u003d\u003d 0) {\n            trend \u003d \"0%\";\n        } else {\n            double percentChange \u003d ((current - last) / last) * 100;\n            trend \u003d (percentChange \u003e 0 ? \"+\" : \"\") + String.format(\"%.1f\", percentChange) + \"%\";\n        }\n\n        Double co2 \u003d repository.sumTotalCo2Impact();\n        double totalCo2 \u003d (co2 !\u003d null) ? co2 : 0.0;\n\n        long totalWaste \u003d repository.countByDataTypeAndTimestampAfter(\"WASTE\", startOfCurrentMonth);\n        long recycledWaste \u003d repository.countByDataTypeAndWasteTypeAndTimestampAfter(\"WASTE\", \"recyclable\", startOfCurrentMonth);\n\n        double recyclingRate \u003d (totalWaste \u003e 0) ? ((double) recycledWaste / totalWaste) * 100 : 0.0;\n\n        double cost \u003d current * ENERGY_COST_PER_KWH;\n\n        List\u003cTopConsumerStats\u003e topConsumers \u003d repository.findTopConsumer(startOfCurrentMonth);\n\n        String topDep \u003d \"Inconnu\";\n\n        if (!topConsumers.isEmpty()) {\n            topDep \u003d topConsumers.get(0).getLocation();\n        }\n\n        return AISummaryDTO.builder()\n                .currentMonthEnergy(current)\n                .lastMonthEnergy(last)\n                .energyTrend(trend)\n                .totalCo2(totalCo2)\n                .recyclingRate(recyclingRate)\n                .estimatedCost(cost)\n                .topConsumer(topDep)\n                .build();\n    }",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 49
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AIService.java",
+      "timestamp": 1765369520866,
+      "startOffset": 5708,
+      "endOffset": 7762,
+      "codeContent": "\n    public AISummaryDTO generateDashboardStats() {\n        LocalDateTime now \u003d LocalDateTime.now();\n        LocalDateTime startOfCurrentMonth \u003d now.withDayOfMonth(1).withHour(0).withMinute(0);\n        LocalDateTime startOfLastMonth \u003d startOfCurrentMonth.minusMonths(1);\n        LocalDateTime endOfLastMonth \u003d startOfCurrentMonth.minusSeconds(1);\n\n        Double currentEnergy \u003d repository.sumValueByDataTypeAndDateRange(\"ENERGY\", startOfCurrentMonth, now);\n        Double lastEnergy \u003d repository.sumValueByDataTypeAndDateRange(\"ENERGY\", startOfLastMonth, endOfLastMonth);\n\n        double current \u003d (currentEnergy !\u003d null) ? currentEnergy : 0.0;\n        double last \u003d (lastEnergy !\u003d null) ? lastEnergy : 0.0;\n\n        String trend;\n        if (last \u003d\u003d 0) {\n            trend \u003d \"0%\";\n        } else {\n            double percentChange \u003d ((current - last) / last) * 100;\n            trend \u003d (percentChange \u003e 0 ? \"+\" : \"\") + String.format(\"%.1f\", percentChange) + \"%\";\n        }\n\n        Double co2 \u003d repository.sumTotalCo2Impact();\n        double totalCo2 \u003d (co2 !\u003d null) ? co2 : 0.0;\n\n        long totalWaste \u003d repository.countByDataTypeAndTimestampAfter(\"WASTE\", startOfCurrentMonth);\n        long recycledWaste \u003d repository.countByDataTypeAndWasteTypeAndTimestampAfter(\"WASTE\", \"recyclable\", startOfCurrentMonth);\n\n        double recyclingRate \u003d (totalWaste \u003e 0) ? ((double) recycledWaste / totalWaste) * 100 : 0.0;\n\n        double cost \u003d current * ENERGY_COST_PER_KWH;\n\n        List\u003cTopConsumerStats\u003e topConsumers \u003d repository.findTopConsumer(startOfCurrentMonth);\n\n        String topDep \u003d \"Inconnu\";\n\n        if (!topConsumers.isEmpty()) {\n            topDep \u003d topConsumers.get(0).getLocation();\n        }\n\n        return AISummaryDTO.builder()\n                .currentMonthEnergy(current)\n                .lastMonthEnergy(last)\n                .energyTrend(trend)\n                .totalCo2(totalCo2)\n                .recyclingRate(recyclingRate)\n                .estimatedCost(cost)\n                .topConsumer(topDep)\n                .build();\n    }",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 49
+    },
+    {
+      "filePath": "/AIService.java",
+      "timestamp": 1765369526383,
+      "startOffset": 7444,
+      "endOffset": 7464,
+      "codeContent": "IntellijIdeaRulezzz ",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/repository/SmartDataRepository.java",
+      "timestamp": 1765372908059,
+      "startOffset": 2439,
+      "endOffset": 2713,
+      "codeContent": "@Aggregation(pipeline \u003d {\n    \"{ $match: { dataType: ?0, timestamp: { $gte: ?1, $lte: ?2 } } }\",\n    \"{ $group: { _id: null, total: { $sum: \u0027$co2Impact\u0027 } } }\" // لاحظ الفرق هنا\n})\nDouble sumCo2ByDataTypeAndDateRange(String dataType, LocalDateTime start, LocalDateTime end);",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 5
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AIService.java",
+      "timestamp": 1765373110916,
+      "startOffset": 6122,
+      "endOffset": 6315,
+      "codeContent": "private double getSumCo2(String type, LocalDateTime start, LocalDateTime end) {\n    Double val \u003d repository.sumCo2ByDataTypeAndDateRange(type, start, end);\n    return val !\u003d null ? val : 0.0;\n}",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 4
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AIService.java",
+      "timestamp": 1765373604828,
+      "startOffset": 0,
+      "endOffset": 8508,
+      "codeContent": "package com.greentechinnovators.backend.service;\n\nimport com.greentechinnovators.backend.dto.AISummaryDTO;\nimport com.greentechinnovators.backend.dto.TopConsumerStats;\nimport com.greentechinnovators.backend.repository.SmartDataRepository;\nimport lombok.RequiredArgsConstructor;\nimport org.springframework.beans.factory.annotation.Value;\nimport org.springframework.http.*;\nimport org.springframework.stereotype.Service;\nimport org.springframework.web.client.RestTemplate;\n\nimport java.time.LocalDateTime;\nimport java.util.*;\n\n@Service\n@RequiredArgsConstructor\npublic class AIService {\n\n    @Value(\"${ai.deepseek.api-key:sk-435906190b884e668ac1e16c72634c17}\")\n    private String apiKey;\n\n    @Value(\"${ai.deepseek.base-url:https://api.deepseek.com/chat/completions}\")\n    private String apiUrl;\n\n    @Value(\"${ai.deepseek.model:deepseek-chat}\")\n    private String model;\n\n    // ثمن التكلفة (تقديري)\n    private static final double COST_ELEC \u003d 1.2; // MAD/kWh\n    private static final double COST_GAS \u003d 10.5; // MAD/m3\n    \n    private final SmartDataRepository repository;\n    private final RestTemplate restTemplate \u003d new RestTemplate();\n\n    private static final String SYSTEM_PROMPT_TEMPLATE \u003d \"\"\"\n            Tu es l\u0027assistant IA de \u0027GreenTech Innovators\u0027.\n            \n            🚨 RÔLE : Tu es un expert en analyse de données énergétiques.\n            \n            📊 VOICI LES DONNÉES DE L\u0027ENTREPRISE (MOIS EN COURS) :\n            %s\n            \n            📝 INSTRUCTIONS :\n            1. Utilise CES données pour répondre. Ne jamais inventer de chiffres.\n            2. Si l\u0027utilisateur demande le \"Total Gaz\", regarde dans le JSON sous \u0027GAZ\u0027.\n            3. Si l\u0027utilisateur demande le \"Transport\", regarde \u0027TRANSPORT\u0027.\n            4. Pour l\u0027électricité, commente la tendance et le coût.\n            5. Sois professionnel, concis et utilise des émojis.\n            \n            Si la question n\u0027a rien à voir avec ces données (ex: sport, cuisine), refuse poliment.\n            \"\"\";\n\n    // --- 1. CHATBOT LOGIC (Auto Global Context) ---\n    \n    public String askAI(String userMessage, List\u003cMap\u003cString, String\u003e\u003e history) {\n        // جمع الداتا كاملة\n        String globalContext \u003d getGlobalContextJson();\n        // حطها فالـ Prompt\n        String dynamicPrompt \u003d String.format(SYSTEM_PROMPT_TEMPLATE, globalContext);\n        // صيفط\n        return callDeepSeek(dynamicPrompt, userMessage, history);\n    }\n\n    private String getGlobalContextJson() {\n        LocalDateTime now \u003d LocalDateTime.now();\n        LocalDateTime startOfMonth \u003d now.withDayOfMonth(1).withHour(0).withMinute(0);\n\n        // A. حساب القيم (Values)\n        double elecVal \u003d getSum(\"ENERGY\", startOfMonth, now);\n        double gasVal \u003d getSum(\"GAS\", startOfMonth, now);\n        double transVal \u003d getSum(\"TRANSPORT\", startOfMonth, now);\n        double wasteVal \u003d getSum(\"WASTE\", startOfMonth, now);\n\n        // B. حساب الكربون (CO2)\n        double elecCo2 \u003d getSumCo2(\"ENERGY\", startOfMonth, now);\n        double gasCo2 \u003d getSumCo2(\"GAS\", startOfMonth, now);\n        double transCo2 \u003d getSumCo2(\"TRANSPORT\", startOfMonth, now);\n        double wasteCo2 \u003d getSumCo2(\"WASTE\", startOfMonth, now);\n\n        // C. Top Consumer\n        String topConsumer \u003d \"Inconnu\";\n        List\u003cTopConsumerStats\u003e tops \u003d repository.findTopConsumer(startOfMonth);\n        if (!tops.isEmpty()) topConsumer \u003d tops.get(0).getLocation();\n\n        // D. بناء JSON (مع حساب التكلفة)\n        // الترتيب: Value -\u003e Cost -\u003e CO2 -\u003e Extra\n        return String.format(\"\"\"\n        {\n            \"ELECTRICITE\": {\n                \"Consommation\": \"%.2f kWh\",\n                \"Coût_Estime\": \"%.2f MAD\",\n                \"Empreinte_Carbone\": \"%.2f kg CO2\", \n                \"Top_Consommateur\": \"%s\"\n            },\n            \"GAZ\": {\n                \"Consommation\": \"%.2f m3\",\n                \"Coût_Estime\": \"%.2f MAD\",\n                \"Empreinte_Carbone\": \"%.2f kg CO2\"\n            },\n            \"TRANSPORT\": {\n                \"Distance\": \"%.2f km\",\n                \"Empreinte_Carbone\": \"%.2f kg CO2\"\n            },\n            \"DECHETS\": {\n                \"Poids\": \"%.2f kg\",\n                \"Empreinte_Carbone\": \"%.2f kg CO2\"\n            }\n        }\n        \"\"\",\n                elecVal, (elecVal * COST_ELEC), elecCo2, topConsumer, // ✅ Elec (Value, Cost, CO2, Top)\n                gasVal, (gasVal * COST_GAS), gasCo2,                  // ✅ Gas (Value, Cost, CO2)\n                transVal, transCo2,                                   // ✅ Transport\n                wasteVal, wasteCo2                                    // ✅ Waste\n        );\n    }\n\n    // --- 2. FRONTEND STATS LOGIC (Cards) ---\n    // ضروري تخلي هاد الميطود باش الكارتات فالـ Dashboard يبانو\n    public AISummaryDTO generateDashboardStats() {\n        LocalDateTime now \u003d LocalDateTime.now();\n        LocalDateTime startOfCurrentMonth \u003d now.withDayOfMonth(1).withHour(0).withMinute(0);\n        LocalDateTime startOfLastMonth \u003d startOfCurrentMonth.minusMonths(1);\n        LocalDateTime endOfLastMonth \u003d startOfCurrentMonth.minusSeconds(1);\n\n        Double currentEnergy \u003d getSum(\"ENERGY\", startOfCurrentMonth, now);\n        Double lastEnergy \u003d getSum(\"ENERGY\", startOfLastMonth, endOfLastMonth);\n\n        String trend;\n        if (lastEnergy \u003d\u003d 0) {\n            trend \u003d \"0%\";\n        } else {\n            double percentChange \u003d ((currentEnergy - lastEnergy) / lastEnergy) * 100;\n            trend \u003d (percentChange \u003e 0 ? \"+\" : \"\") + String.format(\"%.1f\", percentChange) + \"%\";\n        }\n\n        Double totalCo2 \u003d getSumCo2(\"ENERGY\", startOfCurrentMonth, now) + \n                          getSumCo2(\"GAS\", startOfCurrentMonth, now) +\n                          getSumCo2(\"TRANSPORT\", startOfCurrentMonth, now) +\n                          getSumCo2(\"WASTE\", startOfCurrentMonth, now);\n\n        long totalWaste \u003d repository.countByDataTypeAndTimestampAfter(\"WASTE\", startOfCurrentMonth);\n        long recycledWaste \u003d repository.countByDataTypeAndWasteTypeAndTimestampAfter(\"WASTE\", \"recyclable\", startOfCurrentMonth);\n        double recyclingRate \u003d (totalWaste \u003e 0) ? ((double) recycledWaste / totalWaste) * 100 : 0.0;\n\n        return AISummaryDTO.builder()\n                .currentMonthEnergy(currentEnergy)\n                .lastMonthEnergy(lastEnergy)\n                .energyTrend(trend)\n                .totalCo2(totalCo2)\n                .recyclingRate(recyclingRate)\n                .estimatedCost(currentEnergy * COST_ELEC)\n                .build();\n    }\n\n    // --- HELPERS ---\n\n    private double getSum(String type, LocalDateTime start, LocalDateTime end) {\n        Double val \u003d repository.sumValueByDataTypeAndDateRange(type, start, end);\n        return val !\u003d null ? val : 0.0;\n    }\n\n    private double getSumCo2(String type, LocalDateTime start, LocalDateTime end) {\n        Double val \u003d repository.sumCo2ByDataTypeAndDateRange(type, start, end);\n        return val !\u003d null ? val : 0.0;\n    }\n\n    private String callDeepSeek(String systemPrompt, String userMsg, List\u003cMap\u003cString, String\u003e\u003e history) {\n        HttpHeaders headers \u003d new HttpHeaders();\n        headers.setContentType(MediaType.APPLICATION_JSON);\n        headers.setBearerAuth(apiKey);\n\n        Map\u003cString, Object\u003e body \u003d new HashMap\u003c\u003e();\n        body.put(\"model\", model);\n        body.put(\"stream\", false);\n\n        List\u003cMap\u003cString, String\u003e\u003e messages \u003d new ArrayList\u003c\u003e();\n        messages.add(Map.of(\"role\", \"system\", \"content\", systemPrompt));\n\n        if (history !\u003d null) {\n            for (Map\u003cString, String\u003e msg : history) {\n                messages.add(Map.of(\"role\", msg.get(\"role\"), \"content\", msg.get(\"content\")));\n            }\n        }\n\n        messages.add(Map.of(\"role\", \"user\", \"content\", userMsg));\n        body.put(\"messages\", messages);\n\n        try {\n            HttpEntity\u003cMap\u003cString, Object\u003e\u003e entity \u003d new HttpEntity\u003c\u003e(body, headers);\n            Map\u003cString, Object\u003e response \u003d restTemplate.postForObject(apiUrl, entity, Map.class);\n\n            if (response !\u003d null \u0026\u0026 response.containsKey(\"choices\")) {\n                List\u003cMap\u003cString, Object\u003e\u003e choices \u003d (List\u003cMap\u003cString, Object\u003e\u003e) response.get(\"choices\");\n                if (!choices.isEmpty()) {\n                    Map\u003cString, Object\u003e messageObj \u003d (Map\u003cString, Object\u003e) choices.get(0).get(\"message\");\n                    return (String) messageObj.get(\"content\");\n                }\n            }\n            return \"Désolé, pas de réponse.\";\n        } catch (Exception e) {\n            return \"Erreur API: \" + e.getMessage();\n        }\n    }\n}",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 204
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/repository/SmartDataRepository.java",
+      "timestamp": 1765375414977,
+      "startOffset": 2724,
+      "endOffset": 2795,
+      "codeContent": "long countByStatusAndTimestampAfter(String status, LocalDateTime date);",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AIService.java",
+      "timestamp": 1765375454992,
+      "startOffset": 3221,
+      "endOffset": 3392,
+      "codeContent": "long errors \u003d repository.countByStatusAndTimestampAfter(\"ERROR\", startOfMonth);\n        long warnings \u003d repository.countByStatusAndTimestampAfter(\"WARNING\", startOfMonth);",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/repository/SmartDataRepository.java",
+      "timestamp": 1765375697402,
+      "startOffset": 1607,
+      "endOffset": 2081,
+      "codeContent": "Double sumTotalCo2Impact();\n\n    long countByDataTypeAndTimestampAfter(String dataType, LocalDateTime date);\n    long countByDataTypeAndWasteTypeAndTimestampAfter(String dataType, String wasteType, LocalDateTime date);\n\n    @Aggregation(pipeline \u003d {\n            \"{ $match: { dataType: \u0027ENERGY\u0027, timestamp: { $gte: ?0 } } }\",\n            \"{ $group: { _id: \u0027$location\u0027, total: { $sum: \u0027$value\u0027 } } }\",\n            \"{ $sort: { total: -1 } }\",\n            \"{ $limit: 1 }\"\n    })",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 11
+    },
+    {
+      "filePath": "/SmartDataRepository.java",
+      "timestamp": 1765375710298,
+      "startOffset": 680,
+      "endOffset": 704,
+      "codeContent": "{\n    return null;\n    }",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 3
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AIService.java",
+      "timestamp": 1765375907088,
+      "startOffset": 4225,
+      "endOffset": 4423,
+      "codeContent": "\"ETAT_IOT\": {\\s\n                            \"Statut_Global\": \"%s\",\n                            \"Alertes_Critiques\": \"%d\",\n                            \"Avertissements\": \"%d\"\n                        }",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 5
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AIService.java",
+      "timestamp": 1765377901560,
+      "startOffset": 1261,
+      "endOffset": 2498,
+      "codeContent": "\u0026 IDENTITÉ :\n            Tu es un EXPERT MÉTIER en efficacité énergétique et IoT.\n            Tu N\u0027ES PAS un assistant de programmation (Codeur) ni un assistant généraliste.\n            \n            ⛔ INTERDICTIONS STRICTES (GUARDRAILS) :\n            1. NE JAMAIS écrire de code informatique (Java, Python, SQL, etc.), même si l\u0027utilisateur le demande pour analyser les données.\n            2. NE JAMAIS répondre aux questions hors sujet (Politique, Cuisine, Célébrités, Blagues, Modèles d\u0027IA...).\n            3. NE JAMAIS inventer de données qui ne sont pas dans le JSON ci-dessous.\n            \n            ✅ TA MISSION UNIQUE :\n            - Analyser les consommations (Électricité, Gaz, Transport).\n            - Expliquer les coûts et l\u0027empreinte carbone.\n            - Donner des conseils pour réduire la facture énergétique.\n            \n            📊 DONNÉES DE L\u0027ENTREPRISE (SOURCE DE VÉRITÉ) :\n            %s\n            \n            Si l\u0027utilisateur pose une question qui viole les règles ci-dessus (ex: \"Parle-moi de Java\", \"Qui est Trump ?\"), réponds UNIQUEMENT :\n            \"🚫 Hors Sujet : Je suis un assistant spécialisé en gestion énergétique GreenTech. Je ne réponds pas aux questions techniques (code) ou générales.\"",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 19
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AIService.java",
+      "timestamp": 1765378646918,
+      "startOffset": 3045,
+      "endOffset": 3232,
+      "codeContent": "// 👇 زدنا هاد التواريخ باش نحسبو الشهر اللي فات\n        LocalDateTime startOfLastMonth \u003d startOfMonth.minusMonths(1);\n        LocalDateTime endOfLastMonth \u003d startOfMonth.minusSeconds(1);",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 3
+    },
+    {
+      "filePath": "/AIService.java",
+      "timestamp": 1765379401270,
+      "startOffset": 549,
+      "endOffset": 569,
+      "codeContent": "IntellijIdeaRulezzz ",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 53,
-      "totalLines": 429
+      "usageCount": 71,
+      "totalLines": 998
     }
   }
 }
