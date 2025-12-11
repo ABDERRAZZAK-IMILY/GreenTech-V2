@@ -8,10 +8,12 @@ import com.greentechinnovators.backend.mapper.VehicleMapper;
 import com.greentechinnovators.backend.repository.VehicleLogRepository;
 import com.greentechinnovators.backend.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @RequiredArgsConstructor
+@Service
 public class VehicleLogservice {
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper mapper;
