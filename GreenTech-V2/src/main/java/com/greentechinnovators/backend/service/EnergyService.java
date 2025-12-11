@@ -35,7 +35,7 @@ public class EnergyService {
 
 
     public List<EnergyResponseDTO> getAllReadings() {
-        List<Energy> energyList =  repository.findAllByOrderByTimestampDesc();
+        List<Energy> energyList =  repository.findAllByOrderByCreatedAtDesc();
         return energyList.stream().map(mapper::toResponse).toList();
     }
 }

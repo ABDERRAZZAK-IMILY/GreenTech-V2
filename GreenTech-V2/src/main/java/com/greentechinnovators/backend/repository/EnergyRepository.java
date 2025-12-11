@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface EnergyRepository extends MongoRepository<Energy, String> {
-    List<Energy> findAllByOrderByTimestampDesc();
+    List<Energy> findAllByOrderByCreatedAtDesc();
 }

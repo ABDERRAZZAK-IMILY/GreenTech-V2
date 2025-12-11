@@ -781,12 +781,144 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/DashboardController.java",
+      "timestamp": 1765445155942,
+      "startOffset": 96,
+      "endOffset": 1483,
+      "codeContent": "Energy.Request.EnergyRequestDTO;\nimport com.greentechinnovators.backend.dto.Energy.Responce.EnergyResponseDTO;\nimport com.greentechinnovators.backend.dto.trash.request.TrashRequestDTO;\nimport com.greentechinnovators.backend.dto.trash.response.TrashResponseDTO;\nimport com.greentechinnovators.backend.service.EnergyService;\nimport com.greentechinnovators.backend.service.TrashService;\nimport lombok.RequiredArgsConstructor;\nimport org.springframework.web.bind.annotation.*;\n\nimport java.util.List;\n\n@RestController\n@RequestMapping(\"/api/v1\")\n@CrossOrigin(origins \u003d \"*\")\n@RequiredArgsConstructor\npublic class DashboardController {\n\n    private final EnergyService energyService;\n    private final TrashService trashService;\n\n    // Energy endpoints\n    @PostMapping(\"/energy/ingest\")\n    public EnergyResponseDTO ingestEnergyData(@RequestBody EnergyRequestDTO dto) {\n        return energyService.createReading(dto);\n    }\n\n    @GetMapping(\"/energy/metrics\")\n    public List\u003cEnergyResponseDTO\u003e getEnergyMetrics() {\n        return energyService.getAllReadings();\n    }\n\n    // Trash endpoints\n    @PostMapping(\"/trash/ingest\")\n    public TrashResponseDTO ingestTrashData(@RequestBody TrashRequestDTO dto) {\n        return trashService.saveReading(dto);\n    }\n\n    @GetMapping(\"/trash/metrics\")\n    public List\u003cTrashResponseDTO\u003e getTrashMetrics() {\n        return trashService.getAllReadings(",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 40
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/entity/User.java",
+      "timestamp": 1765445155953,
+      "startOffset": 115,
+      "endOffset": 1205,
+      "codeContent": "AllArgsConstructor;\nimport lombok.Builder;\nimport lombok.Data;\nimport lombok.NoArgsConstructor;\nimport org.springframework.data.annotation.Id;\nimport org.springframework.data.mongodb.core.index.Indexed;\nimport org.springframework.data.mongodb.core.mapping.Document;\n\nimport java.time.LocalDateTime;\n\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\n@Document(collection \u003d \"users\")\npublic class User {\n\n    @Id\n    private String id;\n    \n    private String name;\n    \n    @Indexed(unique \u003d true)\n    private String email;\n    \n    private String passwordHash;\n    private Role role;\n    \n    // Profile fields\n    private String profilePicture;   // URL to profile image\n    private LocalDateTime createdAt;  // Registration date\n    private LocalDateTime updatedAt;  // Last update date\n\n    public User(String name, String email, String passwordHash, Role role) {\n        this.name \u003d name;\n        this.email \u003d email;\n        this.passwordHash \u003d passwordHash;\n        this.role \u003d role;\n        this.createdAt \u003d LocalDateTime.now();\n        this.updatedAt \u003d LocalDateTime.now();\n    }",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 41
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/repository/UserRepository.java",
+      "timestamp": 1765445155946,
+      "startOffset": 173,
+      "endOffset": 263,
+      "codeContent": "import org.springframework.stereotype.Repository;\n\nimport java.util.Optional;\n\n@Repository",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 5
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/entity/Vehicle.java",
+      "timestamp": 1765445155962,
+      "startOffset": 261,
+      "endOffset": 653,
+      "codeContent": "BRef;\nimport org.springframework.data.mongodb.core.mapping.Document;\n\nimport java.time.LocalDateTime;\nimport java.util.List;\n\n@Getter\n@Setter\n@AllArgsConstructor\n@NoArgsConstructor\n@Document(\"Vehicle\")\npublic class Vehicle {\n    @Id\n    private String id;\n    private String licensePlate;\n    private String model;\n    private User user;\n    @DBRef\n    private List\u003cVehicleLog\u003e  vehicleLogs;\n",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 20
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/entity/GasMonitor.java",
+      "timestamp": 1765445155964,
+      "startOffset": 56,
+      "endOffset": 728,
+      "codeContent": "com.greentechinnovators.backend.Enums.Status;\nimport lombok.AllArgsConstructor;\nimport lombok.Getter;\nimport lombok.NoArgsConstructor;\nimport lombok.Setter;\nimport org.springframework.data.annotation.Id;\nimport org.springframework.data.mongodb.core.mapping.DBRef;\nimport org.springframework.data.mongodb.core.mapping.Document;\n\nimport java.time.LocalDateTime;\nimport java.util.List;\n\n@Getter\n@Setter\n@AllArgsConstructor\n@NoArgsConstructor\n@Document(\"GasMonitor\")\npublic class GasMonitor {\n    @Id\n    private String id;\n\n    private String location;\n    private String sensorId;\n    private Status status;\n    private Double co2Impact;\n    @DBRef\n    private List\u003cGas\u003e gas",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 27
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/entity/TrashMonitor.java",
+      "timestamp": 1765445155968,
+      "startOffset": 94,
+      "endOffset": 744,
+      "codeContent": "Status;\nimport com.greentechinnovators.backend.Enums.TrashType;\nimport lombok.AllArgsConstructor;\nimport lombok.Getter;\nimport lombok.NoArgsConstructor;\nimport lombok.Setter;\nimport org.springframework.data.annotation.Id;\nimport org.springframework.data.mongodb.core.mapping.DBRef;\nimport org.springframework.data.mongodb.core.mapping.Document;\n\nimport java.time.LocalDateTime;\nimport java.util.List;\n\n@Getter\n@Setter\n@AllArgsConstructor\n@NoArgsConstructor\n@Document(\"TrashMonitor\")\npublic class TrashMonitor {\n    @Id\n    private String id;\n    private String macAddress;\n\n    private String location;\n    private String sensorId;\n    private Status",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 26
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/entity/EnergyMonitor.java",
+      "timestamp": 1765445155971,
+      "startOffset": 56,
+      "endOffset": 727,
+      "codeContent": "com.greentechinnovators.backend.Enums.Status;\nimport lombok.AllArgsConstructor;\nimport lombok.Getter;\nimport lombok.NoArgsConstructor;\nimport lombok.Setter;\nimport org.springframework.data.annotation.Id;\nimport org.springframework.data.mongodb.core.mapping.DBRef;\nimport org.springframework.data.mongodb.core.mapping.Document;\n\nimport java.time.LocalDateTime;\nimport java.util.List;\n\n@Getter\n@Setter\n@AllArgsConstructor\n@NoArgsConstructor\n@Document(\"EnergyMonitor\")\npublic class EnergyMonitor {\n    @Id\n    private String id;\n    private String macAddress;\n\n    private String location;\n    private String sensorId;\n    private Double co2Impact;\n    private Status status",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 26
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AIService.java",
+      "timestamp": 1765445155978,
+      "startOffset": 61,
+      "endOffset": 9370,
+      "codeContent": "fasterxml.jackson.databind.JsonNode;\nimport com.fasterxml.jackson.databind.ObjectMapper;\nimport com.greentechinnovators.backend.dto.AI.TopConsumerStats;\nimport com.greentechinnovators.backend.repository.SmartDataRepository;\nimport lombok.RequiredArgsConstructor;\nimport org.springframework.beans.factory.annotation.Value;\nimport org.springframework.stereotype.Service;\nimport org.springframework.web.client.RestTemplate;\nimport org.springframework.web.reactive.function.client.WebClient;\nimport reactor.core.publisher.Flux;\nimport java.time.LocalDateTime;\nimport java.util.*;\n\n@Service\n@RequiredArgsConstructor\npublic class AIService {\n\n    @Value(\"${spring.ai.deepseek.api-key}\")\n    private String apiKey;\n\n    @Value(\"${spring.ai.deepseek.base-url}\")\n    private String apiUrl;\n\n    @Value(\"${spring.ai.deepseek.model}\")\n    private String model;\n\n    private static final double COST_ELEC \u003d 1.2; // MAD/kWh\n    private static final double COST_GAS \u003d 10.5; // MAD/m3\n    private final SmartDataRepository repository;\n    private final WebClient.Builder webClientBuilder;\n    private final RestTemplate restTemplate \u003d new RestTemplate();\n\n    private static final String SYSTEM_PROMPT_TEMPLATE \u003d \"\"\"\n    Tu es l\u0027assistant IA de \u0027GreenTech Innovators\u0027.\n    \n    🚨 RÔLE \u0026 LANGUE :\n    - Tu es un expert en efficacité énergétique.\n    - Tu parles par défaut en Français.\n    - ✅ SI l\u0027utilisateur te parle en Darija (Marocain) ou demande \"bdarija\", TU DOIS répondre en Darija.\n    \n    📝 RÈGLES DE FORMATAGE (RÉPONSE COURTE ET CLAIRE):\n    1. **Structure :** Utilise des sauts de ligne (\\n) pour séparer chaque idée. Ne fais jamais de blocs de texte compacts.\n    2. **Titres :** Utilise **Titre** pour les titres. IMPORTANT : Mets toujours le titre sur sa propre ligne, avec une ligne vide avant et après.\n    3. **Listes :** Utilise des tirets (\"- \") pour les listes. Chaque point doit être sur une nouvelle ligne.\n    4. **Simplicité :** Évite les caractères spéciaux inutiles comme \"****\" ou les lignes de séparation excessives \"---\".\n    \n    ℹ️ CONTEXTE :\n    - Projet : GreenTech Innovators (Réduction empreinte carbone \u0026 coûts).\n    - Objectif : -20%% coûts, -50%% CO2 d\u0027ici 2030.\n    \n    📊 DONNÉES TEMPS RÉEL :\n    %s\n    \n    ⛔ INTERDICTIONS :\n    1. Pas de code informatique.\n    2. Pas de sujets hors contexte.\n    3. Pas d\u0027invention de chiffres.\n    \"\"\";\n    public Flux\u003cString\u003e askAIStream(String userMessage, List\u003cMap\u003cString, String\u003e\u003e history) {\n        String globalContext \u003d getGlobalContextJson();\n        String dynamicPrompt \u003d String.format(SYSTEM_PROMPT_TEMPLATE, globalContext);\n\n        WebClient webClient \u003d webClientBuilder.baseUrl(apiUrl).build();\n\n        Map\u003cString, Object\u003e body \u003d new HashMap\u003c\u003e();\n        body.put(\"model\", model);\n        body.put(\"stream\", true);\n\n        List\u003cMap\u003cString, String\u003e\u003e messages \u003d new ArrayList\u003c\u003e();\n        messages.add(Map.of(\"role\", \"system\", \"content\", dynamicPrompt));\n\n        if (history !\u003d null) {\n            for (Map\u003cString, String\u003e msg : history) {\n                messages.add(Map.of(\"role\", msg.get(\"role\"), \"content\", msg.get(\"content\")));\n            }\n        }\n        messages.add(Map.of(\"role\", \"user\", \"content\", userMessage));\n        body.put(\"messages\", messages);\n\n        return webClient.post()\n                .header(\"Authorization\", \"Bearer \" + apiKey)\n                .bodyValue(body)\n                .retrieve()\n                .bodyToFlux(String.class)\n                .map(this::extractContentFromDeepSeek)\n                .filter(content -\u003e !content.isEmpty());\n    }\n\n    // switch JSON to word\n    private String extractContentFromDeepSeek(String jsonChunk) {\n        try {\n            if (jsonChunk.contains(\"[DONE]\")) return \"\";\n\n            ObjectMapper mapper \u003d new ObjectMapper();\n            JsonNode rootNode \u003d mapper.readTree(jsonChunk);\n\n            if (rootNode.has(\"choices\") \u0026\u0026 rootNode.get(\"choices\").isArray()) {\n                JsonNode choice \u003d rootNode.get(\"choices\").get(0);\n                if (choice.has(\"delta\") \u0026\u0026 choice.get(\"delta\").has(\"content\")) {\n                    return choice.get(\"delta\").get(\"content\").asText();\n                }\n            }\n        } catch (Exception e) {\n        }\n        return \"\";\n    }\n\n    private String getGlobalContextJson() {\n        LocalDateTime now \u003d LocalDateTime.now();\n        LocalDateTime startOfMonth \u003d now.withDayOfMonth(1).withHour(0).withMinute(0);\n        LocalDateTime startOfLastMonth \u003d startOfMonth.minusMonths(1);\n        LocalDateTime endOfLastMonth \u003d startOfMonth.minusSeconds(1);\n\n        double elecVal \u003d getSum(\"ENERGY\", startOfMonth, now);\n        double gasVal \u003d getSum(\"GAS\", startOfMonth, now);\n        double transVal \u003d getSum(\"TRANSPORT\", startOfMonth, now);\n        double wasteVal \u003d getSum(\"WASTE\", startOfMonth, now);\n\n        //calcul defrence enter this Month and last Month\n        double lastElecVal \u003d getSum(\"ENERGY\", startOfLastMonth, endOfLastMonth);\n        String elecTrend \u003d calculateTrend(elecVal, lastElecVal);\n\n        //CO2\n        double elecCo2 \u003d getSumCo2(\"ENERGY\", startOfMonth, now);\n        double gasCo2 \u003d getSumCo2(\"GAS\", startOfMonth, now);\n        double transCo2 \u003d getSumCo2(\"TRANSPORT\", startOfMonth, now);\n        double wasteCo2 \u003d getSumCo2(\"WASTE\", startOfMonth, now);\n\n        // C. Top Consumer\n        String topConsumer \u003d \"Inconnu\";\n        List\u003cTopConsumerStats\u003e tops \u003d repository.findTopConsumer(startOfMonth);\n        if (!tops.isEmpty()) topConsumer \u003d tops.get(0).getLocation();\n\n        long errors \u003d repository.countByStatusAndTimestampAfter(\"ERROR\", startOfMonth);\n        long warnings \u003d repository.countByStatusAndTimestampAfter(\"WARNING\", startOfMonth);\n        String iotStatus \u003d (errors \u003d\u003d 0 \u0026\u0026 warnings \u003d\u003d 0) ? \"EXCELLENT (Aucune alerte)\" : \"ATTENTION REQUISE\";\n\n        return String.format(\"\"\"\n        {\n            \"ELECTRICITE\": {\n                \"Consommation_Ce_Mois\": \"%.2f kWh\",\n                \"Consommation_Mois_Dernier\": \"%.2f kWh\",\n                \"Tendance\": \"%s\",\n                \"Coût_Estime\": \"%.2f MAD\",\n                \"Empreinte_Carbone\": \"%.2f kg CO2\", \n                \"Top_Consommateur\": \"%s\"\n            },\n            \"GAZ\": {\n                \"Consommation\": \"%.2f m3\",\n                \"Coût_Estime\": \"%.2f MAD\",\n                \"Empreinte_Carbone\": \"%.2f kg CO2\"\n            },\n            \"TRANSPORT\": {\n                \"Distance\": \"%.2f km\",\n                \"Empreinte_Carbone\": \"%.2f kg CO2\"\n            },\n            \"DECHETS\": {\n                \"Poids\": \"%.2f kg\",\n                \"Empreinte_Carbone\": \"%.2f kg CO2\"\n            },\n            \"ETAT_IOT\": { \n                \"Statut_Global\": \"%s\",\n                \"Alertes_Critiques\": \"%d\"\n            }\n        }\n        \"\"\",\n                elecVal, lastElecVal, elecTrend, (elecVal * COST_ELEC), elecCo2, topConsumer,\n                gasVal, (gasVal * COST_GAS), gasCo2,\n                transVal, transCo2,\n                wasteVal, wasteCo2,\n                iotStatus, errors\n        );\n    }\n\n    private double getSum(String type, LocalDateTime start, LocalDateTime end) {\n        Double val \u003d repository.sumValueByDataTypeAndDateRange(type, start, end);\n        return val !\u003d null ? val : 0.0;\n    }\n\n    private double getSumCo2(String type, LocalDateTime start, LocalDateTime end) {\n        Double val \u003d repository.sumCo2ByDataTypeAndDateRange(type, start, end);\n        return val !\u003d null ? val : 0.0;\n    }\n\n//    private String callDeepSeek(String systemPrompt, String userMsg, List\u003cMap\u003cString, String\u003e\u003e history) {\n//        HttpHeaders headers \u003d new HttpHeaders();\n//        headers.setContentType(MediaType.APPLICATION_JSON);\n//        headers.setBearerAuth(apiKey);\n//\n//        Map\u003cString, Object\u003e body \u003d new HashMap\u003c\u003e();\n//        body.put(\"model\", model);\n//        body.put(\"stream\", false);\n//\n//        List\u003cMap\u003cString, String\u003e\u003e messages \u003d new ArrayList\u003c\u003e();\n//        messages.add(Map.of(\"role\", \"system\", \"content\", systemPrompt));\n//\n//        if (history !\u003d null) {\n//            for (Map\u003cString, String\u003e msg : history) {\n//                messages.add(Map.of(\"role\", msg.get(\"role\"), \"content\", msg.get(\"content\")));\n//            }\n//        }\n//\n//        messages.add(Map.of(\"role\", \"user\", \"content\", userMsg));\n//        body.put(\"messages\", messages);\n//\n//        try {\n//            HttpEntity\u003cMap\u003cString, Object\u003e\u003e entity \u003d new HttpEntity\u003c\u003e(body, headers);\n//            Map\u003cString, Object\u003e response \u003d restTemplate.postForObject(apiUrl, entity, Map.class);\n//\n//            if (response !\u003d null \u0026\u0026 response.containsKey(\"choices\")) {\n//                List\u003cMap\u003cString, Object\u003e\u003e choices \u003d (List\u003cMap\u003cString, Object\u003e\u003e) response.get(\"choices\");\n//                if (!choices.isEmpty()) {\n//                    Map\u003cString, Object\u003e messageObj \u003d (Map\u003cString, Object\u003e) choices.get(0).get(\"message\");\n//                    return (String) messageObj.get(\"content\");\n//                }\n//            }\n//            return \"Désolé, pas de réponse.\";\n//        } catch (Exception e) {\n//            return \"Erreur API: \" + e.getMessage();\n//        }\n//    }\n    private String calculateTrend(double current, double last) {\n        if (last \u003d\u003d 0) return \"N/A\";\n        double percent \u003d ((current - last) / last) * 100;\n        return String.format(\"%+.1f%%\", percent",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 225
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/entity/Trash.java",
+      "timestamp": 1765445215046,
+      "startOffset": 63,
+      "endOffset": 377,
+      "codeContent": "AllArgsConstructor;\nimport lombok.Getter;\nimport lombok.NoArgsConstructor;\nimport lombok.Setter;\nimport org.springframework.data.annotation.Id;\nimport org.springframework.data.mongodb.core.mapping.Document;\n\nimport java.time.LocalDateTime;\n\n@Getter\n@Setter\n@AllArgsConstructor\n@NoArgsConstructor\n@Document(\"Trash\")",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 14
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/entity/Energy.java",
+      "timestamp": 1765445215049,
+      "startOffset": 63,
+      "endOffset": 406,
+      "codeContent": "AllArgsConstructor;\nimport lombok.Getter;\nimport lombok.NoArgsConstructor;\nimport lombok.Setter;\nimport org.springframework.data.annotation.Id;\nimport org.springframework.data.mongodb.core.mapping.Document;\n\nimport java.time.LocalDate;\nimport java.time.LocalDateTime;\n\n@Getter\n@Setter\n@AllArgsConstructor\n@NoArgsConstructor\n@Document(\"Energy\")",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 15
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/entity/User.java",
+      "timestamp": 1765445244680,
+      "startOffset": 115,
+      "endOffset": 1205,
+      "codeContent": "AllArgsConstructor;\nimport lombok.Builder;\nimport lombok.Data;\nimport lombok.NoArgsConstructor;\nimport org.springframework.data.annotation.Id;\nimport org.springframework.data.mongodb.core.index.Indexed;\nimport org.springframework.data.mongodb.core.mapping.Document;\n\nimport java.time.LocalDateTime;\n\n@Data\n@Builder\n@NoArgsConstructor\n@AllArgsConstructor\n@Document(collection \u003d \"users\")\npublic class User {\n\n    @Id\n    private String id;\n    \n    private String name;\n    \n    @Indexed(unique \u003d true)\n    private String email;\n    \n    private String passwordHash;\n    private Role role;\n    \n    // Profile fields\n    private String profilePicture;   // URL to profile image\n    private LocalDateTime createdAt;  // Registration date\n    private LocalDateTime updatedAt;  // Last update date\n\n    public User(String name, String email, String passwordHash, Role role) {\n        this.name \u003d name;\n        this.email \u003d email;\n        this.passwordHash \u003d passwordHash;\n        this.role \u003d role;\n        this.createdAt \u003d LocalDateTime.now();\n        this.updatedAt \u003d LocalDateTime.now();\n    }",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 41
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/DashboardController.java",
+      "timestamp": 1765445244718,
+      "startOffset": 96,
+      "endOffset": 1483,
+      "codeContent": "Energy.Request.EnergyRequestDTO;\nimport com.greentechinnovators.backend.dto.Energy.Responce.EnergyResponseDTO;\nimport com.greentechinnovators.backend.dto.trash.request.TrashRequestDTO;\nimport com.greentechinnovators.backend.dto.trash.response.TrashResponseDTO;\nimport com.greentechinnovators.backend.service.EnergyService;\nimport com.greentechinnovators.backend.service.TrashService;\nimport lombok.RequiredArgsConstructor;\nimport org.springframework.web.bind.annotation.*;\n\nimport java.util.List;\n\n@RestController\n@RequestMapping(\"/api/v1\")\n@CrossOrigin(origins \u003d \"*\")\n@RequiredArgsConstructor\npublic class DashboardController {\n\n    private final EnergyService energyService;\n    private final TrashService trashService;\n\n    // Energy endpoints\n    @PostMapping(\"/energy/ingest\")\n    public EnergyResponseDTO ingestEnergyData(@RequestBody EnergyRequestDTO dto) {\n        return energyService.createReading(dto);\n    }\n\n    @GetMapping(\"/energy/metrics\")\n    public List\u003cEnergyResponseDTO\u003e getEnergyMetrics() {\n        return energyService.getAllReadings();\n    }\n\n    // Trash endpoints\n    @PostMapping(\"/trash/ingest\")\n    public TrashResponseDTO ingestTrashData(@RequestBody TrashRequestDTO dto) {\n        return trashService.saveReading(dto);\n    }\n\n    @GetMapping(\"/trash/metrics\")\n    public List\u003cTrashResponseDTO\u003e getTrashMetrics() {\n        return trashService.getAllReadings(",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 40
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 71,
-      "totalLines": 998
+      "usageCount": 83,
+      "totalLines": 1518
     }
   }
 }

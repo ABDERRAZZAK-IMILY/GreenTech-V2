@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface TrashRepository extends MongoRepository<Trash, String> {
-    List<Trash> findAllByOrderByTimestampDesc();
+    List<Trash> findAllByOrderByCreatedAtDesc();
 }
