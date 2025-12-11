@@ -22,7 +22,7 @@ public class EnergyMonitorService {
         return energyMapper.toResponse(energyMonitor);
     }
     public EnergyMonitorResponseDTO Update(StatusChangeDTO dto,String address) {
-        EnergyMonitor energyMonitor = energyMonitorRepository.findById(address).orElseThrow(()->{
+        EnergyMonitor energyMonitor = energyMonitorRepository.findByMacAddress(address).orElseThrow(()->{
             throw new  ResourceNotFoundException("monitor with address "+address+" not found");
         });
         energyMonitor.setStatus(dto.getStatus());
