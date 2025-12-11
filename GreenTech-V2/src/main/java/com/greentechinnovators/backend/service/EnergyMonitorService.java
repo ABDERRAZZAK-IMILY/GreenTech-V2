@@ -2,7 +2,9 @@ package com.greentechinnovators.backend.service;
 
 import com.greentechinnovators.backend.dto.Energy.Request.EnergyMonitorRequestDTO;
 import com.greentechinnovators.backend.dto.Energy.Responce.EnergyMonitorResponseDTO;
+import com.greentechinnovators.backend.dto.StatusChangeDTO;
 import com.greentechinnovators.backend.entity.EnergyMonitor;
+import com.greentechinnovators.backend.exeptions.ResourceNotFoundException;
 import com.greentechinnovators.backend.mapper.EnergyMapper;
 import com.greentechinnovators.backend.repository.EnergyMonitorRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,12 @@ public class EnergyMonitorService {
         EnergyMonitor energyMonitor = energyMonitorRepository.save(energyMapper.toEntity(dto));
         return energyMapper.toResponse(energyMonitor);
     }
-    
+    public EnergyMonitorResponseDTO Update(StatusChangeDTO dto,String address) {
+        EnergyMonitor energyMonitor = energyMonitorRepository.findById(address).orElseThrow(()->{
+            throw new  ResourceNotFoundException("monitor with address "+address+" not found");
+        });
+        energyMonitor.setStatus(dto.getStatus());
+        return energyMapper.toResponse(energyMonitorRepository.save(energyMonitor));
+    }
 
 }
