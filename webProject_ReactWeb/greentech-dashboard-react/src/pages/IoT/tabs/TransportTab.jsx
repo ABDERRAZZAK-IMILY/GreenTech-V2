@@ -161,7 +161,6 @@ const TransportTab = () => {
       vehicle: `${vehicleType} - ${plateNumber}`,
       lat: location.lat,
       lng: location.lng,
-      status: 'moving',
       icon: icon,
       distance: '0 km',
       fuel: '0 L',

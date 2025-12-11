@@ -1,69 +1,98 @@
 import * as Location from 'expo-location';
 import { Alert } from 'react-native';
 
-const API_URL = 'http://192.168.1.5:8080/api/v1/ingest';
+const WS_URL = "ws://192.168.1.5:8080/ws/location";
 
 let locationSubscription = null;
+let websocket = null;
+let intervalSender = null;
 
-export const startTracking = async (userId, onStatusChange) => {
+export const startTracking = async (userId, vehicleType, onStatusChange) => {
   const { status } = await Location.requestForegroundPermissionsAsync();
+
   if (status !== 'granted') {
     Alert.alert('Permission refusée', 'La localisation est nécessaire pour le suivi.');
     return;
   }
 
-  onStatusChange && onStatusChange('Démarrage du GPS...');
+  onStatusChange && onStatusChange("Connexion au serveur WebSocket...");
 
+  websocket = new WebSocket(WS_URL);
+
+  websocket.onopen = () => {
+    onStatusChange && onStatusChange("WebSocket connecté. Démarrage du GPS...");
+
+    // 1. Start GPS tracker (high accuracy)
+    startGpsListener(userId, vehicleType, onStatusChange);
+  };
+
+  websocket.onerror = (error) => {
+    console.error("WS Error:", error);
+    onStatusChange && onStatusChange("Erreur WebSocket");
+  };
+
+  websocket.onclose = () => {
+    onStatusChange && onStatusChange("WebSocket déconnecté");
+  };
+};
+
+/* ---------------- GPS LISTENER ---------------- */
+
+let lastLocation = null;
+
+const startGpsListener = async (userId, vehicleType, onStatusChange) => {
   locationSubscription = await Location.watchPositionAsync(
     {
-      accuracy: Location.Accuracy.High,
-      timeInterval: 5000,
-      distanceInterval: 10,
+      accuracy: Location.Accuracy.Highest,
+      timeInterval: 1000,   // Fetch location every 1 sec (internal)
+      distanceInterval: 0,
     },
     (location) => {
-      sendLocationToBackend(location, userId, onStatusChange);
+      lastLocation = location;
     }
   );
+
+  // 2. Send data every 2 seconds regardless of GPS update timing
+  intervalSender = setInterval(() => {
+    if (lastLocation && websocket && websocket.readyState === WebSocket.OPEN) {
+      sendLocation(lastLocation, userId, vehicleType, onStatusChange);
+    }
+  }, 2000);
 };
+
+/* ---------------- SEND DATA THROUGH WS ---------------- */
+
+const sendLocation = (location, userId, vehicleType, onStatusChange) => {
+  const payload = {
+    userId,
+    latitude: location.coords.latitude,
+    longitude: location.coords.longitude,
+    vehicleType,
+  };
+
+  websocket.send(JSON.stringify(payload));
+
+  onStatusChange &&
+    onStatusChange(
+      `Données envoyées WS: ${payload.latitude.toFixed(4)}, ${payload.longitude.toFixed(4)}`
+    );
+};
+
+/* ---------------- STOP TRACKING ---------------- */
 
 export const stopTracking = () => {
   if (locationSubscription) {
     locationSubscription.remove();
     locationSubscription = null;
   }
-};
 
-const sendLocationToBackend = async (location, userId, onStatusChange) => {
-  try {
-    const speedKmh = location.coords.speed ? (location.coords.speed * 3.6) : 0;
+  if (intervalSender) {
+    clearInterval(intervalSender);
+    intervalSender = null;
+  }
 
-    const payload = {
-      dataType: "TRANSPORT",
-      value: parseFloat(speedKmh.toFixed(1)),
-      unit: "km/h",
-      sensorId: `DRIVER-${userId}`,
-      location: "En route",
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-      status: speedKmh > 1 ? "MOVING" : "IDLE"
-    };
-
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (response.ok) {
-        onStatusChange && onStatusChange(`Données envoyées: ${payload.latitude.toFixed(4)}, ${payload.longitude.toFixed(4)}`);
-    } else {
-        console.log("Erreur serveur:", response.status);
-    }
-
-  } catch (error) {
-    console.error("Erreur connexion:", error);
-    onStatusChange && onStatusChange("Erreur de connexion au serveur");
+  if (websocket) {
+    websocket.close();
+    websocket = null;
   }
 };

@@ -38,7 +38,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 
 void sendTrashWeight(float weight) {
     StaticJsonDocument<200> doc;
-    doc["wight"] = weight;
+    doc["weight"] = weight;
 
     String jsonString;
     serializeJson(doc, jsonString);

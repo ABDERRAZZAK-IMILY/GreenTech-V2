@@ -17,15 +17,13 @@ public class TransportData {
     private Double latitude;
     private Double longitude;
     private Double speed;
-    private String status;      // MOVING, IDLE, STOPPED
     private LocalDateTime timestamp;
 
-    public TransportData(String vehicleId, Double latitude, Double longitude, Double speed, String status) {
+    public TransportData(String vehicleId, Double latitude, Double longitude, Double speed) {
         this.vehicleId = vehicleId;
         this.latitude = latitude;
         this.longitude = longitude;
         this.speed = speed;
-        this.status = status;
         this.timestamp = LocalDateTime.now();
     }
 }
