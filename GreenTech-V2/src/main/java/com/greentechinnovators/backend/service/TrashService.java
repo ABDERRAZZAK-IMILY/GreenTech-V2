@@ -2,11 +2,13 @@ package com.greentechinnovators.backend.service;
 
 import com.greentechinnovators.backend.dto.trash.request.TrashRequestDTO;
 import com.greentechinnovators.backend.dto.trash.response.TrashResponseDTO;
+import com.greentechinnovators.backend.entity.Energy;
 import com.greentechinnovators.backend.entity.Trash;
 import com.greentechinnovators.backend.entity.TrashMonitor;
 import com.greentechinnovators.backend.mapper.TrashMapper;
 import com.greentechinnovators.backend.repository.TrashMonitorRepository;
 import com.greentechinnovators.backend.repository.TrashRepository;
+import com.greentechinnovators.backend.utils.CarbonFootprintService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,7 @@ public class TrashService {
 
     private final TrashRepository repository;
     private final TrashMonitorRepository trashMonitorRepository;
+    private final CarbonFootprintService carbonFootprintService;
 
     private final TrashMapper mapper;
 
@@ -41,5 +44,10 @@ public class TrashService {
         List<Trash> trashList = repository.findAll();
 
         return trashList.stream().map(mapper::toResponse).toList();
+    }
+    public Double getConsumeTrashBetweenDates(LocalDateTime start, LocalDateTime end) {
+        List<Trash> trash =repository.findByTrashDateBetween(start, end);
+        Double consumedTrash = trash.stream().mapToDouble(Trash::getWight).sum();
+        return carbonFootprintService.calculateTrashFootprint(consumedTrash);
     }
 }
