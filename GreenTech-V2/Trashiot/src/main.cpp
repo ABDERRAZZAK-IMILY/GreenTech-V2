@@ -12,7 +12,7 @@ const char* password = "Youcode@2024";
 const char* ws_host = "192.168.8.101";
 const int ws_port = 8080;
 const char* ws_path = "/iot/trash";  // Updated to use dedicated trash endpoint
-const char* mac_address = "ESP32-TRASH-001";  // Unique MAC address for this device
+String mac_address = "";
 
 WebSocketsClient webSocket;
 bool wsConnected = false;
@@ -92,7 +92,8 @@ void sendTrashWeight(float weight) {
     
     StaticJsonDocument<200> doc;
     doc["weight"] = weight;
-    doc["macAddress"] = mac_address;  // Include MAC address
+    doc["macAddress"] = mac_address;
+
 
     String jsonString;
     serializeJson(doc, jsonString);
@@ -103,6 +104,12 @@ void sendTrashWeight(float weight) {
 
 void setup() {
     Serial.begin(115200);
+
+
+    mac_address = WiFi.macAddress();
+Serial.print("ESP32 MAC: ");
+Serial.println(mac_address);
+
 
     if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
         Serial.println(F("SSD1306 allocation failed"));
