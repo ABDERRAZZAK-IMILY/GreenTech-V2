@@ -1,12 +1,11 @@
 package com.greentechinnovators.backend.repository;
 
-import com.greentechinnovators.backend.dto.TopConsumerStats;
+import com.greentechinnovators.backend.dto.AI.TopConsumerStats;
 import com.greentechinnovators.backend.entity.SmartData;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
-import org.bson.Document;
 import java.time.LocalDateTime;
 import java.util.List;
 
