@@ -10,10 +10,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @CrossOrigin("*")
 @RequiredArgsConstructor
 @RequestMapping("api/v1/energy/monitor")
+
 public class EnergyMonitorController {
     private final EnergyMonitorService service;
 
@@ -21,8 +24,14 @@ public class EnergyMonitorController {
     public ResponseEntity<EnergyMonitorResponseDTO> create(@Valid @RequestBody EnergyMonitorRequestDTO dto) {
         return ResponseEntity.ok(service.create(dto));
     }
+
     @PatchMapping("/update/{id}")
-    public ResponseEntity<EnergyMonitorResponseDTO>  update(@Valid @RequestBody StatusChangeDTO dto, @PathVariable String id) {
+    public ResponseEntity<EnergyMonitorResponseDTO> update(@Valid @RequestBody StatusChangeDTO dto, @PathVariable String id) {
         return ResponseEntity.ok(service.Update(dto, id));
+    }
+
+    @GetMapping("all")
+    private ResponseEntity<List<EnergyMonitorResponseDTO>> all() {
+        return ResponseEntity.ok(service.findAll());
     }
 }
