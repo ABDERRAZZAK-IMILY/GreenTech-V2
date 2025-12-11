@@ -1,10 +1,7 @@
 package com.greentechinnovators.backend.dto.trash.request;
 
 import com.greentechinnovators.backend.Enums.TrashType;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.util.List;
@@ -31,4 +28,7 @@ public class TrashMonitorRequestDTO {
 
     // List of trash logs associated with this monitor
     private List<TrashRequestDTO> trashLogs;
+
+    @NotEmpty(message = "mac address should not be empty")
+    private String macAddress;
 }

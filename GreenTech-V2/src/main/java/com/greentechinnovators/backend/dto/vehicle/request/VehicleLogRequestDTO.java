@@ -8,7 +8,6 @@ import lombok.Data;
 
 @Data
 public class VehicleLogRequestDTO {
-
     // The ID of the vehicle reporting this log
     @NotBlank(message = "Vehicle ID is required")
     private String vehicleId;

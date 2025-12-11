@@ -22,5 +22,8 @@ public class EnergyMonitorRequestDTO {
     @PositiveOrZero(message = "CO2 Impact cannot be negative")
     private Double co2Impact;
 
+    @NotEmpty(message = "mac address should not be empty")
+    private String macAddress;
+
     private List<EnergyRequestDTO> energyReadings;
 }

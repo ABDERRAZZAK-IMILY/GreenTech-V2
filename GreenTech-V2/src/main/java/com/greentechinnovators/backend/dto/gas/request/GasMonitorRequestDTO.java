@@ -1,9 +1,6 @@
 package com.greentechinnovators.backend.dto.gas.request;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.util.List;
@@ -27,4 +24,7 @@ public class GasMonitorRequestDTO {
 
     // List of gas readings associated with this monitor
     private List<GasRequestDTO> gasReadings;
+
+    @NotEmpty(message = "mac address should not be empty")
+    private String macAddress;
 }
