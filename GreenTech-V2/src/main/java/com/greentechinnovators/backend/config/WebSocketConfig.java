@@ -37,10 +37,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSoc
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         // Register WebSocket handlers for IoT devices
-        registry.addHandler(energyIotHandler, "/ws/energy")
+        registry.addHandler(energyIotHandler, "/iot/energy")
                 .setAllowedOrigins("*");
-        
-        registry.addHandler(trashIotHandler, "/ws/trash")
+
+        registry.addHandler(trashIotHandler, "/iot/trash")
                 .setAllowedOrigins("*");
     }
 }
