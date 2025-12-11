@@ -1,21 +1,17 @@
-import { useState, useEffect, useRef } from 'react';
-import { streamChatResponse } from '../services/AI/chatService'; 
+import { useState, useRef, useEffect } from 'react';
+import { streamChatResponse } from '../services/AI/aiService'; 
 
-const useChatbotLogic = ( ) => {
-    const [chatMessages, setChatMessages] = useState([]);
+const useChatBot = () => {
+   const [chatMessages, setChatMessages] = useState([
+    {
+        sender: 'ai',
+        text: "Bonjour ! 👋 Je suis l'assistant intelligent **GreenTech**.\n\nJe suis là pour optimiser votre performance énergétique. Je peux :\n\n- 📊 **Analyser** vos consommations (Électricité, Gaz, Transport)\n- 🔮 **Prédire** vos futures factures et émissions CO₂\n- 💡 **Proposer** des solutions pour réduire les coûts\n- ⚠️ **Détecter** les anomalies en temps réel\n\n**Posez-moi une question ou choisissez une action ci-dessous !** 👇",
+        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+    }
+]);
     const [chatInput, setChatInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
-
     const chatMessagesRef = useRef(null);
-
-    // Initialisation
-    useEffect(() => {
-        setChatMessages([{
-            sender: 'ai',
-            text: "Bonjour ! Je suis l'IA GreenTech. Posez-moi une question !",
-            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-        }]);
-    }, []);
 
     // Auto Scroll
     useEffect(() => {
@@ -24,44 +20,41 @@ const useChatbotLogic = ( ) => {
         }
     }, [chatMessages, isTyping]);
 
-    const sendChatMessage = async () => {
-        if (!chatInput.trim()) return;
+    const sendChatMessage = async (msgOverride = null) => {
+        const messageToSend = msgOverride || chatInput;
+        if (!messageToSend.trim()) return;
         
-        const userMsg = chatInput;
         const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-        // 1. Kan-zidou l-message dyal User
+        // 1. Préparer l'historique pour l'API
         const history = chatMessages.slice(-6).map(msg => ({
             role: msg.sender === 'user' ? 'user' : 'assistant',
             content: msg.text
         }));
 
-        setChatMessages(prev => [...prev, { sender: 'user', text: userMsg, time }]);
+        // 2. Ajouter le message utilisateur à l'UI
+        setChatMessages(prev => [...prev, { sender: 'user', text: messageToSend, time }]);
         setChatInput('');
         setIsTyping(true);
-        
-        // ❌ HYYEDNA HADI: setChatMessages(prev => [...prev, { sender: 'ai', text: "", time }]);
-        // L-message dyal AI maghaytzadch daba
 
         let aiFullText = "";
 
+        // 3. Appel au Service
         await streamChatResponse(
-            userMsg, 
+            messageToSend, 
             history, 
             (chunk) => { 
-                setIsTyping(false); // Kan7bsso l-loading mli kaybda l-ktiba
+                setIsTyping(false);
                 aiFullText += chunk; 
 
                 setChatMessages(prev => {
                     const lastMsg = prev[prev.length - 1];
-
-                    // Logic: Ila kan akher message howa 'ai', kan-updatiwh.
-                    // Ila kan akher message howa 'user', kankriyiw wahd jdid dyal 'ai'.
                     if (lastMsg && lastMsg.sender === 'ai') {
                         const newMsgs = [...prev];
                         newMsgs[newMsgs.length - 1] = { ...lastMsg, text: aiFullText };
                         return newMsgs;
                     } else {
+                        // Sinon on crée le message de l'IA
                         return [...prev, { sender: 'ai', text: aiFullText, time }];
                     }
                 });
@@ -69,25 +62,14 @@ const useChatbotLogic = ( ) => {
             (error) => {
                 console.error("Erreur Chatbot:", error);
                 setIsTyping(false);
-                
-                // Hta f l-error, khassna nchofo wash message déjà kayn ola la
-                setChatMessages(prev => {
-                    const lastMsg = prev[prev.length - 1];
-                    const errorText = "⚠️ Désolé, une erreur est survenue.";
-
-                    if (lastMsg && lastMsg.sender === 'ai') {
-                        const newMsgs = [...prev];
-                        newMsgs[newMsgs.length - 1].text = errorText;
-                        return newMsgs;
-                    } else {
-                        return [...prev, { sender: 'ai', text: errorText, time }];
-                    }
-                });
+                setChatMessages(prev => [
+                    ...prev, 
+                    { sender: 'ai', text: "⚠️ Désolé, une erreur est survenue.", time }
+                ]);
             }
         );
     };
 
-    // 👇 Helper Functions
     const handleChatEnter = (event) => {
         if (event.key === 'Enter') {
             sendChatMessage();
@@ -95,11 +77,8 @@ const useChatbotLogic = ( ) => {
     };
     
     const quickAction = (question) => {
-        // Hna khassna ndiro chwiya d modification bach tkhdm mzyan m3a state
         setChatInput(question);
-        // Best practice: N3yytou l sendChatMessage direct bla timeout ila kan momkin, 
-        // walakin madaam khdamti b timeout, khalliha haka:
-        setTimeout(() => sendChatMessage(), 100); 
+        sendChatMessage(question); 
     };
 
     return {
@@ -114,4 +93,4 @@ const useChatbotLogic = ( ) => {
     };
 };
 
-export default useChatbotLogic;
+export default useChatBot;

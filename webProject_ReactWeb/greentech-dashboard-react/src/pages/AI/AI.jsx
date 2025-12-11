@@ -6,15 +6,17 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import useChatbot from '../../hooks/useChatBot';
 import remarkBreaks from 'remark-breaks'; 
-
-// npm install react-markdown remark-gfm
+import useAIPrediction from '../../hooks/useAIPrediction';
 
 const AI = () => {
   const [activeSubTab, setActiveSubTab] = useState('chatbot');
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRecommendation, setSelectedRecommendation] = useState(null);
-
- const {
+   const { 
+        predictionData, 
+        generatePredictions 
+    } = useAIPrediction();
+     const {
         chatMessages,
         chatInput,
         setChatInput,
@@ -48,10 +50,15 @@ const formatStreamText = (text) => {
     setRecommendationProgress,
     setRecommendationStep,
     isRecommendationsGenerated,
-    setIsRecommendationsGenerated
+    setIsRecommendationsGenerated,
+    predictionProgress,
+    predictionStep,    
+    isGeneratingPredictions
   } = useLoading();
 
 
+
+  
 
 
 
@@ -216,50 +223,6 @@ const formatStreamText = (text) => {
     }
   };
 
-  // Generate Predictions
-  const generatePredictions = () => {
-    setIsGeneratingPredictions(true);
-    setPredictionProgress(0);
-
-    const steps = [
-      { progress: 0, message: 'Initialisation des modèles IA...', duration: 500 },
-      { progress: 20, message: 'Analyse des données historiques...', duration: 700 },
-      { progress: 40, message: 'Entraînement des algorithmes prédictifs...', duration: 800 },
-      { progress: 60, message: 'Calcul des tendances futures...', duration: 700 },
-      { progress: 80, message: 'Génération des graphiques...', duration: 600 },
-      { progress: 100, message: 'Finalisation...', duration: 300 }
-    ];
-
-    let currentStep = 0;
-
-    const executeStep = () => {
-      if (currentStep < steps.length) {
-        const step = steps[currentStep];
-        setPredictionProgress(step.progress);
-        setPredictionStep(step.message);
-
-        setTimeout(() => {
-          currentStep++;
-          executeStep();
-        }, step.duration);
-      } else {
-        setTimeout(() => {
-          setIsGeneratingPredictions(false);
-          setIsPredictionsGenerated(true);
-          showNotification('Prédictions générées avec succès!', 'success');
-          // Initialize charts immediately after generation
-          requestAnimationFrame(() => {
-            setTimeout(() => {
-              initializePredictionCharts();
-            }, 100);
-          });
-        }, 200);
-      }
-    };
-
-    executeStep();
-  };
-  
 
 
   // Generate Recommendations
@@ -299,18 +262,17 @@ const formatStreamText = (text) => {
     executeStep();
   };
 
-
-
-  useEffect(() => {
+ 
+useEffect(() => {
     if (activeSubTab === 'predictions' && isPredictionsGenerated) {
-      // Use requestAnimationFrame to ensure DOM is fully rendered
       requestAnimationFrame(() => {
         setTimeout(() => {
           initializePredictionCharts();
-        }, 50);
+        }, 100);
       });
     }
   }, [activeSubTab, isPredictionsGenerated]);
+
 
   useEffect(() => {
     if (chatMessagesRef.current) {
@@ -333,7 +295,6 @@ const formatStreamText = (text) => {
 
 
   // useEffect(() => {
-  //   if (!aiStats || loading) return;
   //   const canvasElement = document.getElementById('energyChart');
   //   if (!canvasElement) return;
   //   if (chartRef.current) chartRef.current.destroy();
@@ -356,12 +317,9 @@ const formatStreamText = (text) => {
   //   });
 
   //   return () => { if (chartRef.current) chartRef.current.destroy(); };
-  // }, [aiStats, loading]);
+  // }, []);
 
-  // Handle Enter key in chat input
-  
-
-  // Quick action button click
+ 
 
 
   // Start recommended action
@@ -392,202 +350,95 @@ const formatStreamText = (text) => {
   };
 
   // Initialize prediction charts
-  const initializePredictionCharts = () => {
-    // Destroy existing charts
-    Object.values(chartsRef.current).forEach(chart => {
-      if (chart) chart.destroy();
+ const initializePredictionCharts = () => {
+    // 1. Ila makanch data, 7bess
+    if (!predictionData) return;
+
+    // 2. Nettoyer l-charts l-9dam
+    Object.values(chartsRef.current).forEach(chart => { 
+        if (chart) chart.destroy(); 
     });
 
-    // Electricity
-    const el1 = document.getElementById('electricityPredictionChart');
-    if (el1) {
-      chartsRef.current.electricity = new Chart(el1, {
-        type: 'line',
-        data: {
-          labels: ['J1', 'J5', 'J10', 'J15', 'J20', 'J25', 'J30'],
-          datasets: [{
-            data: [2450, 2500, 2480, 2550, 2600, 2620, 2650],
-            borderColor: '#feca57',
-            backgroundColor: 'rgba(254, 202, 87, 0.1)',
-            fill: true,
-            tension: 0.4,
-            borderWidth: 3,
-            pointRadius: 4,
-            pointBackgroundColor: '#feca57'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
+    const labels = ['J-6', 'J-5', 'J-4', 'J-3', 'J-2', 'Hier', 'Aujourd\'hui'];
+
+    // Helper bach y-creer Chart (Kay-accepti Array dyal l-backend)
+    const createChart = (canvasId, historyData, color, bgColor) => {
+      const ctx = document.getElementById(canvasId);
+      
+      // ✅ HNA L-MOCHKIL KAN:
+      // Ila l-backend sift history 3amer, khoudou. Sinon dir 7 dyal les zéros.
+      const realData = (historyData && historyData.length > 0) 
+                        ? historyData 
+                        : [0, 0, 0, 0, 0, 0, 0];
+
+      if (ctx) {
+        return new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: realData, // <--- Hna fin katchd l-ar9am dyal DB
+              borderColor: color,
+              backgroundColor: bgColor,
+              fill: true,
+              tension: 0.4,
+              borderWidth: 3,
+              pointRadius: 3,
+              pointBackgroundColor: color
+            }]
           },
-          scales: {
-            y: {
-              beginAtZero: false,
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
-              ticks: {
-                color: '#b0b0b0'
-              }
-            },
-            x: {
-              grid: {
-                display: false
-              },
-              ticks: {
-                color: '#b0b0b0'
-              }
-            }
+          options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { legend: { display: false } }, 
+            scales: { x: { display: false }, y: { display: false } } 
           }
-        }
-      });
+        });
+      }
+      return null;
+    };
+
+    // --- 1. ELECTRICITY ---
+    if (predictionData.electricite) {
+        chartsRef.current.electricity = createChart(
+            'electricityPredictionChart',
+            predictionData.electricite.history, // <--- Jib history mn Backend
+            '#feca57', 
+            'rgba(254, 202, 87, 0.1)'
+        );
     }
 
-    // Gas
-    const el2 = document.getElementById('gasPredictionChart');
-    if (el2) {
-      chartsRef.current.gas = new Chart(el2, {
-        type: 'line',
-        data: {
-          labels: ['J1', 'J5', 'J10', 'J15', 'J20', 'J25', 'J30'],
-          datasets: [{
-            data: [8, 8.2, 8.5, 9, 9.5, 10, 10.5],
-            borderColor: '#ff6348',
-            backgroundColor: 'rgba(255, 99, 72, 0.1)',
-            fill: true,
-            tension: 0.4,
-            borderWidth: 3,
-            pointRadius: 4,
-            pointBackgroundColor: '#ff6348'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            y: {
-              beginAtZero: false,
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
-              ticks: {
-                color: '#b0b0b0'
-              }
-            },
-            x: {
-              grid: {
-                display: false
-              },
-              ticks: {
-                color: '#b0b0b0'
-              }
-            }
-          }
-        }
-      });
+    // --- 2. GAZ ---
+    if (predictionData.gaz) {
+        chartsRef.current.gas = createChart(
+            'gasPredictionChart',
+            predictionData.gaz.history, 
+            '#ff6348',
+            'rgba(255, 99, 72, 0.1)'
+        );
     }
 
-    // Transport
-    const el3 = document.getElementById('transportPredictionChart');
-    if (el3) {
-      chartsRef.current.transport = new Chart(el3, {
-        type: 'line',
-        data: {
-          labels: ['J1', 'J5', 'J10', 'J15', 'J20', 'J25', 'J30'],
-          datasets: [{
-            data: [8200, 8250, 8280, 8300, 8320, 8350, 8370],
-            borderColor: '#48dbfb',
-            backgroundColor: 'rgba(72, 219, 251, 0.1)',
-            fill: true,
-            tension: 0.4,
-            borderWidth: 3,
-            pointRadius: 4,
-            pointBackgroundColor: '#48dbfb'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            y: {
-              beginAtZero: false,
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
-              ticks: {
-                color: '#b0b0b0'
-              }
-            },
-            x: {
-              grid: {
-                display: false
-              },
-              ticks: {
-                color: '#b0b0b0'
-              }
-            }
-          }
-        }
-      });
+    // --- 3. TRANSPORT ---
+    if (predictionData.transport) {
+        chartsRef.current.transport = createChart(
+            'transportPredictionChart',
+            predictionData.transport.history,
+            '#48dbfb',
+            'rgba(72, 219, 251, 0.1)'
+        );
     }
 
-    // Waste
-    const el4 = document.getElementById('wastePredictionChart');
-    if (el4) {
-      chartsRef.current.waste = new Chart(el4, {
-        type: 'line',
-        data: {
-          labels: ['J1', 'J5', 'J10', 'J15', 'J20', 'J25', 'J30'],
-          datasets: [{
-            data: [518, 530, 545, 555, 565, 575, 580],
-            borderColor: '#1dd1a1',
-            backgroundColor: 'rgba(29, 209, 161, 0.1)',
-            fill: true,
-            tension: 0.4,
-            borderWidth: 3,
-            pointRadius: 4,
-            pointBackgroundColor: '#1dd1a1'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            y: {
-              beginAtZero: false,
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
-              ticks: {
-                color: '#b0b0b0'
-              }
-            },
-            x: {
-              grid: {
-                display: false
-              },
-              ticks: {
-                color: '#b0b0b0'
-              }
-            }
-          }
-        }
-      });
+    // --- 4. DÉCHETS ---
+    if (predictionData.dechets) {
+        chartsRef.current.waste = createChart(
+            'wastePredictionChart',
+            predictionData.dechets.history,
+            '#1dd1a1',
+            'rgba(29, 209, 161, 0.1)'
+        );
     }
   };
 
-  // Cleanup charts on unmount
   useEffect(() => {
     return () => {
       Object.values(chartsRef.current).forEach(chart => {
@@ -1122,10 +973,10 @@ const formatStreamText = (text) => {
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '500px', margin: '0 auto 25px' }}>
               Cliquez sur le bouton "Générer les Prédictions" pour analyser vos données historiques et obtenir des prévisions de consommation pour les 30 prochains jours.
             </p>
-            <button onClick={generatePredictions} className="btn-primary">
+            {/* <button onClick={generatePredictions} className="btn-primary">
               <i className="fas fa-magic"></i>
               Générer les Prédictions
-            </button>
+            </button> */}
           </div>
         ) : (
           <div className="predictions-intro" style={{ marginBottom: '25px' }}>
@@ -1135,13 +986,15 @@ const formatStreamText = (text) => {
           </div>
         )}
 
-        {isPredictionsGenerated && (
+       {isPredictionsGenerated && predictionData && (
         <div className="predictions-grid" style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '20px',
           marginTop: '20px'
         }}>
+          
+          {/* ======================= 1. ÉLECTRICITÉ ======================= */}
           <div className="prediction-card" style={{
             background: 'rgba(255, 255, 255, 0.05)',
             backdropFilter: 'blur(10px)',
@@ -1150,126 +1003,56 @@ const formatStreamText = (text) => {
             border: '1px solid rgba(254, 202, 87, 0.2)',
             boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)'
           }}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '70px 230px 170px 300px 260px 1fr',
-              gap: '15px',
-              alignItems: 'center'
-            }}>
-              {/* Colonne 1: Icône */}
-              <div style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #feca57 0%, #ff9ff3 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '28px'
-              }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '70px 230px 170px 300px 260px 1fr', gap: '15px', alignItems: 'center' }}>
+              {/* Icône */}
+              <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: 'linear-gradient(135deg, #feca57 0%, #ff9ff3 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
                 <i className="fas fa-bolt" />
               </div>
-
-              {/* Colonne 2: Titre + Sous-titre */}
+              {/* Titre */}
               <div>
-                <h4 style={{ margin: '0 0 6px 0', fontSize: '17px', fontWeight: '700' }}>
-                  Prédiction Électricité
-                </h4>
-                <p style={{ margin: '0', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.3' }}>
-                  Consommation prévue sur 30 jours par département
-                </p>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '17px', fontWeight: '700' }}>Prédiction Électricité</h4>
+                <p style={{ margin: '0', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.3' }}>Consommation prévue sur 30 jours</p>
               </div>
-
-              {/* Colonne 3: Valeur principale + % */}
+              {/* Valeur Principale (DYNAMIQUE) */}
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#feca57', marginBottom: '2px' }}>
-                  2,650 kWh
+                  {predictionData.electricite.valeurPrincipale}
                 </div>
                 <div style={{ fontSize: '11px', color: '#feca57' }}>
-                  <i className="fas fa-arrow-up" /> +5%
+                  <i className="fas fa-arrow-up" /> {predictionData.electricite.pourcentage}
                 </div>
               </div>
-
-              {/* Colonne 4: Graphique */}
+              {/* Graphique */}
               <div>
-                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  📈 Tendance
-                </h5>
-                <div style={{ height: '140px', position: 'relative' }}>
-                  <canvas id="electricityPredictionChart" />
-                </div>
+                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📈 Tendance</h5>
+                <div style={{ height: '140px', position: 'relative' }}><canvas id="electricityPredictionChart" /></div>
               </div>
-
-              {/* Colonne 5: Répartition */}
+              {/* Répartition (Statique pour l'instant) */}
               <div>
-                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  📊 Répartition
-                </h5>
-                <div style={{
-                  background: 'rgba(0, 0, 0, 0.15)',
-                  borderRadius: '10px',
-                  padding: '10px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span>🏭 Production</span>
-                    <span style={{ fontWeight: '700', color: '#feca57' }}>45%</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span>🏢 Bureaux</span>
-                    <span style={{ fontWeight: '700', color: '#feca57' }}>25%</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span>📦 Entrepôt</span>
-                    <span style={{ fontWeight: '700', color: '#feca57' }}>20%</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span>☕ Cafétéria</span>
-                    <span style={{ fontWeight: '700', color: '#feca57' }}>10%</span>
-                  </div>
-                </div>
+                 <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📊 Répartition</h5>
+                 <div style={{ background: 'rgba(0, 0, 0, 0.15)', borderRadius: '10px', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}><span>🏭 Production</span><span style={{ fontWeight: '700', color: '#feca57' }}>45%</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}><span>🏢 Bureaux</span><span style={{ fontWeight: '700', color: '#feca57' }}>25%</span></div>
+                 </div>
               </div>
-
-              {/* Colonne 6: Impact */}
+              {/* Impact (DYNAMIQUE) */}
               <div>
-                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  💰 Impact
-                </h5>
+                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>💰 Impact</h5>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{
-                    padding: '10px',
-                    background: 'rgba(254, 202, 87, 0.1)',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(254, 202, 87, 0.2)'
-                  }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
-                      Coût prévu
-                    </div>
-                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#feca57' }}>
-                      2,310 MAD
-                    </div>
+                  <div style={{ padding: '10px', background: 'rgba(254, 202, 87, 0.1)', borderRadius: '10px', border: '1px solid rgba(254, 202, 87, 0.2)' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>Coût prévu</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#feca57' }}>{predictionData.electricite.coutPrevu}</div>
                   </div>
-                  <div style={{
-                    padding: '10px',
-                    background: 'rgba(67, 233, 123, 0.1)',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(67, 233, 123, 0.2)'
-                  }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
-                      Émissions CO2
-                    </div>
-                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#43e97b' }}>
-                      1.9 t CO2
-                    </div>
+                  <div style={{ padding: '10px', background: 'rgba(67, 233, 123, 0.1)', borderRadius: '10px', border: '1px solid rgba(67, 233, 123, 0.2)' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>Émissions CO2</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#43e97b' }}>{predictionData.electricite.emissionCo2}</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Gas Prediction */}
+          {/* ======================= 2. GAZ ======================= */}
           <div className="prediction-card" style={{
             background: 'rgba(255, 255, 255, 0.05)',
             backdropFilter: 'blur(10px)',
@@ -1278,127 +1061,56 @@ const formatStreamText = (text) => {
             border: '1px solid rgba(255, 99, 72, 0.2)',
             boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)'
           }}>
-            {/* Grid avec largeurs fixes pour alignement parfait */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '70px 230px 170px 300px 260px 1fr',
-              gap: '15px',
-              alignItems: 'center'
-            }}>
-              {/* Colonne 1: Icône */}
-              <div style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #ff6348 0%, #ffb142 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '28px'
-              }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '70px 230px 170px 300px 260px 1fr', gap: '15px', alignItems: 'center' }}>
+              {/* Icône */}
+              <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: 'linear-gradient(135deg, #ff6348 0%, #ffb142 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
                 <i className="fas fa-fire" />
               </div>
-
-              {/* Colonne 2: Titre + Sous-titre */}
+              {/* Titre */}
               <div>
-                <h4 style={{ margin: '0 0 6px 0', fontSize: '17px', fontWeight: '700' }}>
-                  Prédiction Gaz
-                </h4>
-                <p style={{ margin: '0', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.3' }}>
-                  Consommation prévue sur 30 jours par usage
-                </p>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '17px', fontWeight: '700' }}>Prédiction Gaz</h4>
+                <p style={{ margin: '0', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.3' }}>Consommation prévue sur 30 jours</p>
               </div>
-
-              {/* Colonne 3: Valeur principale + % */}
+              {/* Valeur (DYNAMIQUE) */}
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#ff6348', marginBottom: '2px' }}>
-                  10.5 btl
+                  {predictionData.gaz.valeurPrincipale}
                 </div>
                 <div style={{ fontSize: '11px', color: '#ff6348' }}>
-                  <i className="fas fa-arrow-up" /> +3%
+                  <i className="fas fa-arrow-up" /> {predictionData.gaz.pourcentage}
                 </div>
               </div>
-
-              {/* Colonne 4: Graphique */}
+              {/* Graphique */}
               <div>
-                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  📈 Tendance
-                </h5>
-                <div style={{ height: '140px', position: 'relative' }}>
-                  <canvas id="gasPredictionChart" />
-                </div>
+                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📈 Tendance</h5>
+                <div style={{ height: '140px', position: 'relative' }}><canvas id="gasPredictionChart" /></div>
               </div>
-
-              {/* Colonne 5: Répartition */}
+              {/* Répartition */}
               <div>
-                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  📊 Répartition
-                </h5>
-                <div style={{
-                  background: 'rgba(0, 0, 0, 0.15)',
-                  borderRadius: '10px',
-                  padding: '10px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span>🍳 Cuisine</span>
-                    <span style={{ fontWeight: '700', color: '#ff6348' }}>35%</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span>🌡️ Chauffage</span>
-                    <span style={{ fontWeight: '700', color: '#ff6348' }}>30%</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span>❄️ Climatisation</span>
-                    <span style={{ fontWeight: '700', color: '#ff6348' }}>25%</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span>💧 Eau + Production</span>
-                    <span style={{ fontWeight: '700', color: '#ff6348' }}>10%</span>
-                  </div>
-                </div>
+                 <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📊 Répartition</h5>
+                 <div style={{ background: 'rgba(0, 0, 0, 0.15)', borderRadius: '10px', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}><span>🍳 Cuisine</span><span style={{ fontWeight: '700', color: '#ff6348' }}>35%</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}><span>🌡️ Chauffage</span><span style={{ fontWeight: '700', color: '#ff6348' }}>30%</span></div>
+                 </div>
               </div>
-
-              {/* Colonne 6: Impact */}
+              {/* Impact (DYNAMIQUE) */}
               <div>
-                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  💰 Impact
-                </h5>
+                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>💰 Impact</h5>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{
-                    padding: '10px',
-                    background: 'rgba(255, 99, 72, 0.1)',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(255, 99, 72, 0.2)'
-                  }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
-                      Coût prévu
-                    </div>
-                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#ff6348' }}>
-                      520 MAD
-                    </div>
+                  <div style={{ padding: '10px', background: 'rgba(255, 99, 72, 0.1)', borderRadius: '10px', border: '1px solid rgba(255, 99, 72, 0.2)' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>Coût prévu</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#ff6348' }}>{predictionData.gaz.coutPrevu}</div>
                   </div>
-                  <div style={{
-                    padding: '10px',
-                    background: 'rgba(67, 233, 123, 0.1)',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(67, 233, 123, 0.2)'
-                  }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
-                      Émissions CO2
-                    </div>
-                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#43e97b' }}>
-                      86 kg CO2
-                    </div>
+                  <div style={{ padding: '10px', background: 'rgba(67, 233, 123, 0.1)', borderRadius: '10px', border: '1px solid rgba(67, 233, 123, 0.2)' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>Émissions CO2</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#43e97b' }}>{predictionData.gaz.emissionCo2}</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Transport Prediction */}
+          {/* ======================= 3. TRANSPORT ======================= */}
           <div className="prediction-card" style={{
             background: 'rgba(255, 255, 255, 0.05)',
             backdropFilter: 'blur(10px)',
@@ -1407,127 +1119,56 @@ const formatStreamText = (text) => {
             border: '1px solid rgba(72, 219, 251, 0.2)',
             boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)'
           }}>
-            {/* Grid avec largeurs fixes pour alignement parfait */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '70px 230px 170px 300px 260px 1fr',
-              gap: '15px',
-              alignItems: 'center'
-            }}>
-              {/* Colonne 1: Icône */}
-              <div style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #48dbfb 0%, #0abde3 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '28px'
-              }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '70px 230px 170px 300px 260px 1fr', gap: '15px', alignItems: 'center' }}>
+              {/* Icône */}
+              <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: 'linear-gradient(135deg, #48dbfb 0%, #0abde3 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
                 <i className="fas fa-truck" />
               </div>
-
-              {/* Colonne 2: Titre + Sous-titre */}
+              {/* Titre */}
               <div>
-                <h4 style={{ margin: '0 0 6px 0', fontSize: '17px', fontWeight: '700' }}>
-                  Prédiction Transport
-                </h4>
-                <p style={{ margin: '0', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.3' }}>
-                  Distance prévue sur 30 jours par véhicule
-                </p>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '17px', fontWeight: '700' }}>Prédiction Transport</h4>
+                <p style={{ margin: '0', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.3' }}>Distance prévue sur 30 jours</p>
               </div>
-
-              {/* Colonne 3: Valeur principale + % */}
+              {/* Valeur (DYNAMIQUE) */}
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#48dbfb', marginBottom: '2px' }}>
-                  8,370 km
+                  {predictionData.transport.valeurPrincipale}
                 </div>
                 <div style={{ fontSize: '11px', color: '#48dbfb' }}>
-                  <i className="fas fa-arrow-up" /> +2%
+                  <i className="fas fa-arrow-up" /> {predictionData.transport.pourcentage}
                 </div>
               </div>
-
-              {/* Colonne 4: Graphique */}
+              {/* Graphique */}
               <div>
-                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  📈 Tendance
-                </h5>
-                <div style={{ height: '140px', position: 'relative' }}>
-                  <canvas id="transportPredictionChart" />
-                </div>
+                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📈 Tendance</h5>
+                <div style={{ height: '140px', position: 'relative' }}><canvas id="transportPredictionChart" /></div>
               </div>
-
-              {/* Colonne 5: Répartition */}
+              {/* Répartition */}
               <div>
-                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  📊 Répartition
-                </h5>
-                <div style={{
-                  background: 'rgba(0, 0, 0, 0.15)',
-                  borderRadius: '10px',
-                  padding: '10px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span>🚚 Camion</span>
-                    <span style={{ fontWeight: '700', color: '#48dbfb' }}>32%</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span>🚐 Camionnette</span>
-                    <span style={{ fontWeight: '700', color: '#48dbfb' }}>24%</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span>🚗 Voitures</span>
-                    <span style={{ fontWeight: '700', color: '#48dbfb' }}>24%</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span>🚙 Utilitaire + Moto</span>
-                    <span style={{ fontWeight: '700', color: '#48dbfb' }}>20%</span>
-                  </div>
-                </div>
+                 <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📊 Répartition</h5>
+                 <div style={{ background: 'rgba(0, 0, 0, 0.15)', borderRadius: '10px', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}><span>🚚 Camion</span><span style={{ fontWeight: '700', color: '#48dbfb' }}>32%</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}><span>🚗 Voitures</span><span style={{ fontWeight: '700', color: '#48dbfb' }}>24%</span></div>
+                 </div>
               </div>
-
-              {/* Colonne 6: Impact */}
+              {/* Impact (DYNAMIQUE) */}
               <div>
-                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  💰 Impact
-                </h5>
+                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>💰 Impact</h5>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{
-                    padding: '10px',
-                    background: 'rgba(72, 219, 251, 0.1)',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(72, 219, 251, 0.2)'
-                  }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
-                      Essence consommée
-                    </div>
-                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#48dbfb' }}>
-                      789 L
-                    </div>
+                  <div style={{ padding: '10px', background: 'rgba(72, 219, 251, 0.1)', borderRadius: '10px', border: '1px solid rgba(72, 219, 251, 0.2)' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>Coût prévu</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#48dbfb' }}>{predictionData.transport.coutPrevu}</div>
                   </div>
-                  <div style={{
-                    padding: '10px',
-                    background: 'rgba(67, 233, 123, 0.1)',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(67, 233, 123, 0.2)'
-                  }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
-                      Émissions CO2
-                    </div>
-                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#43e97b' }}>
-                      1.86 t CO2
-                    </div>
+                  <div style={{ padding: '10px', background: 'rgba(67, 233, 123, 0.1)', borderRadius: '10px', border: '1px solid rgba(67, 233, 123, 0.2)' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>Émissions CO2</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#43e97b' }}>{predictionData.transport.emissionCo2}</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Waste Prediction */}
+          {/* ======================= 4. DÉCHETS ======================= */}
           <div className="prediction-card" style={{
             background: 'rgba(255, 255, 255, 0.05)',
             backdropFilter: 'blur(10px)',
@@ -1536,138 +1177,63 @@ const formatStreamText = (text) => {
             border: '1px solid rgba(29, 209, 161, 0.2)',
             boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)'
           }}>
-            {/* Grid avec largeurs fixes pour alignement parfait */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '70px 230px 170px 300px 260px 1fr',
-              gap: '15px',
-              alignItems: 'center'
-            }}>
-              {/* Colonne 1: Icône */}
-              <div style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #1dd1a1 0%, #10ac84 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '28px'
-              }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '70px 230px 170px 300px 260px 1fr', gap: '15px', alignItems: 'center' }}>
+              {/* Icône */}
+              <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: 'linear-gradient(135deg, #1dd1a1 0%, #10ac84 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
                 <i className="fas fa-trash-alt" />
               </div>
-
-              {/* Colonne 2: Titre + Sous-titre */}
+              {/* Titre */}
               <div>
-                <h4 style={{ margin: '0 0 6px 0', fontSize: '17px', fontWeight: '700' }}>
-                  Prédiction Déchets
-                </h4>
-                <p style={{ margin: '0', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.3' }}>
-                  Production prévue sur 30 jours par type (Taux recyclage: 42%)
-                </p>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '17px', fontWeight: '700' }}>Prédiction Déchets</h4>
+                <p style={{ margin: '0', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.3' }}>Production prévue sur 30 jours</p>
               </div>
-
-              {/* Colonne 3: Valeur principale + % */}
+              {/* Valeur (DYNAMIQUE) */}
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#1dd1a1', marginBottom: '2px' }}>
-                  580 kg
+                  {predictionData.dechets.valeurPrincipale}
                 </div>
                 <div style={{ fontSize: '11px', color: '#f5576c' }}>
-                  <i className="fas fa-arrow-up" /> +12%
+                  <i className="fas fa-arrow-up" /> {predictionData.dechets.pourcentage}
                 </div>
               </div>
-
-              {/* Colonne 4: Graphique */}
+              {/* Graphique */}
               <div>
-                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  📈 Tendance
-                </h5>
-                <div style={{ height: '140px', position: 'relative' }}>
-                  <canvas id="wastePredictionChart" />
-                </div>
+                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📈 Tendance</h5>
+                <div style={{ height: '140px', position: 'relative' }}><canvas id="wastePredictionChart" /></div>
               </div>
-
-              {/* Colonne 5: Répartition */}
+              {/* Répartition */}
               <div>
-                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  📊 Répartition
-                </h5>
-                <div style={{
-                  background: 'rgba(0, 0, 0, 0.15)',
-                  borderRadius: '10px',
-                  padding: '10px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px'
-                }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '12px' }}>
-                      <span>♻️ Recyclable</span>
-                      <span style={{ fontWeight: '700', color: '#1dd1a1' }}>42%</span>
+                 <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📊 Répartition</h5>
+                 <div style={{ background: 'rgba(0, 0, 0, 0.15)', borderRadius: '10px', padding: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '12px' }}><span>♻️ Recyclable</span><span style={{ fontWeight: '700', color: '#1dd1a1' }}>42%</span></div>
+                        <div style={{ height: '6px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '3px', overflow: 'hidden' }}><div style={{ width: '42%', height: '100%', background: 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)' }} /></div>
                     </div>
-                    <div style={{ height: '6px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ width: '42%', height: '100%', background: 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)', borderRadius: '3px' }} />
+                    <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '12px' }}><span>🗑️ Non-recyclable</span><span style={{ fontWeight: '700', color: '#1dd1a1' }}>23%</span></div>
+                        <div style={{ height: '6px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '3px', overflow: 'hidden' }}><div style={{ width: '23%', height: '100%', background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)' }} /></div>
                     </div>
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '12px' }}>
-                      <span>🍃 Organique</span>
-                      <span style={{ fontWeight: '700', color: '#1dd1a1' }}>35%</span>
-                    </div>
-                    <div style={{ height: '6px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ width: '35%', height: '100%', background: 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)', borderRadius: '3px' }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '12px' }}>
-                      <span>🗑️ Non-recyclable</span>
-                      <span style={{ fontWeight: '700', color: '#1dd1a1' }}>23%</span>
-                    </div>
-                    <div style={{ height: '6px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ width: '23%', height: '100%', background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)', borderRadius: '3px' }} />
-                    </div>
-                  </div>
-                </div>
+                 </div>
               </div>
-
-              {/* Colonne 6: Impact */}
+              {/* Impact (DYNAMIQUE) */}
               <div>
-                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  💰 Impact
-                </h5>
+                <h5 style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>💰 Impact</h5>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{
-                    padding: '10px',
-                    background: 'rgba(29, 209, 161, 0.1)',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(29, 209, 161, 0.2)'
-                  }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
-                      Déchets recyclés
-                    </div>
-                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#1dd1a1' }}>
-                      244 kg
-                    </div>
+                  <div style={{ padding: '10px', background: 'rgba(29, 209, 161, 0.1)', borderRadius: '10px', border: '1px solid rgba(29, 209, 161, 0.2)' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>Coût prévu</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#1dd1a1' }}>{predictionData.dechets.coutPrevu}</div>
                   </div>
-                  <div style={{
-                    padding: '10px',
-                    background: 'rgba(67, 233, 123, 0.1)',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(67, 233, 123, 0.2)'
-                  }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
-                      Émissions CO2
-                    </div>
-                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#43e97b' }}>
-                      133 kg CO2
-                    </div>
+                  <div style={{ padding: '10px', background: 'rgba(67, 233, 123, 0.1)', borderRadius: '10px', border: '1px solid rgba(67, 233, 123, 0.2)' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>Émissions CO2</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#43e97b' }}>{predictionData.dechets.emissionCo2}</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
         </div>
-        )}
+      )}
       </div>
 
       {/* Recommendations Tab */}

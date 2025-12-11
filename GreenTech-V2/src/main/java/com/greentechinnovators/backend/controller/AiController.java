@@ -1,5 +1,6 @@
 package com.greentechinnovators.backend.controller;
 
+import com.greentechinnovators.backend.dto.AI.PredictionResponse;
 import com.greentechinnovators.backend.service.AIService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -9,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/chat")
+@RequestMapping("/api/ai")
 public class AiController {
 
     private final AIService aiService;
@@ -19,7 +20,7 @@ public class AiController {
     }
 
 
-    @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> chatStream(@RequestBody Map<String, Object> payload) {
         String userMessage = (String) payload.get("message");
         List<Map<String, String>> history = (List<Map<String, String>>) payload.get("history");
@@ -27,5 +28,8 @@ public class AiController {
         return aiService.askAIStream(userMessage, history);
     }
 
-
+    @GetMapping("/predictions")
+    public PredictionResponse getPredictions() {
+        return aiService.generatePredictions();
+    }
 }
