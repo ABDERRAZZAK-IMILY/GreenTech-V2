@@ -37,9 +37,9 @@ public class TrashService {
 
     }
 
-    public List<TrashResponseDTO> getAllReadings() {
-        List<Trash> trashList = repository.findAllByOrderByTimestampDesc();
-
-        return trashList.stream().map(mapper::toResponse).toList();
-    }
+//    public List<TrashResponseDTO> getAllReadings() {
+//        List<Trash> trashList = repository.findAllByOrderByTimestampDesc();
+//
+//        return trashList.stream().map(mapper::toResponse).toList();
+//    }
 }

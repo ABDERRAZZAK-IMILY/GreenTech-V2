@@ -36,6 +36,7 @@ public class SecurityConfig {
                         .requestMatchers("/notifications/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/ws/**", "/iot/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
