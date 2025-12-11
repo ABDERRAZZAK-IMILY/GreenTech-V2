@@ -10,6 +10,7 @@ pipeline {
         SPRING_DATA_MONGODB_URI = "mongodb://mongodbatlas:27017/greentech_db"
     }
 
+
     stages {
         stage('Checkout') {
             steps {
