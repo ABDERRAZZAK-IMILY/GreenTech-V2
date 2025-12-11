@@ -24,4 +24,5 @@ public interface VehicleLogRepository extends MongoRepository<VehicleLog,String>
             "{ '$sort': { '_id': 1 } }"
     })
     List<DailyStat> getLast7DaysStats(LocalDateTime startDate);
+    List<VehicleLog> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

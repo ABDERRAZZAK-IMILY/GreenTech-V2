@@ -25,4 +25,5 @@ public interface EnergyRepository extends MongoRepository<Energy, String> {
             "{ '$sort': { '_id': 1 } }"
     })
     List<DailyStat> getLast7DaysStats(LocalDateTime startDate);
+    List<Energy> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

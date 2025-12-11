@@ -7,9 +7,11 @@ import com.greentechinnovators.backend.entity.VehicleLog;
 import com.greentechinnovators.backend.mapper.VehicleMapper;
 import com.greentechinnovators.backend.repository.VehicleLogRepository;
 import com.greentechinnovators.backend.repository.VehicleRepository;
+import com.greentechinnovators.backend.utils.CarbonFootprintService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -18,6 +20,7 @@ public class VehicleLogservice {
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper mapper;
     private final VehicleLogRepository vehicleLogRepository;
+    private final CarbonFootprintService carbonFootprintService;
 
     public VehicleLogResponseDTO create(VehicleLogRequestDTO dto){
         Vehicle vehicle = vehicleRepository.findById(dto.getVehicleId()).orElseThrow(()->{throw  new RuntimeException("vehicle not found");});

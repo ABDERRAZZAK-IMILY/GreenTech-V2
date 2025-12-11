@@ -25,4 +25,6 @@ public interface TrashRepository extends MongoRepository<Trash, String> {
             "{ '$sort': { '_id': 1 } }"
     })
     List<DailyStat> getLast7DaysStats(LocalDateTime startDate);
+    List<Trash> findByTrashDateBetween(LocalDateTime start, LocalDateTime end);
+
 }

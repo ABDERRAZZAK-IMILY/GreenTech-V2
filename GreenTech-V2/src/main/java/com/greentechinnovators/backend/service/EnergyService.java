@@ -8,9 +8,11 @@ import com.greentechinnovators.backend.mapper.EnergyMapper;
 import com.greentechinnovators.backend.repository.EnergyMonitorRepository;
 import com.greentechinnovators.backend.repository.EnergyRepository;
 import com.greentechinnovators.backend.repository.GasMonitorRepository;
+import com.greentechinnovators.backend.utils.CarbonFootprintService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -20,6 +22,7 @@ public class EnergyService {
     private final EnergyRepository repository;
     private final EnergyMapper mapper;
     private final EnergyMonitorRepository monitorRepository;
+    private final CarbonFootprintService carbonFootprintService;
 
     public EnergyResponseDTO createReading(EnergyRequestDTO dto) {
         Energy energy = mapper.toEntity(dto);
@@ -35,7 +38,12 @@ public class EnergyService {
 
 
     public List<EnergyResponseDTO> getAllReadings() {
-        List<Energy> energyList =  repository.findAllByOrderByCreatedAtDesc();
+        List<Energy> energyList =  repository.findAll();
         return energyList.stream().map(mapper::toResponse).toList();
+    }
+    public Double getConsumeEnergyBetweenDates(LocalDateTime start, LocalDateTime end) {
+        List<Energy> energy = repository.findByCreatedAtBetween(start, end);
+        Double consumedEnergy = energy.stream().mapToDouble(Energy::getEnergyConsumed).sum();
+        return carbonFootprintService.calculateEnergyFootprint(consumedEnergy);
     }
 }

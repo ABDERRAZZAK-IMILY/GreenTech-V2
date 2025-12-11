@@ -1,28 +1,46 @@
 package com.greentechinnovators.backend.config;
 
-import com.greentechinnovators.backend.handler.Esp32WebSocketHandler;
-import com.greentechinnovators.backend.handler.NotificationWebSocketHandler;
+import com.greentechinnovators.backend.handler.EnergerIotWebSokrtHandller;
+import com.greentechinnovators.backend.handler.TrashIotWebsocketHandeller;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.socket.config.annotation.EnableWebSocket;
-import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
-import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.*;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+
 
 @Configuration
+@EnableWebSocketMessageBroker
 @EnableWebSocket
-public class WebSocketConfig implements WebSocketConfigurer {
+@RequiredArgsConstructor
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSocketConfigurer {
 
-    private final Esp32WebSocketHandler esp32Handler;
-    private final NotificationWebSocketHandler notificationHandler;
+    private final EnergerIotWebSokrtHandller energyIotHandler;
+    private final TrashIotWebsocketHandeller trashIotHandler;
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
 
-    public WebSocketConfig(Esp32WebSocketHandler esp32Handler, 
-                          NotificationWebSocketHandler notificationHandler) {
-        this.esp32Handler = esp32Handler;
-        this.notificationHandler = notificationHandler;
+        registry.addEndpoint("/ws-native").setAllowedOriginPatterns("*");
+    }
+
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        // Messages prefixed with /app go to controller
+        registry.setApplicationDestinationPrefixes("/app");
+        // Messages prefixed with /topic go to subscribers
+        registry.enableSimpleBroker("/topic");
     }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(esp32Handler, "/ws").setAllowedOrigins("*");
-        registry.addHandler(notificationHandler, "/notifications").setAllowedOrigins("*");
+        // Register WebSocket handlers for IoT devices
+        registry.addHandler(energyIotHandler, "/iot/energy")
+                .setAllowedOrigins("*");
+
+        registry.addHandler(trashIotHandler, "/iot/trash")
+                .setAllowedOrigins("*");
     }
 }
