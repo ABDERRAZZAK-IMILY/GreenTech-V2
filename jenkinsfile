@@ -2,14 +2,13 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3' 
+        maven 'Maven3'
         jdk 'Java17'
     }
 
     environment {
         SPRING_DATA_MONGODB_URI = "mongodb://mongodbatlas:27017/greentech_db"
     }
-
 
     stages {
         stage('Checkout') {
