@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'Maven3'
+        jdk 'Java17'
+    }
+
+    environment {
+        SPRING_DATA_MONGODB_URI = "mongodb://mongodbatlas:27017/greentech_db"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out source code...'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Building the application...'
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo 'Running Unit Tests...'
+                sh 'mvn test'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build and Test Succeeded!'
+        }
+        failure {
+            echo 'Build Failed :('
+        }
+    }
+}
