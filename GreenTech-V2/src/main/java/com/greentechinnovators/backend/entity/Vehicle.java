@@ -25,5 +25,6 @@ public class Vehicle {
     @DBRef
     private List<VehicleLog>  vehicleLogs;
 
+
     private LocalDateTime lastSignalTime;
 }
