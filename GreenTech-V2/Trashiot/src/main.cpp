@@ -11,9 +11,11 @@ const char* password = "Youcode@2024";
 
 const char* ws_host = "192.168.8.101";
 const int ws_port = 8080;
-const char* ws_path = "/ws";
+const char* ws_path = "/ws/trash";  // Updated to use dedicated trash endpoint
+const char* mac_address = "ESP32-TRASH-001";  // Unique MAC address for this device
 
 WebSocketsClient webSocket;
+bool wsConnected = false;
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -25,20 +27,72 @@ const unsigned long sendInterval = 5000;
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     switch(type) {
         case WStype_DISCONNECTED:
-            Serial.println("[WSc] Disconnected!");
+            Serial.println("========================================");
+            Serial.println("[WSc] Disconnected from server!");
+            Serial.println("========================================");
+            wsConnected = false;
+            
+            display.clearDisplay();
+            display.setCursor(0,0);
+            display.println("WS: Disconnected");
+            display.display();
             break;
+            
         case WStype_CONNECTED:
+            Serial.println("========================================");
             Serial.printf("[WSc] Connected to url: %s\n", payload);
+            Serial.println("========================================");
+            wsConnected = true;
+            
+            display.clearDisplay();
+            display.setCursor(0,0);
+            display.println("WS: Connected!");
+            display.display();
             break;
+            
         case WStype_TEXT:
-            Serial.printf("[WSc] Server response: %s\n", payload);
+            {
+                Serial.printf("[WSc] Server response: %s\n", payload);
+                
+                // Parse server response
+                StaticJsonDocument<200> doc;
+                DeserializationError error = deserializeJson(doc, payload);
+                
+                if (!error) {
+                    const char* status = doc["status"];
+                    if (status && strcmp(status, "ok") == 0) {
+                        Serial.println("[WSc] Data acknowledged by server ✓");
+                    } else if (status && strcmp(status, "connected") == 0) {
+                        Serial.println("[WSc] Server sent welcome message ✓");
+                    }
+                }
+            }
+            break;
+            
+        case WStype_ERROR:
+            Serial.println("[WSc]  Error occurred!");
+            wsConnected = false;
+            break;
+            
+        case WStype_PING:
+            Serial.println("[WSc] Ping received");
+            break;
+            
+        case WStype_PONG:
+            Serial.println("[WSc] Pong received - connection alive");
             break;
     }
 }
 
 void sendTrashWeight(float weight) {
+    if (!wsConnected) {
+        Serial.println("WebSocket not connected. Skipping send.");
+        return;
+    }
+    
     StaticJsonDocument<200> doc;
     doc["weight"] = weight;
+    doc["macAddress"] = mac_address;  // Include MAC address
 
     String jsonString;
     serializeJson(doc, jsonString);
@@ -69,10 +123,30 @@ void setup() {
         display.display();
     }
     Serial.println("\nWiFi Connected!");
+    
+    display.clearDisplay();
+    display.setCursor(0,0);
+    display.println("WiFi: Connected");
+    display.print("IP: ");
+    display.println(WiFi.localIP());
+    display.display();
+    delay(2000);
 
+    // Configure WebSocket
+    Serial.println("====================================");
+    Serial.printf("Connecting to WebSocket Server...\n");
+    Serial.printf("Host: %s\n", ws_host);
+    Serial.printf("Port: %d\n", ws_port);
+    Serial.printf("Path: %s\n", ws_path);
+    Serial.printf("ESP32 IP: %s\n", WiFi.localIP().toString().c_str());
+    Serial.println("====================================");
+    
     webSocket.begin(ws_host, ws_port, ws_path);
     webSocket.onEvent(webSocketEvent);
     webSocket.setReconnectInterval(5000);
+    webSocket.enableHeartbeat(15000, 3000, 2); // Ping every 15s, timeout 3s, 2 retries
+    
+    Serial.println("WebSocket configured - waiting for connection...");
 }
 
 void loop() {
@@ -88,12 +162,21 @@ void loop() {
 
         display.clearDisplay();
         display.setCursor(0,0);
-        display.println(">> Sending Weight <<");
+        
+        if (wsConnected) {
+            display.println(">> WS Connected <<");
+        } else {
+            display.println(">> WS Disconnected <<");
+        }
 
-        display.setCursor(0, 30);
+        display.setCursor(0, 20);
         display.print("Weight: ");
         display.print(weight);
         display.println(" kg");
+        
+        display.setCursor(0, 40);
+        display.print("IP: ");
+        display.println(WiFi.localIP());
 
         display.display();
     }
