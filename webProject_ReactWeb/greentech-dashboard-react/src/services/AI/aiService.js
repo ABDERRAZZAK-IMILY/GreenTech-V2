@@ -1,8 +1,11 @@
+
+const API_BASE_URL = 'http://localhost:8080/api/ai';
+
 export const streamChatResponse = async (userMessage, history, onChunk, onError) => {
     try {
         const token = localStorage.getItem('token');
         
-        const response = await fetch('http://localhost:8080/api/chat/stream', {
+        const response = await fetch(`${API_BASE_URL}/chat/stream`, { 
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -32,5 +35,29 @@ export const streamChatResponse = async (userMessage, history, onChunk, onError)
         }
     } catch (error) {
         if (onError) onError(error);
+    }
+};
+
+// --- SERVICE PRÉDICTIONS (JSON) ---
+export const getAIPredictions = async () => {
+    try {
+        const token = localStorage.getItem('token');
+        
+        const response = await fetch(`${API_BASE_URL}/predictions`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+
+        return await response.json(); 
+    } catch (error) {
+        console.error("Erreur Service AI:", error);
+        throw error; 
     }
 };

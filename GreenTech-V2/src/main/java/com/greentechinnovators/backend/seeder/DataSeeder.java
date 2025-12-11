@@ -158,4 +158,7 @@ public class DataSeeder implements CommandLineRunner {
     private double generateTransportValue() {
         return 10.0 + (random.nextDouble() * 40.0); // 10-50 km
     }
+
+
+
 }
