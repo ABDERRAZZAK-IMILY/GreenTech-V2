@@ -19,6 +19,7 @@ import java.util.List;
 public class EnergyMonitor {
     @Id
     private String id;
+    private String macAddress;
 
     private String location;
     private String sensorId;
