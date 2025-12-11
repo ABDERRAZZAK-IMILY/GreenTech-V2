@@ -1,5 +1,6 @@
 package com.greentechinnovators.backend.dto.Energy.Request;
 
+import com.greentechinnovators.backend.Enums.Status;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -16,7 +17,7 @@ public class EnergyMonitorRequestDTO {
 
     @NotBlank(message = "Status is required")
     @Pattern(regexp = "^(ACTIVE|INACTIVE|MAINTENANCE)$", message = "Status must be ACTIVE, INACTIVE, or MAINTENANCE")
-    private String status;
+    private Status status;
 
     @NotNull(message = "CO2 Impact is required")
     @PositiveOrZero(message = "CO2 Impact cannot be negative")
