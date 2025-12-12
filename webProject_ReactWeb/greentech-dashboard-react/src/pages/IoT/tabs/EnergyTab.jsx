@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { showNotification } from '../../../utils/notifications';
-import SmartDataService from '../../../services/smartDataService';
+import { energyDataService } from '../../../services/smartDataService';
+
 
 const EnergyTab = () => {
   const [sensors, setSensors] = useState([]);
@@ -25,7 +26,7 @@ const EnergyTab = () => {
   // Fetch energy data from backend
   const fetchEnergyData = async () => {
     try {
-      const response = await SmartDataService.getMetrics('ENERGY');
+      const response = await energyDataService.getMetrics('ENERGY');
       setSensors(response.data);
       setLoading(false);
     } catch (error) {

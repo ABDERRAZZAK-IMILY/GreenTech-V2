@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { showNotification } from '../../../utils/notifications';
-import SmartDataService from '../../../services/smartDataService';
+
+import { trashDataService } from '../../../services/smartDataService';
 
 const WasteTab = () => {
   const [sensors, setSensors] = useState([]);
@@ -27,7 +28,7 @@ const WasteTab = () => {
   // Fetch waste data from backend
   const fetchWasteData = async () => {
     try {
-      const response = await SmartDataService.getMetrics('WASTE');
+      const response = await trashDataService.getMetrics('WASTE');
       setSensors(response.data);
       setLoading(false);
     } catch (error) {
