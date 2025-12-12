@@ -31,16 +31,33 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-class SmartDataService {
+// class SmartDataService {
     
-    getMetrics(type) {
-        return axiosInstance.get(`/metrics/${type}`);
-    }
+//     getMetrics(type) {
+//         return axiosInstance.get(`/metrics/${type}`);
+//     }
 
-    calculateTotal(dataList) {
+//     calculateTotal(dataList) {
+//         if (!dataList || dataList.length === 0) return 0;
+//         return dataList.reduce((sum, item) => sum + (item.value || 0), 0);
+//     }
+// }
+
+
+
+
+
+class EnergyDataService {
+  getEnergyMetrics() {
+    return axiosInstance.get(`/energy/metrics`);
+  }
+
+  calculateTotal(dataList) {
         if (!dataList || dataList.length === 0) return 0;
         return dataList.reduce((sum, item) => sum + (item.value || 0), 0);
     }
 }
 
-export default new SmartDataService();
+export const energyDataService = new EnergyDataService();
+
+// export default new SmartDataService();
