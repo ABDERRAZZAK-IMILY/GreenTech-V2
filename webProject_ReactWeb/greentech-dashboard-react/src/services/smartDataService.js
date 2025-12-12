@@ -67,6 +67,11 @@ class TrashDataService {
     return axiosInstance.patch(`/trash/monitor/${macAddress}`, statusData);
   }
 
+  // Submit manual trash data
+  submitManualData(data) {
+    return axiosInstance.post(`/trash/ingest`, data);
+  }
+
   calculateTotal(dataList) {
     if (!dataList || dataList.length === 0) return 0;
     return dataList.reduce((sum, item) => sum + (item.weight || 0), 0);
@@ -97,14 +102,113 @@ class EnergyDataService {
     return axiosInstance.patch(`/energy/monitor/update/${macAddress}`, statusData);
   }
 
+  // Submit manual energy data
+  submitManualData(data) {
+    return axiosInstance.post(`/energy/ingest`, data);
+  }
+
   calculateTotal(dataList) {
     if (!dataList || dataList.length === 0) return 0;
     return dataList.reduce((sum, item) => sum + (item.energyConsumed || 0), 0);
   }
 }
 
+class GasDataService {
+  getGasMetrics() {
+    return axiosInstance.get(`/gas/metrics`);
+  }
+// Submit manual gas data
+  submitManualData(data) {
+    return axiosInstance.post(`/gas/ingest`, data);
+  }
+
+  
+  getTodayMetrics() {
+    return axiosInstance.get(`/gas/today`);
+  }
+
+  calculateTotal(dataList) {
+    if (!dataList || dataList.length === 0) return 0;
+    return dataList.reduce((sum, item) => sum + (item.consumedGas || 0), 0);
+  }
+}
+
+class VehicleDataService {
+  getVehicleMetrics() {
+    return axiosInstance.get(`/vehicle/metrics`);
+  }
+
+  getTodayMetrics() {
+    return axiosInstance.get(`/vehicle/today`);
+  }
+
+  // Submit manual vehicle data
+  submitManualData(data) {
+    return axiosInstance.post(`/vehicle/ingest`, data);
+  }
+
+  // Calculate distance between two GPS coordinates using Haversine formula
+  calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth radius in kilometers
+    const dLat = this.toRad(lat2 - lat1);
+    const dLon = this.toRad(lon2 - lon1);
+    
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRad(lat1)) * Math.cos(this.toRad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in km
+    
+    return distance;
+  }
+
+  toRad(degrees) {
+    return degrees * (Math.PI / 180);
+  }
+
+  // Calculate total distance from vehicle logs
+  calculateTotal(dataList) {
+    if (!dataList || dataList.length === 0) return 0;
+    if (dataList.length === 1) return 0; // Need at least 2 points
+    
+    let totalDistance = 0;
+    
+    // Sort by createdAt to ensure chronological order
+    const sortedData = [...dataList].sort((a, b) => {
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    });
+    
+    // Calculate distance between consecutive points
+    for (let i = 1; i < sortedData.length; i++) {
+      const prev = sortedData[i - 1];
+      const curr = sortedData[i];
+      
+      if (prev.latitude && prev.longitude && curr.latitude && curr.longitude) {
+        const distance = this.calculateDistance(
+          prev.latitude,
+          prev.longitude,
+          curr.latitude,
+          curr.longitude
+        );
+        
+        // Add distance only if it's reasonable (less than 100km between consecutive points)
+        // This helps filter out GPS errors or unrealistic jumps
+        if (distance < 100) {
+          totalDistance += distance;
+        }
+      }
+    }
+    
+    return totalDistance;
+  }
+}
+
 export const energyDataService = new EnergyDataService();
 export const trashDataService = new TrashDataService();
+export const gasDataService = new GasDataService();
+export const vehicleDataService = new VehicleDataService();
 
 
 
