@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import KPICard from '../../components/common/KPICard';
 import { useCharts } from '../../hooks/useCharts';
-import SmartDataService from '../../services/smartDataService';
+
+import { energyDataService, trashDataService } from '../../services/smartDataService';
+
+
 
 const Dashboard = () => {
   // State pour les contrôles des charts
@@ -20,11 +23,15 @@ const Dashboard = () => {
 useEffect(() => {
     const fetchData = async () => {
       try {
-        const energyRes = await SmartDataService.getMetrics('ENERGY');
-        const wasteRes = await SmartDataService.getMetrics('WASTE');
 
-        const totalEnergy = SmartDataService.calculateTotal(energyRes.data);
-        const totalWaste = SmartDataService.calculateTotal(wasteRes.data);
+        const energyRes = await energyDataService.getEnergyMetrics();
+
+        const wasteRes = await trashDataService.getTrashMetrics();
+
+
+        const totalEnergy = energyDataService.calculateTotal(energyRes.data);
+
+        const totalWaste = trashDataService.calculateTotal(wasteRes.data);
 
         const totalCo2 = (totalEnergy * 0.5) + (totalWaste * 2.0);
 

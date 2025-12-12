@@ -46,7 +46,6 @@ public class TrashService {
         return trashList.stream().map(mapper::toResponse).toList();
     }
     public Double getConsumeTrashBetweenDates(LocalDateTime start, LocalDateTime end) {
-
         List<Trash> allTrash = repository.findAll();
 
         Double consumedTrash = allTrash.stream()

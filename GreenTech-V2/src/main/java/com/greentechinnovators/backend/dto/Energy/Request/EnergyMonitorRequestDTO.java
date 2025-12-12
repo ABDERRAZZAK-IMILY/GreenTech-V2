@@ -15,8 +15,7 @@ public class EnergyMonitorRequestDTO {
     @NotBlank(message = "Sensor ID is required")
     private String sensorId;
 
-    @NotBlank(message = "Status is required")
-    @Pattern(regexp = "^(ACTIVE|INACTIVE|MAINTENANCE)$", message = "Status must be ACTIVE, INACTIVE, or MAINTENANCE")
+    @NotNull(message = "Status is required")
     private Status status;
 
     @NotNull(message = "CO2 Impact is required")
