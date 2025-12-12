@@ -1,9 +1,6 @@
-package com.greentechinnovators.backend.service;
+package com.greentechinnovators.backend.service.report;
 
 import com.greentechinnovators.backend.dto.ReportData;
-import com.greentechinnovators.backend.service.report.PdfStyler;
-import com.greentechinnovators.backend.service.report.ReportAiAnalyst;
-import com.greentechinnovators.backend.service.report.ReportDataFetcher;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfWriter;
 import lombok.RequiredArgsConstructor;

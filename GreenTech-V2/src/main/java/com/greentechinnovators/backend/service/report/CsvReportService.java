@@ -1,8 +1,6 @@
-package com.greentechinnovators.backend.service;
+package com.greentechinnovators.backend.service.report;
 
 import com.greentechinnovators.backend.dto.ReportData;
-import com.greentechinnovators.backend.service.report.ReportAiAnalyst;
-import com.greentechinnovators.backend.service.report.ReportDataFetcher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,7 +27,6 @@ public class CsvReportService {
         ReportData data = dataFetcher.getMonthlyData(start, now);
         String aiAnalysis = aiAnalyst.generateAnalysis(data);
 
-        // 2. Prepare File
         String folderName = "generated-reports";
         String rootPath = System.getProperty("user.dir");
         File directory = new File(rootPath, folderName);
@@ -41,15 +38,11 @@ public class CsvReportService {
         String fileName = "Rapport_Data_" + now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm")) + ".csv";
         File file = new File(directory, fileName);
 
-        // 3. Write CSV Content
         try (PrintWriter pw = new PrintWriter(new FileWriter(file, java.nio.charset.StandardCharsets.UTF_8))) {
-            // ✅ UTF-8 BOM bach Excel yfham accents
             pw.write('\ufeff');
 
-            // A. Header (L'3anawin)
             pw.println("Date;Transport_Km;Transport_CO2_kg;Dechets_Kg;Dechets_CO2_kg;Energie_kWh;Energie_CO2_kg;Analyse_IA");
 
-            // B. Data Row
             pw.printf("%s;%.2f;%.2f;%.2f;%.2f;%.2f;%.2f;%s%n",
                     now.format(DateTimeFormatter.ISO_DATE),
                     data.getTransportKm(),
@@ -69,7 +62,6 @@ public class CsvReportService {
 
     private String escapeCsv(String text) {
         if (text == null) return "";
-        // N7aydo les sauts de ligne bach yji f ligne whda, o nremplaciw ; b ,
         return "\"" + text.replace(";", ",").replace("\n", " ").replace("\r", " ") + "\"";
     }
 }
