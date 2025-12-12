@@ -43,9 +43,16 @@ axiosInstance.interceptors.response.use(
 //     }
 // }
 
+class TrashDataService {
+  getTrashMetrics() {
+    return axiosInstance.get(`/trash/metrics`);
+  }
 
-
-
+  calculateTotal(dataList) {
+    if (!dataList || dataList.length === 0) return 0;
+    return dataList.reduce((sum, item) => sum + (item.value || 0), 0);
+  }
+}
 
 class EnergyDataService {
   getEnergyMetrics() {
@@ -53,11 +60,13 @@ class EnergyDataService {
   }
 
   calculateTotal(dataList) {
-        if (!dataList || dataList.length === 0) return 0;
-        return dataList.reduce((sum, item) => sum + (item.value || 0), 0);
-    }
+    if (!dataList || dataList.length === 0) return 0;
+    return dataList.reduce((sum, item) => sum + (item.value || 0), 0);
+  }
 }
 
 export const energyDataService = new EnergyDataService();
+export const trashDataService = new TrashDataService();
 
-// export default new SmartDataService();
+
+
