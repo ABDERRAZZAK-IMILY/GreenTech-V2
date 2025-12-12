@@ -34,6 +34,20 @@ public class VehicleLogservice {
         List<VehicleLog> vehicleLogs = vehicleLogRepository.findAll();
         return vehicleLogs.stream().map(mapper::toVehicleLogResponse).toList();
     }
+
+    public List<VehicleLogResponseDTO> getTodayReadings() {
+        LocalDateTime startOfToday = LocalDateTime.now().toLocalDate().atStartOfDay();
+        LocalDateTime endOfToday = startOfToday.plusDays(1);
+        
+        List<VehicleLog> vehicleLogs = vehicleLogRepository.findAll().stream()
+                .filter(v -> v.getCreatedAt() != null && 
+                           !v.getCreatedAt().isBefore(startOfToday) && 
+                           v.getCreatedAt().isBefore(endOfToday))
+                .toList();
+        
+        return vehicleLogs.stream().map(mapper::toVehicleLogResponse).toList();
+    }
+
     public void deleteById(String id){
         vehicleLogRepository.deleteById(id);
     }
