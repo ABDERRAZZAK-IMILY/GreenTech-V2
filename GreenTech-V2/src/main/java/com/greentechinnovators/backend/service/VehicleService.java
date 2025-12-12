@@ -63,13 +63,12 @@ public class VehicleService {
             List<VehicleLog> dailyLogs = vehicleLogRepository.findByCreatedAtBetween(startDay, endDay);
 
             if (!dailyLogs.isEmpty()) {
-                System.out.println("📅 Date: " + current + " | Logs Found: " + dailyLogs.size());
+                System.out.println(" Date: " + current + " | Logs Found: " + dailyLogs.size());
             }
-            // ------------------------------------------------
 
             // 2. Grouping by VehicleId
             Map<String, List<VehicleLog>> logsPerCar = dailyLogs.stream()
-                    .filter(log -> log.getVehicleId() != null) // تفادي Null logs
+                    .filter(log -> log.getVehicleId() != null)
                     .collect(Collectors.groupingBy(VehicleLog::getVehicleId));
 
             double totalFleetDistance = 0.0;

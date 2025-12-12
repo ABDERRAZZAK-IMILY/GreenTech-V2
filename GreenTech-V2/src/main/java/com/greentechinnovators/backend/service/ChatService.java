@@ -14,6 +14,7 @@ import reactor.core.publisher.Flux;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.DoubleStream;
 
 @Slf4j
 @Service
@@ -37,11 +38,6 @@ public class ChatService {
     @Value("${spring.ai.deepseek.model}")
     private String model;
 
-    // Constants (Prix)
-    private static final double COST_ELEC = 1.2; // MAD/kWh
-    private static final double COST_GAS = 10.5; // MAD/m3
-
-    // ⚠️ Remarque : SYSTEM_PROMPT_TEMPLATE bqa kima kan.
 
     private static final String SYSTEM_PROMPT_TEMPLATE = """
     Tu es l'assistant IA de 'GreenTech Innovators'.
@@ -98,82 +94,41 @@ public class ChatService {
 
 
     private String getChatContextJson() {
-//        LocalDateTime now = LocalDateTime.now();
-//        LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0);
-//        LocalDateTime startOfLastMonth = startOfMonth.minusMonths(1);
+        LocalDate now = LocalDate.now();
+        LocalDate startOfMonth = now.withDayOfMonth(1);
 
-        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
         LocalDate startOfLastMonth = startOfMonth.minusMonths(1);
-        LocalDate now= LocalDate.now();
+        LocalDate endOfLastMonth = startOfMonth.minusDays(1);
 
 
-        //double elecVal = energyService.getConsumedKwhBetweenDates(startOfMonth, now);
-        //double gasVal = gasService.sumValueByCreatedAtBetween(startOfMonth, now);
-        //double wasteVal = trashService.getConsumeTrashBetweenDates(startOfMonth, now);
-        List<DailyDistanceDTO> dailyDistanceDTOS =
-                vehicleLogService.getDistanceHistory(startOfMonth, now);
+        // double elecVal = energyService.getConsumedKwhBetweenDates(startOfMonth, now);
+        // double gasVal = gasService.sumValueByCreatedAtBetween(startOfMonth, now);
+        // double wasteVal = trashService.getConsumeTrashBetweenDates(startOfMonth, now);
 
-        System.out.println("=============================> " +
-                dailyDistanceDTOS.stream()
-                        .map(DailyDistanceDTO::getTotalDistanceKm)
-                        .toList()
+
+        List<DailyDistanceDTO> currentLogs = vehicleLogService.getDistanceHistory(startOfMonth, now);
+        List<DailyDistanceDTO> lastMonthLogs = vehicleLogService.getDistanceHistory(startOfLastMonth, endOfLastMonth);
+
+        double transVal = calculateTotalDistance(currentLogs);
+        double transLastVal = calculateTotalDistance(lastMonthLogs);
+        double transCo2 = calculateTotalCarbon(currentLogs);
+        double transLastCo2 = calculateTotalCarbon(lastMonthLogs);
+
+        return String.format(Locale.US, """
+        {
+             "TRANSPORT": {
+                    "Distance": "%.2f km",
+                    "LastMonthDistance": "%.2f km",
+                    "CO2": "%.2f kg",
+                    "LastMonthCO2" : "%.2f kg"
+             }
+        }
+        """,
+                transVal,
+                transLastVal,
+                transCo2,
+                transLastCo2
         );
-
-        return dailyDistanceDTOS.toString();
-
-        // 2. Récupérer les valeurs du mois dernier (Pour que l'AI calcule la Tendance)
-//        double elecLastVal = energyService.getConsumedKwhBetweenDates(startOfLastMonth, startOfMonth);
-//        double wasteLastVal = trashService.getConsumeTrashBetweenDates(startOfLastMonth, startOfMonth);
-        //double gasLastVal = gasService.sumValueByCreatedAtBetween(startOfLastMonth, startOfMonth.minusNanos(1));
-        //double transLastVal = vehicleLogService.sumDistanceByCreatedAtBetween(startOfLastMonth, startOfMonth.minusNanos(1));
-
-        // 3. Calculer CO2 et Coûts
-        // ✅ Utilisation de CarbonFootprintService l'l'calcul
-//        double elecCo2 = carbonFootprintService.calculateEnergyFootprint(elecVal);
-//        double wasteCo2 = carbonFootprintService.calculateTrashFootprint(wasteVal);
-        //double gasCo2 = carbonFootprintService.calculateGasFootprint(gasVal);
-//        double transCo2 = carbonFootprintService.calculateTransportFootprint(transVal);
-
-//        double elecCost = elecVal * COST_ELEC;
-        //double gasCost = gasVal * COST_GAS;
-
-        // 4. Retourner le JSON (M'kammal w m'qadd)
-//        "GAZ": {
-//            "Conso": "%.2f kg",
-//                    "LastMonthConso": "%.2f kg",
-//                    "Cout": "%.2f MAD",
-//                    "CO2": "%.2f kg"
-//        },
-//
-//        return String.format("""
-//        {
-//            "ELECTRICITE": {
-//                "Conso": "%.2f kWh",
-//                "LastMonthConso": "%.2f kWh",
-//                "Cout": "%.2f MAD",
-//                "CO2": "%.2f kg"
-//            },
-//            "DECHETS": {
-//                "Poids": "%.2f kg",
-//                "LastMonthPoids": "%.2f kg",
-//                "CO2": "%.2f kg"
-//            },
-//             "TRANSPORT": {
-//                    "Distance": "%.2f km",
-//                    "LastMonthDistance": "%.2f km",
-//                    "CO2": "%.2f kg"
-//             },
-//        }
-//        """
-                // ELECTRICITE
-//                 elecLastVal,
-                // GAZ
-                //gasVal, gasLastVal, gasCost, gasCo2,
-                // TRANSPORT
-                //transVal, transLastVal, transCo2,
-                // DECHETS
-//                 wasteLastVal
-//        );
     }
     // Parsing Stream (WebClient)
     private String extractContentFromDeepSeek(String jsonChunk) {
@@ -191,17 +146,21 @@ public class ChatService {
         return "";
     }
 
-    public List<DailyDistanceDTO> test() {
+    private double calculateTotalDistance(List<DailyDistanceDTO> logs) {
+        if (logs == null || logs.isEmpty()) {
+            return 0.0;
+        }
+        return logs.stream()
+                .mapToDouble(DailyDistanceDTO::getTotalDistanceKm)
+                .sum();
+    }
 
-        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
-        LocalDate now = LocalDate.now();
-
-
-        List<DailyDistanceDTO> dailyDistanceDTOS = vehicleLogService.getDistanceHistory(startOfMonth, now);
-
-        System.out.println("Result Size: " + dailyDistanceDTOS.size());
-
-        // 4. Return the VARIABLE (not the class name)
-        return dailyDistanceDTOS;
+    private double calculateTotalCarbon(List<DailyDistanceDTO> logs) {
+        if (logs == null || logs.isEmpty()) {
+            return 0.0;
+        }
+        return logs.stream()
+                .mapToDouble(DailyDistanceDTO::getCarbonFootprintKg)
+                .sum();
     }
 }
