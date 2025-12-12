@@ -6,4 +6,5 @@ public enum TrashType {
     NONRECYCLABLE,
     ELECTRONIC,
     DANGEROUS
+
 }
