@@ -59,6 +59,7 @@ public class VehicleService {
             // 1. Calculate distance for THIS specific day
             Double dailyKm = calculateDailyDistance(current);
 
+
             // 2. Calculate Carbon (Optional)
             Double dailyCarbon = carbonService.calculateTransportFootprint(dailyKm);
 
