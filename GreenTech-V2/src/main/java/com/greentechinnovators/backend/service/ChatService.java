@@ -130,7 +130,7 @@ public class ChatService {
                 transLastCo2
         );
     }
-    // Parsing Stream (WebClient)
+
     private String extractContentFromDeepSeek(String jsonChunk) {
         try {
             if (jsonChunk.contains("[DONE]")) return "";

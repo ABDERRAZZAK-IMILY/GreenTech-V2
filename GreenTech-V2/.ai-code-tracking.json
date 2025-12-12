@@ -3652,12 +3652,111 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/banking/src/main/java/com/banking/domain/Account.java",
+      "timestamp": 1765542327257,
+      "startOffset": 1020,
+      "endOffset": 1061,
+      "codeContent": "            // Hna l-exception l-mohimma\n",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765546920462,
+      "startOffset": 88,
+      "endOffset": 7064,
+      "codeContent": "JsonNode;\nimport com.fasterxml.jackson.databind.ObjectMapper;\nimport com.greentechinnovators.backend.dto.AI.DailyStat;\nimport com.greentechinnovators.backend.dto.AI.PredictionResponse;\nimport com.greentechinnovators.backend.repository.*;\nimport lombok.RequiredArgsConstructor;\nimport lombok.extern.slf4j.Slf4j;\nimport org.springframework.beans.factory.annotation.Value;\nimport org.springframework.http.HttpEntity;\nimport org.springframework.http.HttpHeaders;\nimport org.springframework.http.MediaType;\nimport org.springframework.stereotype.Service;\nimport org.springframework.web.client.RestTemplate;\n\nimport java.time.LocalDateTime;\nimport java.util.*;\n\n@Slf4j\n@Service\n@RequiredArgsConstructor\npublic class PredictionService {\n\n\n    private final EnergyRepository energyRepository;\n    private final GasRepository gasRepository;\n    private final TrashRepository trashRepository;\n    private final VehicleLogRepository vehicleLogRepository;\n\n    private final RestTemplate restTemplate \u003d new RestTemplate();\n\n    @Value(\"${spring.ai.deepseek.api-key}\")\n    private String apiKey;\n\n    @Value(\"${spring.ai.deepseek.base-url}\")\n    private String apiUrl;\n\n    @Value(\"${spring.ai.deepseek.model}\")\n    private String model;\n\n\n\n    public PredictionResponse generatePredictions() {\n        String context \u003d getGlobalContextJson();\n        String prompt \u003d \"\"\"\n            Analyse les données suivantes et prédis la consommation du mois prochain.\n            DONNÉES ACTUELLES :\n            %s\n            \n            RÈGLE STRICTE : Réponds UNIQUEMENT avec ce format JSON exact :\n            {\n                \"electricite\": { \"valeurPrincipale\": \"X kWh\", \"pourcentage\": \"+X%%\", \"coutPrevu\": \"X MAD\", \"emissionCo2\": \"X t CO2\" },\n                \"gaz\": { \"valeurPrincipale\": \"X m3\", \"pourcentage\": \"+X%%\", \"coutPrevu\": \"X MAD\", \"emissionCo2\": \"X kg CO2\" },\n                \"transport\": { \"valeurPrincipale\": \"X km\", \"pourcentage\": \"+X%%\", \"coutPrevu\": \"X MAD\", \"emissionCo2\": \"X t CO2\" },\n                \"dechets\": { \"valeurPrincipale\": \"X kg\", \"pourcentage\": \"+X%%\", \"coutPrevu\": \"X MAD\", \"emissionCo2\": \"X kg CO2\" }\n            }\n        \"\"\".formatted(context);\n\n        String rawJson \u003d callDeepSeek(prompt);\n        String cleanJson \u003d rawJson.replace(\"```json\", \"\").replace(\"```\", \"\").trim();\n\n        PredictionResponse response;\n        try {\n            response \u003d new ObjectMapper().readValue(cleanJson, PredictionResponse.class);\n        } catch (Exception e) {\n            log.error(\"Erreur parsing Prediction\", e);\n            response \u003d new PredictionResponse();\n        }\n\n\n        LocalDateTime sevenDaysAgo \u003d LocalDateTime.now().minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);\n\n        // Utilisation des Repositories pour l\u0027Historique (getLast7DaysStats)\n        if (response.getElectricite() !\u003d null) {\n            List\u003cDailyStat\u003e stats \u003d energyRepository.getLast7DaysStats(sevenDaysAgo);\n            response.getElectricite().setHistory(getHistoryData(stats));\n        }\n\n        if (response.getGaz() !\u003d null) {\n            List\u003cDailyStat\u003e stats \u003d gasRepository.getLast7DaysStats(sevenDaysAgo);\n            response.getGaz().setHistory(getHistoryData(stats));\n        }\n\n        if (response.getTransport() !\u003d null) {\n            List\u003cDailyStat\u003e stats \u003d vehicleLogRepository.getLast7DaysStats(sevenDaysAgo);\n            response.getTransport().setHistory(getHistoryData(stats));\n        }\n\n        if (response.getDechets() !\u003d null) {\n            List\u003cDailyStat\u003e stats \u003d trashRepository.getLast7DaysStats(sevenDaysAgo);\n            response.getDechets().setHistory(getHistoryData(stats));\n        }\n\n        return response;\n    }\n\n\n    private String getGlobalContextJson() {\n        LocalDateTime now \u003d LocalDateTime.now();\n        LocalDateTime startOfMonth \u003d now.withDayOfMonth(1).withHour(0).withMinute(0);\n        LocalDateTime startOfLastMonth \u003d startOfMonth.minusMonths(1);\n\n        double elecVal \u003d safeGet(energyRepository.sumValueByCreatedAtAfter(startOfMonth));\n        double gasVal \u003d safeGet(gasRepository.sumValueByCreatedAtAfter(startOfMonth));\n        double wasteVal \u003d safeGet(trashRepository.sumWeightByCreatedAtAfter(startOfMonth));\n        double transVal \u003d safeGet(vehicleLogRepository.sumDistanceByCreatedAtAfter(startOfMonth));\n\n        double elecLastVal \u003d safeGet(energyRepository.sumValueByCreatedAtAfter(startOfLastMonth)) - elecVal;\n        String elecTrend \u003d calculateTrend(elecVal, elecLastVal);\n\n\n        String topConsumer \u003d \"Usine Principale\";\n\n        return String.format(\"\"\"\n        {\n            \"ELECTRICITE\": { \"Conso\": \"%.2f kWh\", \"Trend\": \"%s\", \"Cout\": \"%.2f MAD\", \"CO2\": \"%.2f kg\" },\n            \"GAZ\": { \"Conso\": \"%.2f m3\", \"Cout\": \"%.2f MAD\", \"CO2\": \"%.2f kg\" },\n            \"TRANSPORT\": { \"Distance\": \"%.2f km\", \"CO2\": \"%.2f kg\" },\n            \"DECHETS\": { \"Poids\": \"%.2f kg\", \"CO2\": \"%.2f kg\" }\n        }\n        \"\"\",\n                elecVal, elecTrend, (elecVal * COST_ELEC), elecCo2,\n                gasVal, (gasVal * COST_GAS), gasCo2,\n                transVal, transCo2,\n                wasteVal, wasteCo2\n        );\n    }\n\n    private double safeGet(Double val) {\n        return val !\u003d null ? val : 0.0;\n    }\n\n    private String calculateTrend(double current, double last) {\n        if (last \u003d\u003d 0) return \"+0%\";\n        double percent \u003d ((current - last) / last) * 100;\n        return String.format(\"%+.1f%%\", percent);\n    }\n\n    private String callDeepSeek(String prompt) {\n        HttpHeaders headers \u003d new HttpHeaders();\n        headers.setContentType(MediaType.APPLICATION_JSON);\n        headers.setBearerAuth(apiKey);\n\n        Map\u003cString, Object\u003e body \u003d new HashMap\u003c\u003e();\n        body.put(\"model\", model);\n        body.put(\"stream\", false);\n        body.put(\"messages\", List.of(Map.of(\"role\", \"user\", \"content\", prompt)));\n\n        HttpEntity\u003cMap\u003cString, Object\u003e\u003e entity \u003d new HttpEntity\u003c\u003e(body, headers);\n        try {\n            Map\u003cString, Object\u003e response \u003d restTemplate.postForObject(apiUrl, entity, Map.class);\n            List\u003cMap\u003cString, Object\u003e\u003e choices \u003d (List\u003cMap\u003cString, Object\u003e\u003e) response.get(\"choices\");\n            Map\u003cString, Object\u003e msg \u003d (Map\u003cString, Object\u003e) choices.get(0).get(\"message\");\n            return (String) msg.get(\"content\");\n        } catch (Exception e) {\n            return \"{}\";\n        }\n    }\n\n    private List\u003cDouble\u003e getHistoryData(List\u003cDailyStat\u003e dbStats) {\n\n        Map\u003cString, Double\u003e statsMap \u003d new HashMap\u003c\u003e();\n        for (DailyStat stat : dbStats) {\n            statsMap.put(stat.getDate(), stat.getTotal());\n        }\n\n        List\u003cDouble\u003e history \u003d new ArrayList\u003c\u003e();\n\n\n        LocalDateTime dateIter \u003d LocalDateTime.now().minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);\n\n        for (int i \u003d 0; i \u003c 7; i++) {\n            String key \u003d dateIter.toLocalDate().toString();\n\n            history.add(statsMap.getOrDefault(key, 0.0));\n\n            dateIter \u003d dateIter.plusDays(1);\n        }\n\n        return history;\n    }",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 180
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765546958850,
+      "startOffset": 4019,
+      "endOffset": 4074,
+      "codeContent": "        // 1. Récupérer les valeurs cumulées (Ce mois)\n",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765546959547,
+      "startOffset": 3768,
+      "endOffset": 3859,
+      "codeContent": "/**\n     * Context for Production/Prediction (Uses Repositories) - Le code original\n     */",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 3
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765546960389,
+      "startOffset": 4719,
+      "endOffset": 4746,
+      "codeContent": "        // 4. Top Consumer\n",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765546961085,
+      "startOffset": 4535,
+      "endOffset": 4567,
+      "codeContent": "        // 2. Calculer Tendance\n",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765546961776,
+      "startOffset": 4748,
+      "endOffset": 4960,
+      "codeContent": "  // 3. Calculer CO2 et Coûts\n        double elecCo2 \u003d elecVal * CO2_ELEC;\n        double gasCo2 \u003d gasVal * CO2_GAS;\n        double transCo2 \u003d transVal * CO2_TRANS;\n        double wasteCo2 \u003d wasteVal * CO2_TRASH;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 5
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765553418309,
+      "startOffset": 3767,
+      "endOffset": 3859,
+      "codeContent": " /**\n     * Context for Production/Prediction (Uses Repositories) - Le code original\n     */",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 3
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765553422698,
+      "startOffset": 1316,
+      "endOffset": 1668,
+      "codeContent": " // Constants (Prix \u0026 CO2)\n    private static final double COST_ELEC \u003d 1.2; \n    private static final double COST_GAS \u003d 10.5; \n    private static final double CO2_ELEC \u003d 0.7;  \n    private static final double CO2_GAS \u003d 2.0;   \n    private static final double CO2_TRASH \u003d 0.5; // kg CO2/kg\n    private static final double CO2_TRANS \u003d 0.15; // kg CO2/km\n",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 8
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 332,
-      "totalLines": 4971
+      "usageCount": 341,
+      "totalLines": 5178
     }
   }
 }
