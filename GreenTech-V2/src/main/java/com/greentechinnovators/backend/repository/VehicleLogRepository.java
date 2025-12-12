@@ -25,4 +25,5 @@ public interface VehicleLogRepository extends MongoRepository<VehicleLog,String>
     })
     List<DailyStat> getLast7DaysStats(LocalDateTime startDate);
     List<VehicleLog> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+    List<VehicleLog> findByCreatedAtBetweenOrderByCreatedAtAsc(LocalDateTime start, LocalDateTime end);
 }
