@@ -66,6 +66,45 @@ export const getLineChartData = (metric, period) => {
     }
   }
 
+  // Try to get real-time data for gas
+  if (metric === 'gas' && period === '24h') {
+    const realData = getRealTimeData('gas');
+    if (realData && realData.length > 0) {
+      const hourlyData = groupDataByHour(realData, 'consumedGas');
+      return {
+        labels: ['0h', '2h', '4h', '6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'],
+        data: hourlyData,
+        color: '#f59e0b',
+        label: 'Gaz (m³)'
+      };
+    }
+  }
+
+  // Try to get real-time data for transport/vehicle
+  if (metric === 'transport' && period === '24h') {
+    const realData = getRealTimeData('vehicle');
+    if (realData && realData.length > 0) {
+      // For vehicle, just count trips per time slot
+      const hourlyCounts = Array(12).fill(0);
+      realData.forEach(item => {
+        if (item.createdAt) {
+          const date = new Date(item.createdAt);
+          const hour = date.getHours();
+          const index = Math.floor(hour / 2);
+          if (index < 12) {
+            hourlyCounts[index] += 5; // 5km per trip
+          }
+        }
+      });
+      return {
+        labels: ['0h', '2h', '4h', '6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'],
+        data: hourlyCounts,
+        color: '#3b82f6',
+        label: 'Distance (km)'
+      };
+    }
+  }
+
   // Fallback to static data
   const dataConfigs = {
     electricity: {
