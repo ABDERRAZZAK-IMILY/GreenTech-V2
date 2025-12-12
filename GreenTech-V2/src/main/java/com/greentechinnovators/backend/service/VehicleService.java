@@ -54,11 +54,12 @@ public class VehicleService {
 
     public List<DailyDistanceDTO> getDistanceHistory(LocalDateTime start, LocalDateTime end) {
         List<DailyDistanceDTO> report = new ArrayList<>();
-        LocalDate current = start;
+        LocalDateTime current = start;
 
         while (!current.isAfter(end)) {
-            LocalDateTime startDay = current.atStartOfDay();
-            LocalDateTime endDay = current.atTime(23, 59, 59);
+            LocalDate date = start.toLocalDate();
+            LocalDateTime startDay = date.atStartOfDay();
+            LocalDateTime endDay = date.plusDays(1).atStartOfDay();
 
             List<VehicleLog> dailyLogs = vehicleLogRepository.findByCreatedAtBetween(startDay, endDay);
 
