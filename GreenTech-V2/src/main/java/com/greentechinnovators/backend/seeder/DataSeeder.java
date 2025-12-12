@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Random;
 
 @Component
-public class DataSeeder implements CommandLineRunner {
+public class DataSeeder {
 
     private final SmartDataRepository smartDataRepository;
     private final Random random = new Random();
@@ -20,7 +20,6 @@ public class DataSeeder implements CommandLineRunner {
         this.smartDataRepository = smartDataRepository;
     }
 
-    @Override
     public void run(String... args) throws Exception {
         // smartDataRepository.deleteAll();
 

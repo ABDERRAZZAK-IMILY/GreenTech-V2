@@ -13,8 +13,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -22,14 +20,14 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AIService {
+public class PredictionService {
+
 
     private final EnergyRepository energyRepository;
     private final GasRepository gasRepository;
     private final TrashRepository trashRepository;
     private final VehicleLogRepository vehicleLogRepository;
 
-    private final WebClient.Builder webClientBuilder;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${spring.ai.deepseek.api-key}")
@@ -44,64 +42,10 @@ public class AIService {
     // Constants (Prix & CO2)
     private static final double COST_ELEC = 1.2; // MAD/kWh
     private static final double COST_GAS = 10.5; // MAD/m3
-
-    // Facteurs CO2 (Estimations)
     private static final double CO2_ELEC = 0.7;  // kg CO2/kWh
     private static final double CO2_GAS = 2.0;   // kg CO2/m3
     private static final double CO2_TRASH = 0.5; // kg CO2/kg
     private static final double CO2_TRANS = 0.15; // kg CO2/km
-    private static final String SYSTEM_PROMPT_TEMPLATE = """
-    Tu es l'assistant IA de 'GreenTech Innovators'.
-    
-    🚨 RÔLE & LANGUE :
-    - Tu es un expert en efficacité énergétique.
-    - Tu parles par défaut en Français.
-    - ✅ SI l'utilisateur te parle en Darija (Marocain) ou demande "bdarija", TU DOIS répondre en Darija.
-    
-    📝 RÈGLES DE FORMATAGE (RÉPONSE COURTE ET CLAIRE):
-    1. **Structure :** Utilise des sauts de ligne (\n) pour séparer chaque idée. Ne fais jamais de blocs de texte compacts.
-    2. **Titres :** Utilise **Titre** pour les titres. IMPORTANT : Mets toujours le titre sur sa propre ligne, avec une ligne vide avant et après.
-    3. **Listes :** Utilise des tirets ("- ") pour les listes. Chaque point doit être sur une nouvelle ligne.
-    4. **Simplicité :** Évite les caractères spéciaux inutiles comme "****" ou les lignes de séparation excessives "---".
-    
-    ℹ️ CONTEXTE :
-    - Projet : GreenTech Innovators (Réduction empreinte carbone & coûts).
-    - Objectif : -20%% coûts, -50%% CO2 d'ici 2030.
-    
-    📊 DONNÉES TEMPS RÉEL :
-    %s
-    
-    ⛔ INTERDICTIONS :
-    1. Pas de code informatique.
-    2. Pas de sujets hors contexte.
-    3. Pas d'invention de chiffres.
-    """;
-
-
-    public Flux<String> askAIStream(String userMessage, List<Map<String, String>> history) {
-        String globalContext = getGlobalContextJson();
-        String dynamicPrompt = String.format(SYSTEM_PROMPT_TEMPLATE, globalContext);
-
-        WebClient webClient = webClientBuilder.baseUrl(apiUrl).build();
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("model", model);
-        body.put("stream", true);
-
-        List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "system", "content", dynamicPrompt));
-        if (history != null) messages.addAll(history);
-        messages.add(Map.of("role", "user", "content", userMessage));
-        body.put("messages", messages);
-
-        return webClient.post()
-                .header("Authorization", "Bearer " + apiKey)
-                .bodyValue(body)
-                .retrieve()
-                .bodyToFlux(String.class)
-                .map(this::extractContentFromDeepSeek)
-                .filter(content -> !content.isEmpty());
-    }
 
 
     public PredictionResponse generatePredictions() {
@@ -133,6 +77,7 @@ public class AIService {
 
         LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);
 
+        // Utilisation des Repositories pour l'Historique (getLast7DaysStats)
         if (response.getElectricite() != null) {
             List<DailyStat> stats = energyRepository.getLast7DaysStats(sevenDaysAgo);
             response.getElectricite().setHistory(getHistoryData(stats));
@@ -156,6 +101,9 @@ public class AIService {
         return response;
     }
 
+    /**
+     * Context for Production/Prediction (Uses Repositories) - Le code original
+     */
     private String getGlobalContextJson() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0);
@@ -167,7 +115,7 @@ public class AIService {
         double wasteVal = safeGet(trashRepository.sumWeightByCreatedAtAfter(startOfMonth));
         double transVal = safeGet(vehicleLogRepository.sumDistanceByCreatedAtAfter(startOfMonth));
 
-        // 2. Calculer Tendance (Astuce: Total depuis mois dernier - Total ce mois = Total mois dernier)
+        // 2. Calculer Tendance
         double elecLastVal = safeGet(energyRepository.sumValueByCreatedAtAfter(startOfLastMonth)) - elecVal;
         String elecTrend = calculateTrend(elecVal, elecLastVal);
 
@@ -178,7 +126,7 @@ public class AIService {
         double wasteCo2 = wasteVal * CO2_TRASH;
 
         // 4. Top Consumer
-        String topConsumer = "Usine Principale"; // Placeholder ou appel repository spécifique
+        String topConsumer = "Usine Principale";
 
         return String.format("""
         {
@@ -194,7 +142,6 @@ public class AIService {
                 wasteVal, wasteCo2
         );
     }
-
 
     private double safeGet(Double val) {
         return val != null ? val : 0.0;
@@ -227,23 +174,6 @@ public class AIService {
             return "{}";
         }
     }
-
-    // Parsing Stream (WebClient)
-    private String extractContentFromDeepSeek(String jsonChunk) {
-        try {
-            if (jsonChunk.contains("[DONE]")) return "";
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode rootNode = mapper.readTree(jsonChunk);
-            if (rootNode.has("choices") && rootNode.get("choices").isArray()) {
-                JsonNode choice = rootNode.get("choices").get(0);
-                if (choice.has("delta") && choice.get("delta").has("content")) {
-                    return choice.get("delta").get("content").asText();
-                }
-            }
-        } catch (Exception e) {}
-        return "";
-    }
-
 
     private List<Double> getHistoryData(List<DailyStat> dbStats) {
 

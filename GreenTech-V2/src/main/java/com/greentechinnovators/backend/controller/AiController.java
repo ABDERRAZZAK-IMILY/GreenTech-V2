@@ -1,7 +1,7 @@
 package com.greentechinnovators.backend.controller;
 
 import com.greentechinnovators.backend.dto.AI.PredictionResponse;
-import com.greentechinnovators.backend.service.AIService;
+import com.greentechinnovators.backend.service.ChatService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -13,9 +13,9 @@ import java.util.Map;
 @RequestMapping("/api/ai")
 public class AiController {
 
-    private final AIService aiService;
+    private final ChatService aiService;
 
-    public AiController(AIService aiService) {
+    public AiController(ChatService aiService) {
         this.aiService = aiService;
     }
 
@@ -28,8 +28,8 @@ public class AiController {
         return aiService.askAIStream(userMessage, history);
     }
 
-    @GetMapping("/predictions")
-    public PredictionResponse getPredictions() {
-        return aiService.generatePredictions();
-    }
+//    @GetMapping("/predictions")
+//    public PredictionResponse getPredictions() {
+//        return aiService.generatePredictions();
+//    }
 }

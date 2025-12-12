@@ -4,6 +4,7 @@ import com.greentechinnovators.backend.dto.Energy.Request.EnergyRequestDTO;
 import com.greentechinnovators.backend.dto.Energy.Responce.EnergyResponseDTO;
 import com.greentechinnovators.backend.entity.Energy;
 import com.greentechinnovators.backend.entity.EnergyMonitor;
+import com.greentechinnovators.backend.entity.Trash;
 import com.greentechinnovators.backend.mapper.EnergyMapper;
 import com.greentechinnovators.backend.repository.EnergyMonitorRepository;
 import com.greentechinnovators.backend.repository.EnergyRepository;
@@ -13,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -36,14 +39,33 @@ public class EnergyService {
     }
 
 
-
     public List<EnergyResponseDTO> getAllReadings() {
         List<Energy> energyList =  repository.findAll();
         return energyList.stream().map(mapper::toResponse).toList();
     }
-    public Double getConsumeEnergyBetweenDates(LocalDateTime start, LocalDateTime end) {
-        List<Energy> energy = repository.findByCreatedAtBetween(start, end);
-        Double consumedEnergy = energy.stream().mapToDouble(Energy::getEnergyConsumed).sum();
-        return carbonFootprintService.calculateEnergyFootprint(consumedEnergy);
+
+
+
+
+
+    public Double getConsumedKwhBetweenDates(LocalDateTime start, LocalDateTime end) {
+
+        List<Energy> allEnergy = repository.findAll();
+
+
+        Double consumedEnergy = allEnergy.stream()
+                .filter(e -> {
+                    if (e.getCreatedAt() == null || e.getEnergyConsumed() == null) return false;
+
+                    boolean isAfterStart = !e.getCreatedAt().isBefore(start);
+                    boolean isBeforeEnd = !e.getCreatedAt().isAfter(end);
+
+                    return isAfterStart && isBeforeEnd;
+                })
+                .mapToDouble(Energy::getEnergyConsumed)
+                .sum();
+
+
+        return consumedEnergy;
     }
 }

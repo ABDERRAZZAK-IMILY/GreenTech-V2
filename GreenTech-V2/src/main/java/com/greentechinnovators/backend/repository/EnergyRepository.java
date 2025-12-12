@@ -4,6 +4,7 @@ import com.greentechinnovators.backend.dto.AI.DailyStat;
 import com.greentechinnovators.backend.entity.Energy;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
