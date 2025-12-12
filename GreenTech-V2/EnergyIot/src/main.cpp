@@ -9,7 +9,7 @@
 const char* ssid = "Youcode";
 const char* password = "Youcode@2024";
 
-const char* ws_host = "192.168.8.101";
+const char* ws_host = "192.168.8.54";
 const int ws_port = 8080;
 const char* ws_path = "/iot/energy";  // Dedicated energy endpoint
 String mac_address = "";
