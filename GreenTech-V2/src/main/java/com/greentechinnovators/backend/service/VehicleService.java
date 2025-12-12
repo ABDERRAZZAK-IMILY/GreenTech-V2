@@ -52,7 +52,7 @@ public class VehicleService {
         vehicleRepository.deleteById(id);
     }
 
-    public List<DailyDistanceDTO> getDistanceHistory(LocalDate start, LocalDate end) {
+    public List<DailyDistanceDTO> getDistanceHistory(LocalDateTime start, LocalDateTime end) {
         List<DailyDistanceDTO> report = new ArrayList<>();
         LocalDate current = start;
 
