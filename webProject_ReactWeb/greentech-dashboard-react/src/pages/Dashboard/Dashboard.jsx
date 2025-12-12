@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import KPICard from '../../components/common/KPICard';
 import { useCharts } from '../../hooks/useCharts';
 
-import { energyDataService, trashDataService } from '../../services/smartDataService';
+import { energyDataService, trashDataService, gasDataService, vehicleDataService } from '../../services/smartDataService';
 
 
 
@@ -17,11 +17,15 @@ const Dashboard = () => {
   const [metrics, setMetrics] = useState({
     energy: 0,
     waste: 0,
+    gas: 0,
+    vehicle: 0,
     co2: 0
   });
 
   const energyWsRef = useRef(null);
   const trashWsRef = useRef(null);
+  const gasWsRef = useRef(null);
+  const vehicleWsRef = useRef(null);
 
 
 useEffect(() => {
@@ -30,20 +34,28 @@ useEffect(() => {
 
         const energyRes = await energyDataService.getTodayMetrics();
         const wasteRes = await trashDataService.getTodayMetrics();
+        const gasRes = await gasDataService.getTodayMetrics();
+        const vehicleRes = await vehicleDataService.getTodayMetrics();
 
         // Store real-time data in localStorage for charts
         localStorage.setItem('realtime_energy', JSON.stringify(energyRes.data));
         localStorage.setItem('realtime_trash', JSON.stringify(wasteRes.data));
+        localStorage.setItem('realtime_gas', JSON.stringify(gasRes.data));
+        localStorage.setItem('realtime_vehicle', JSON.stringify(vehicleRes.data));
 
         const totalEnergy = energyDataService.calculateTotal(energyRes.data);
         const totalWaste = trashDataService.calculateTotal(wasteRes.data);
+        const totalGas = gasDataService.calculateTotal(gasRes.data);
+        const totalVehicle = vehicleDataService.calculateTotal(vehicleRes.data);
 
 
-        const totalCo2 = (totalEnergy * 0.5) + (totalWaste * 2.0);
+        const totalCo2 = (totalEnergy * 0.5) + (totalWaste * 2.0) + (totalGas * 0.2) + (totalVehicle * 0.19);
 
         setMetrics({
           energy: totalEnergy.toFixed(1),
           waste: totalWaste.toFixed(1),
+          gas: totalGas.toFixed(1),
+          vehicle: totalVehicle.toFixed(1),
           co2: totalCo2.toFixed(1)
         });
       } catch (error) {
@@ -54,66 +66,172 @@ useEffect(() => {
     fetchData();
 
     // Setup WebSocket for real-time energy updates
-    const energyWs = new WebSocket('ws://localhost:8080/iot/energy');
-    energyWsRef.current = energyWs;
+    const connectEnergyWs = () => {
+      const energyWs = new WebSocket('ws://localhost:8080/iot/energy');
+      energyWsRef.current = energyWs;
 
-    energyWs.onopen = () => {
-      console.log(' Energy WebSocket Connected');
-    };
+      energyWs.onopen = () => {
+        console.log(' Energy WebSocket Connected');
+      };
 
-    energyWs.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        
-        if (message.type === 'ENERGY_UPDATE' && message.data) {
-          console.log(' Real-time Energy Update:', message.data);
-          // Refresh data and trigger charts update
-          fetchData();
-          setRefreshTrigger(prev => prev + 1);
+      energyWs.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          
+          if (message.type === 'ENERGY_UPDATE' && message.data) {
+            console.log(' Real-time Energy Update:', message.data);
+            // Refresh data and trigger charts update
+            fetchData();
+            setRefreshTrigger(prev => prev + 1);
+          }
+        } catch (error) {
+          console.error('Error parsing energy WebSocket message:', error);
         }
-      } catch (error) {
-        console.error('Error parsing energy WebSocket message:', error);
-      }
-    };
+      };
 
-    energyWs.onerror = (error) => {
-      console.error(' Energy WebSocket Error:', error);
-    };
+      energyWs.onerror = (error) => {
+        console.error(' Energy WebSocket Error:', error);
+      };
 
-    energyWs.onclose = () => {
-      console.log(' Energy WebSocket Disconnected');
+      energyWs.onclose = (event) => {
+        console.log(' Energy WebSocket Disconnected', event.code, event.reason);
+        // Attempt reconnection after 5 seconds
+        if (event.code !== 1000) { // 1000 = normal closure
+          setTimeout(() => {
+            console.log(' Attempting to reconnect Energy WebSocket...');
+            connectEnergyWs();
+          }, 5000);
+        }
+      };
     };
 
     // Setup WebSocket for real-time trash updates
-    const trashWs = new WebSocket('ws://localhost:8080/iot/trash');
-    trashWsRef.current = trashWs;
+    const connectTrashWs = () => {
+      const trashWs = new WebSocket('ws://localhost:8080/iot/trash');
+      trashWsRef.current = trashWs;
 
-    trashWs.onopen = () => {
-      console.log(' Trash WebSocket Connected');
-    };
+      trashWs.onopen = () => {
+        console.log('Trash WebSocket Connected');
+      };
 
-    trashWs.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        
-        if (message.type === 'TRASH_UPDATE' && message.data) {
-          console.log(' Real-time Trash Update:', message.data);
-          // Refresh data and trigger charts update
-          fetchData();
-          setRefreshTrigger(prev => prev + 1);
+      trashWs.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          
+          if (message.type === 'TRASH_UPDATE' && message.data) {
+            console.log(' Real-time Trash Update:', message.data);
+            // Refresh data and trigger charts update
+            fetchData();
+            setRefreshTrigger(prev => prev + 1);
+          }
+        } catch (error) {
+          console.error('Error parsing trash WebSocket message:', error);
         }
-      } catch (error) {
-        console.error('Error parsing trash WebSocket message:', error);
-      }
+      };
+
+      trashWs.onerror = (error) => {
+        console.error(' Trash WebSocket Error:', error);
+      };
+
+      trashWs.onclose = (event) => {
+        console.log(' Trash WebSocket Disconnected', event.code, event.reason);
+        // Attempt reconnection after 5 seconds
+        if (event.code !== 1000) { // 1000 = normal closure
+          setTimeout(() => {
+            console.log(' Attempting to reconnect Trash WebSocket...');
+            connectTrashWs();
+          }, 5000);
+        }
+      };
     };
 
-    trashWs.onerror = (error) => {
-      console.error(' Trash WebSocket Error:', error);
+    // WebSocket for Gas IoT
+    const connectGasWs = () => {
+      const gasWs = new WebSocket('ws://localhost:8080/iot/gas');
+      gasWsRef.current = gasWs;
+
+      gasWs.onopen = () => {
+        console.log(' Gas IoT WebSocket connected');
+      };
+
+      gasWs.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'GAS_UPDATE' && message.data) {
+            // Update localStorage with new gas data
+            const existingData = JSON.parse(localStorage.getItem('realtime_gas') || '[]');
+            const updatedData = [...existingData, message.data];
+            localStorage.setItem('realtime_gas', JSON.stringify(updatedData));
+
+            // Trigger chart refresh
+            setRefreshTrigger(prev => prev + 1);
+          }
+        } catch (error) {
+          console.error(' Error processing gas message:', error);
+        }
+      };
+
+      gasWs.onerror = (error) => {
+        console.error(' Gas WebSocket error:', error);
+      };
+
+      gasWs.onclose = (event) => {
+        console.log(' Gas WebSocket disconnected:', event.reason);
+        if (event.code !== 1000) {
+          setTimeout(() => {
+            console.log(' Attempting to reconnect Gas WebSocket...');
+            connectGasWs();
+          }, 5000);
+        }
+      };
     };
 
-    trashWs.onclose = () => {
-      console.log(' Trash WebSocket Disconnected');
+    // WebSocket for Vehicle IoT
+    const connectVehicleWs = () => {
+      const vehicleWs = new WebSocket('ws://localhost:8080/iot/vehicle');
+      vehicleWsRef.current = vehicleWs;
+
+      vehicleWs.onopen = () => {
+        console.log(' Vehicle IoT WebSocket connected');
+      };
+
+      vehicleWs.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'VEHICLE_UPDATE' && message.data) {
+            // Update localStorage with new vehicle data
+            const existingData = JSON.parse(localStorage.getItem('realtime_vehicle') || '[]');
+            const updatedData = [...existingData, message.data];
+            localStorage.setItem('realtime_vehicle', JSON.stringify(updatedData));
+
+            // Trigger chart refresh
+            setRefreshTrigger(prev => prev + 1);
+          }
+        } catch (error) {
+          console.error(' Error processing vehicle message:', error);
+        }
+      };
+
+      vehicleWs.onerror = (error) => {
+        console.error(' Vehicle WebSocket error:', error);
+      };
+
+      vehicleWs.onclose = (event) => {
+        console.log(' Vehicle WebSocket disconnected:', event.reason);
+        if (event.code !== 1000) {
+          setTimeout(() => {
+            console.log(' Attempting to reconnect Vehicle WebSocket...');
+            connectVehicleWs();
+          }, 5000);
+        }
+      };
     };
+
+    // Initialize all WebSocket connections
+    connectEnergyWs();
+    connectTrashWs();
+    connectGasWs();
+    connectVehicleWs();
 
     // Cleanup on unmount
     return () => {
@@ -122,6 +240,12 @@ useEffect(() => {
       }
       if (trashWsRef.current) {
         trashWsRef.current.close();
+      }
+      if (gasWsRef.current) {
+        gasWsRef.current.close();
+      }
+      if (vehicleWsRef.current) {
+        vehicleWsRef.current.close();
       }
     };
   }, []);
@@ -180,14 +304,14 @@ useEffect(() => {
             icon="fire"
             iconGradient="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
             title="Consommation Gaz"
-            value="0"
+            value={metrics.gas || "0"}
             unit="m³ aujourd'hui"
-            trend="positive"
-            trendValue="En attente"
+            trend="neutral"
+            trendValue="En temps réel"
             extraInfo={
               <div className="co2-info">
                 <i className="fas fa-smog" style={{ color: "#ef4444" }} />
-                <span>0 kg CO2 dégagé</span>
+                <span>{(metrics.gas * 0.2).toFixed(1)} kg CO2 dégagé</span>
               </div>
             }
           />
@@ -219,7 +343,7 @@ useEffect(() => {
                   <i className="fas fa-calendar-alt" style={{ color: "#10b981" }} />
                   <div>
                     <div className="detail-label">Sources actives</div>
-                    <div className="detail-value">Energy + Waste</div>
+                    <div className="detail-value">Energy + Waste + Gas + Vehicle</div>
                   </div>
                 </div>
                 <div className="carbon-progress-mini">
@@ -257,14 +381,14 @@ useEffect(() => {
             icon="car"
             iconGradient="linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
             title="Distance Parcourue"
-            value="0"
+            value={metrics.vehicle || "0"}
             unit="km aujourd'hui"
             trend="neutral"
-            trendValue="En attente"
+            trendValue="En temps réel"
             extraInfo={
               <div className="co2-info">
                 <i className="fas fa-smog" style={{ color: "#ef4444" }} />
-                <span>0 kg CO2 dégagé</span>
+                <span>{(metrics.vehicle * 0.19).toFixed(1)} kg CO2 dégagé</span>
               </div>
             }
           />
