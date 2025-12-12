@@ -17,7 +17,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -51,53 +54,64 @@ public class VehicleService {
 
     public List<DailyDistanceDTO> getDistanceHistory(LocalDate start, LocalDate end) {
         List<DailyDistanceDTO> report = new ArrayList<>();
-
-        // Loop from Start Date until End Date
         LocalDate current = start;
+
         while (!current.isAfter(end)) {
+            LocalDateTime startDay = current.atStartOfDay();
+            LocalDateTime endDay = current.atTime(23, 59, 59);
 
-            // 1. Calculate distance for THIS specific day
-            Double dailyKm = calculateDailyDistance(current);
+            List<VehicleLog> dailyLogs = vehicleLogRepository.findByCreatedAtBetween(startDay, endDay);
 
-            // 2. Calculate Carbon (Optional)
-            Double dailyCarbon = carbonService.calculateTransportFootprint(dailyKm);
+            if (!dailyLogs.isEmpty()) {
+                System.out.println("📅 Date: " + current + " | Logs Found: " + dailyLogs.size());
+            }
+            // ------------------------------------------------
 
-            // 3. Add to report
+            // 2. Grouping by VehicleId
+            Map<String, List<VehicleLog>> logsPerCar = dailyLogs.stream()
+                    .filter(log -> log.getVehicleId() != null) // تفادي Null logs
+                    .collect(Collectors.groupingBy(VehicleLog::getVehicleId));
+
+            double totalFleetDistance = 0.0;
+
+            for (Map.Entry<String, List<VehicleLog>> entry : logsPerCar.entrySet()) {
+                String carId = entry.getKey();
+                List<VehicleLog> carLogs = entry.getValue();
+
+                carLogs.sort(Comparator.comparing(VehicleLog::getCreatedAt));
+
+                double carDist = calculateSingleCarDistance(carLogs);
+
+                if (carDist > 0) {
+                    System.out.println("   🚗 Car: " + carId + " | Distance: " + carDist + " km");
+                }
+
+                totalFleetDistance += carDist;
+            }
+
             report.add(DailyDistanceDTO.builder()
                     .date(current)
-                    .totalDistanceKm(dailyKm)
-                    .carbonFootprintKg(dailyCarbon)
+                    .totalDistanceKm(totalFleetDistance)
+                    .carbonFootprintKg(totalFleetDistance * 0.12)
                     .build());
 
-            // Move to next day
             current = current.plusDays(1);
         }
-
         return report;
     }
 
-    // --- HELPER: The Logic for a Single Day ---
-    private Double calculateDailyDistance(LocalDate date) {
-        LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.atTime(23, 59, 59);
+    // Helper Method
+    private Double calculateSingleCarDistance(List<VehicleLog> logs) {
+        //
+        if (logs.size() < 2) return 0.0;
 
-        // Fetch logs sorted by time
-        List<VehicleLog> logs = vehicleLogRepository.findByCreatedAtBetween(startOfDay, endOfDay);
-
-        if (logs == null || logs.size() < 2) {
-            return 0.0;
-        }
-
-        double totalDistance = 0.0;
+        double dist = 0.0;
         for (int i = 0; i < logs.size() - 1; i++) {
-            VehicleLog p1 = logs.get(i);
-            VehicleLog p2 = logs.get(i + 1);
-
-            totalDistance += GeoUtils.calculateDistanceKm(
-                    p1.getLatitude(), p1.getLongitude(),
-                    p2.getLatitude(), p2.getLongitude()
+            dist += GeoUtils.calculateDistanceKm(
+                    logs.get(i).getLatitude(), logs.get(i).getLongitude(),
+                    logs.get(i+1).getLatitude(), logs.get(i+1).getLongitude()
             );
         }
-        return totalDistance;
+        return dist;
     }
 }
