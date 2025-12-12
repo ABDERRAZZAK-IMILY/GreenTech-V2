@@ -30,8 +30,14 @@ public class EnergerIotWebSokrtHandller extends TextWebSocketHandler {
         sessions.put(session.getId(), session);
         log.info("Energy IoT WebSocket connected: {}", session.getId());
         
-        // Send welcome message
-        session.sendMessage(new TextMessage("{\"status\":\"connected\",\"message\":\"Energy IoT WebSocket connected\"}"));
+        // Send welcome message only if session is open
+        try {
+            if (session.isOpen()) {
+                session.sendMessage(new TextMessage("{\"status\":\"connected\",\"message\":\"Energy IoT WebSocket connected\"}"));
+            }
+        } catch (Exception e) {
+            log.warn("Failed to send welcome message to session {}: {}", session.getId(), e.getMessage());
+        }
     }
 
     @Override
