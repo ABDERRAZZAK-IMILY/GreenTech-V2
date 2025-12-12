@@ -4,6 +4,7 @@ import com.greentechinnovators.backend.dto.AI.DailyStat;
 import com.greentechinnovators.backend.entity.Energy;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -25,5 +26,4 @@ public interface EnergyRepository extends MongoRepository<Energy, String> {
             "{ '$sort': { '_id': 1 } }"
     })
     List<DailyStat> getLast7DaysStats(LocalDateTime startDate);
-    List<Energy> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }
