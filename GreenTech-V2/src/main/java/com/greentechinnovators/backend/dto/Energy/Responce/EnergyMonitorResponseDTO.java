@@ -9,6 +9,7 @@ public class EnergyMonitorResponseDTO {
     private String id;
     private String location;
     private String sensorId;
+    private String macAddress;
     private Status status;
     private Double co2Impact;
     private LocalDateTime timestamp;
