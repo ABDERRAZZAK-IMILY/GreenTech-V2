@@ -3553,12 +3553,67 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/entity/Energy.java",
+      "timestamp": 1765527528112,
+      "startOffset": 194,
+      "endOffset": 220,
+      "codeContent": "Instant;\nimport java.time.",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/TrashService.java",
+      "timestamp": 1765527528116,
+      "startOffset": 767,
+      "endOffset": 2507,
+      "codeContent": "time.ZoneId;\nimport java.time.ZoneOffset;\nimport java.util.Date;\nimport java.util.List;\n\n@Service\n@RequiredArgsConstructor\npublic class TrashService {\n\n    private final TrashRepository repository;\n    private final TrashMonitorRepository trashMonitorRepository;\n    private final CarbonFootprintService carbonFootprintService;\n\n    private final TrashMapper mapper;\n\n    public TrashResponseDTO saveReading(TrashRequestDTO dto) {\n\n        TrashMonitor monitor \u003d trashMonitorRepository.findByMacAddress(dto.getMacAddress()).orElseThrow(() -\u003e {\n            throw new RuntimeException(\"Mac address not found\");\n        });\n        Trash entity \u003d mapper.toEntity(dto);\n        entity.setCreatedAt(LocalDateTime.now());\n        Trash savedEntity \u003d repository.save(entity);\n        monitor.getTrash().add(savedEntity);\n        trashMonitorRepository.save(monitor);\n        return mapper.toResponse(savedEntity);\n\n\n    }\n\n    public List\u003cTrashResponseDTO\u003e getAllReadings() {\n        List\u003cTrash\u003e trashList \u003d repository.findAll();\n\n        return trashList.stream().map(mapper::toResponse).toList();\n    }\n\n\n    public Double getConsumeTrashBetweenDates(LocalDateTime start, LocalDateTime end) {\n\n        List\u003cTrash\u003e allTrash \u003d repository.findAll();\n\n        Double consumedTrash \u003d allTrash.stream()\n                .filter(t -\u003e {\n                    if (t.getCreatedAt() \u003d\u003d null || t.getWight() \u003d\u003d null) return false;\n\n                    boolean isAfterStart \u003d !t.getCreatedAt().isBefore(start);\n                    boolean isBeforeEnd \u003d !t.getCreatedAt().isAfter(end);\n\n                    return isAfterStart \u0026\u0026 isBeforeEnd;\n                })\n                .mapToDouble(Trash::getWight)\n                .sum();\n\n\n        return consumedTrash",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 55
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/EnergyService.java",
+      "timestamp": 1765527528119,
+      "startOffset": 358,
+      "endOffset": 2514,
+      "codeContent": "entity.Trash;\nimport com.greentechinnovators.backend.mapper.EnergyMapper;\nimport com.greentechinnovators.backend.repository.EnergyMonitorRepository;\nimport com.greentechinnovators.backend.repository.EnergyRepository;\nimport com.greentechinnovators.backend.repository.GasMonitorRepository;\nimport com.greentechinnovators.backend.utils.CarbonFootprintService;\nimport lombok.RequiredArgsConstructor;\nimport org.springframework.stereotype.Service;\n\nimport java.time.LocalDateTime;\nimport java.time.ZoneId;\nimport java.time.ZoneOffset;\nimport java.util.List;\n\n@Service\n@RequiredArgsConstructor\npublic class EnergyService {\n\n    private final EnergyRepository repository;\n    private final EnergyMapper mapper;\n    private final EnergyMonitorRepository monitorRepository;\n    private final CarbonFootprintService carbonFootprintService;\n\n    public EnergyResponseDTO createReading(EnergyRequestDTO dto) {\n        Energy energy \u003d mapper.toEntity(dto);\n        EnergyMonitor monitor \u003d monitorRepository.findByMacAddress(dto.getMacAddress()).orElseThrow(()-\u003e{\n            throw new RuntimeException(\"Mac address not found\");\n        });\n        Energy res \u003d  repository.save(energy);\n        monitor.getEnergy().add(res);\n        monitorRepository.save(monitor);\n        return mapper.toResponse(res);\n    }\n\n\n    public List\u003cEnergyResponseDTO\u003e getAllReadings() {\n        List\u003cEnergy\u003e energyList \u003d  repository.findAll();\n        return energyList.stream().map(mapper::toResponse).toList();\n    }\n\n\n\n\n\n    public Double getConsumedKwhBetweenDates(LocalDateTime start, LocalDateTime end) {\n\n        List\u003cEnergy\u003e allEnergy \u003d repository.findAll();\n\n\n        Double consumedEnergy \u003d allEnergy.stream()\n                .filter(e -\u003e {\n                    if (e.getCreatedAt() \u003d\u003d null || e.getEnergyConsumed() \u003d\u003d null) return false;\n\n                    boolean isAfterStart \u003d !e.getCreatedAt().isBefore(start);\n                    boolean isBeforeEnd \u003d !e.getCreatedAt().isAfter(end);\n\n                    return isAfterStart \u0026\u0026 isBeforeEnd;\n                })\n                .mapToDouble(Energy::getEnergyConsumed)\n                .sum();\n\n\n        return consumedEnergy",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 63
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/repository/TrashRepository.java",
+      "timestamp": 1765527528126,
+      "startOffset": 156,
+      "endOffset": 1364,
+      "codeContent": "Energy;\nimport com.greentechinnovators.backend.entity.Trash;\nimport org.springframework.data.mongodb.repository.Aggregation;\nimport org.springframework.data.mongodb.repository.MongoRepository;\nimport org.springframework.data.mongodb.repository.Query;\nimport org.springframework.stereotype.Repository;\n\nimport java.time.LocalDateTime;\nimport java.util.Date;\nimport java.util.List;\n\n@Repository\npublic interface TrashRepository extends MongoRepository\u003cTrash, String\u003e {\n    List\u003cTrash\u003e findAllByOrderByCreatedAtDesc();\n\n    @Aggregation(pipeline \u003d {\n            \"{ \u0027$match\u0027: { \u0027createdAt\u0027: { \u0027$gte\u0027: ?0 } } }\",\n            \"{ \u0027$group\u0027: { \u0027_id\u0027: null, \u0027total\u0027: { \u0027$sum\u0027: \u0027$weight\u0027 } } }\"\n    })\n    Double sumWeightByCreatedAtAfter(LocalDateTime date);\n\n    @Aggregation(pipeline \u003d {\n            \"{ \u0027$match\u0027: { \u0027createdAt\u0027: { \u0027$gte\u0027: ?0 } } }\",\n            \"{ \u0027$group\u0027: { \u0027_id\u0027: { $dateToString: { format: \u0027%Y-%m-%d\u0027, date: \u0027$timestamp\u0027 } }, \u0027total\u0027: { \u0027$sum\u0027: \u0027$weight\u0027 } } }\", // \u003c-- weight\n            \"{ \u0027$sort\u0027: { \u0027_id\u0027: 1 } }\"\n    })\n    List\u003cDailyStat\u003e getLast7DaysStats(LocalDateTime startDate);\n\n    @Query(\"{ \u0027createdAt\u0027 : { \u0027$gte\u0027 : ?0, \u0027$lt\u0027 : ?1 } }\")\n    List\u003cTrash\u003e findByDateRange(Date start, Dat",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 30
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/TrashService.java",
+      "timestamp": 1765527648769,
+      "startOffset": 1955,
+      "endOffset": 2776,
+      "codeContent": "\u003c\u003c\u003c\u003c\u003c\u003c\u003c HEAD\n\n        List\u003cTrash\u003e allTrash \u003d repository.findAll();\n\n        Double consumedTrash \u003d allTrash.stream()\n                .filter(t -\u003e {\n                    if (t.getCreatedAt() \u003d\u003d null || t.getWight() \u003d\u003d null) return false;\n\n                    boolean isAfterStart \u003d !t.getCreatedAt().isBefore(start);\n                    boolean isBeforeEnd \u003d !t.getCreatedAt().isAfter(end);\n\n                    return isAfterStart \u0026\u0026 isBeforeEnd;\n                })\n                .mapToDouble(Trash::getWight)\n                .sum();\n\n\n        return consumedTrash;\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n        List\u003cTrash\u003e trash \u003drepository.findByCreatedAtBetween(start, end);\n        Double consumedTrash \u003d trash.stream().mapToDouble(Trash::getWight).sum();\n        return carbonFootprintService.calculateTrashFootprint(consumedTrash);\n\u003e\u003e\u003e\u003e\u003e\u003e\u003e main",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 23
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 323,
-      "totalLines": 4722
+      "usageCount": 328,
+      "totalLines": 4895
     }
   }
 }

@@ -13,9 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -48,8 +45,6 @@ public class TrashService {
 
         return trashList.stream().map(mapper::toResponse).toList();
     }
-
-
     public Double getConsumeTrashBetweenDates(LocalDateTime start, LocalDateTime end) {
 
         List<Trash> allTrash = repository.findAll();
