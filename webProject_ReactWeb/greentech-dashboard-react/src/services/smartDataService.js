@@ -48,6 +48,10 @@ class TrashDataService {
     return axiosInstance.get(`/trash/metrics`);
   }
 
+  getTodayMetrics() {
+    return axiosInstance.get(`/trash/today`);
+  }
+
   // Get all trash monitors
   getAllMonitors() {
     return axiosInstance.get(`/trash/monitor/all`);
@@ -65,13 +69,17 @@ class TrashDataService {
 
   calculateTotal(dataList) {
     if (!dataList || dataList.length === 0) return 0;
-    return dataList.reduce((sum, item) => sum + (item.value || 0), 0);
+    return dataList.reduce((sum, item) => sum + (item.weight || 0), 0);
   }
 }
 
 class EnergyDataService {
   getEnergyMetrics() {
     return axiosInstance.get(`/energy/metrics`);
+  }
+
+  getTodayMetrics() {
+    return axiosInstance.get(`/energy/today`);
   }
 
   // Get all energy monitors
@@ -91,7 +99,7 @@ class EnergyDataService {
 
   calculateTotal(dataList) {
     if (!dataList || dataList.length === 0) return 0;
-    return dataList.reduce((sum, item) => sum + (item.value || 0), 0);
+    return dataList.reduce((sum, item) => sum + (item.energyConsumed || 0), 0);
   }
 }
 
