@@ -49,11 +49,11 @@ public class VehicleService {
         vehicleRepository.deleteById(id);
     }
 
-    public List<DailyDistanceDTO> getDistanceHistory(LocalDate start, LocalDate end) {
+    public List<DailyDistanceDTO> getDistanceHistory(LocalDateTime start, LocalDateTime end) {
         List<DailyDistanceDTO> report = new ArrayList<>();
 
         // Loop from Start Date until End Date
-        LocalDate current = start;
+        LocalDateTime current = start;
         while (!current.isAfter(end)) {
 
             // 1. Calculate distance for THIS specific day
@@ -77,12 +77,13 @@ public class VehicleService {
     }
 
     // --- HELPER: The Logic for a Single Day ---
-    private Double calculateDailyDistance(LocalDate date) {
+    private Double calculateDailyDistance(LocalDateTime dateTimeInput) {
+        LocalDate date = dateTimeInput.toLocalDate();
+
         LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.atTime(23, 59, 59);
 
         // Fetch logs sorted by time
-        List<VehicleLog> logs = vehicleLogRepository.findByCreatedAtBetween(startOfDay, endOfDay);
+        List<VehicleLog> logs = vehicleLogRepository.findByCreatedAtBetween(startOfDay, startOfDay);
 
         if (logs == null || logs.size() < 2) {
             return 0.0;
