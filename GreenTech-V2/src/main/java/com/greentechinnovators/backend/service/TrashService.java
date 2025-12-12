@@ -101,7 +101,7 @@ public class TrashService {
 
         LocalDateTime startOfNextDay = date.plusDays(1).atStartOfDay();
         List<Trash> trashes = repository.findByCreatedAtBetween(startOfDay, startOfNextDay);
-        if (trashes == null || trashes.size() < 2) {
+        if (trashes == null || trashes.isEmpty()) {
             return 0.0;
         }
 
