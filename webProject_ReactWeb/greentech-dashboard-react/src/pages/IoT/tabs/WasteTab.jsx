@@ -15,6 +15,16 @@ const WasteTab = () => {
   const [currentSensorId, setCurrentSensorId] = useState(null);
   const [currentSubtypes, setCurrentSubtypes] = useState([]);
   const [sensorCounter, setSensorCounter] = useState(13);
+  
+  // Form state for adding new sensor
+  const [newSensorForm, setNewSensorForm] = useState({
+    location: '',
+    sensorId: '',
+    macAddress: '',
+    trashType: 'ORGANIC',
+    status: 'ONLINE',
+    co2Impact: 0
+  });
 
   // Waste subtypes configuration
   const wasteSubtypesConfig = {
@@ -206,6 +216,26 @@ const WasteTab = () => {
   };
 
   const openAddSensorModal = () => {
+    // Generate new sensor ID
+    const newSensorId = `ESP32-WASTE-${String(sensorCounter).padStart(3, '0')}`;
+    
+    // Map activeFilter to TrashType enum
+    const trashTypeMap = {
+      'organic': 'ORGANIC',
+      'recyclable': 'RECYCLABLE',
+      'non-recyclable': 'NON_RECYCLABLE',
+      'electronic': 'ELECTRONIC',
+      'dangerous': 'DANGEROUS'
+    };
+    
+    setNewSensorForm({
+      location: '',
+      sensorId: newSensorId,
+      macAddress: '',
+      trashType: trashTypeMap[activeFilter] || 'ORGANIC',
+      status: 'ONLINE',
+      co2Impact: 0
+    });
     setShowAddModal(true);
   };
 
@@ -217,117 +247,39 @@ const WasteTab = () => {
     setCurrentSensorId(null);
   };
 
-  const handleAddSensor = (event) => {
+  const handleAddSensor = async (event) => {
     event.preventDefault();
 
-    const threshold = document.getElementById('addSensorThreshold').value;
-    const sensorId = `ESP32-WASTE-${String(sensorCounter).padStart(3, '0')}`;
+    try {
+      // Prepare data for backend
+      const monitorData = {
+        location: newSensorForm.location,
+        sensorId: newSensorForm.sensorId,
+        macAddress: newSensorForm.macAddress,
+        trashType: newSensorForm.trashType,
+        status: newSensorForm.status,
+        co2Impact: parseFloat(newSensorForm.co2Impact) || 0,
+        trashLogs: []
+      };
 
-    // Type names mapping
-    const typeNames = {
-      organic: 'Organique',
-      recyclable: 'Recyclable',
-      'non-recyclable': 'Non-Recyclable',
-      electronic: 'Électronique',
-      dangerous: 'Dangereux'
-    };
+      // Send to backend
+      const response = await trashDataService.createMonitor(monitorData);
+      
+      console.log('Monitor created:', response.data);
 
-    // Type icons mapping
-    const typeIcons = {
-      organic: 'leaf',
-      recyclable: 'recycle',
-      'non-recyclable': 'trash',
-      electronic: 'laptop',
-      dangerous: 'radiation-alt'
-    };
+      // Increment counter for next sensor
+      setSensorCounter(sensorCounter + 1);
 
-    // Type colors mapping
-    const typeColors = {
-      organic: '#22c55e',
-      recyclable: '#3b82f6',
-      'non-recyclable': '#f59e0b',
-      electronic: '#a855f7',
-      dangerous: '#ef4444'
-    };
+      // Refresh sensors list
+      fetchWasteData();
 
-    // Create new sensor card
-    const newSensorCard = document.createElement('div');
-    newSensorCard.className = `sensor-card sensor-online waste-sensor`;
-    newSensorCard.setAttribute('data-sensor-id', sensorId);
-    newSensorCard.setAttribute('data-waste-type', activeFilter);
-    newSensorCard.style.opacity = '0';
-    newSensorCard.style.transform = 'scale(0.8)';
-
-    newSensorCard.innerHTML = `
-      <div class="sensor-header">
-        <div class="sensor-name">
-          <i class="fas fa-weight-hanging"></i>
-          <span>${sensorId}</span>
-        </div>
-        <label class="sensor-toggle">
-          <input type="checkbox" checked />
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="sensor-waste-type ${activeFilter}">
-        <i class="fas fa-${typeIcons[activeFilter]}" style="color: ${typeColors[activeFilter]}"></i>
-        <span>${typeNames[activeFilter]}</span>
-      </div>
-      <div class="sensor-value">
-        <span class="value">0.0</span>
-        <span class="unit">kg</span>
-      </div>
-      <div class="sensor-capacity">
-        <div class="capacity-bar">
-          <div class="capacity-fill ${activeFilter}" style="width: 0%"></div>
-        </div>
-        <span class="capacity-text">0% (0.0/${threshold} kg)</span>
-      </div>
-      <div class="sensor-status">
-        <span class="status-badge online">
-          <i class="fas fa-circle"></i> En ligne
-        </span>
-      </div>
-      <div class="sensor-timestamp">Dernière mise à jour: à l'instant</div>
-      <div class="sensor-actions">
-        <button class="btn-sensor-detail">
-          <i class="fas fa-eye"></i> Détails
-        </button>
-        <button class="btn-sensor-config">
-          <i class="fas fa-cog"></i> Modifier
-        </button>
-        <button class="btn-sensor-delete">
-          <i class="fas fa-trash"></i> Supprimer
-        </button>
-      </div>
-    `;
-
-    // Add to sensors grid
-    const sensorsGrid = document.querySelector('.sensors-grid-scroll');
-    sensorsGrid.appendChild(newSensorCard);
-
-    // Animate appearance
-    setTimeout(() => {
-      newSensorCard.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-      newSensorCard.style.opacity = '1';
-      newSensorCard.style.transform = 'scale(1)';
-    }, 10);
-
-    // Add event listeners
-    const detailBtn = newSensorCard.querySelector('.btn-sensor-detail');
-    detailBtn.addEventListener('click', () => viewSensorDetails(sensorId));
-
-    const configBtn = newSensorCard.querySelector('.btn-sensor-config');
-    configBtn.addEventListener('click', () => configureSensor(sensorId));
-
-    const deleteBtn = newSensorCard.querySelector('.btn-sensor-delete');
-    deleteBtn.addEventListener('click', () => deleteSensor(sensorId));
-
-    // Increment counter for next sensor
-    setSensorCounter(sensorCounter + 1);
-
-    showNotification('Capteur ajouté avec succès !', 'success');
-    closeModals();
+      showNotification('Capteur ajouté avec succès !', 'success');
+      closeModals();
+    } catch (error) {
+      console.error('Error adding sensor:', error);
+      const errorMessage = error.response?.data?.message || 'Erreur lors de l\'ajout du capteur';
+      showNotification(errorMessage, 'error');
+    }
   };
 
   const handleUpdateSensor = (event) => {
@@ -786,27 +738,121 @@ const WasteTab = () => {
             <div className="modal-body">
               <form id="addSensorForm" onSubmit={handleAddSensor}>
                 <div className="form-group">
-                  <label>Nom du capteur</label>
-                  <input type="text" defaultValue="ESP32-WASTE-013" readOnly style={{cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.03)'}} required />
+                  <label htmlFor="sensorId">ID du capteur</label>
+                  <input 
+                    type="text" 
+                    id="sensorId"
+                    value={newSensorForm.sensorId}
+                    readOnly 
+                    style={{cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.03)'}} 
+                    required 
+                  />
+                  <small style={{color: 'rgba(255,255,255,0.5)', fontSize: '12px'}}>
+                    Généré automatiquement
+                  </small>
                 </div>
+
                 <div className="form-group">
-                  <label>Type de capteur</label>
-                  <input type="text" defaultValue="Capteur de Poids (HX711)" readOnly style={{cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.03)'}} required />
+                  <label htmlFor="macAddress">
+                    <i className="fas fa-wifi" /> Adresse MAC du Capteur
+                  </label>
+                  <input 
+                    type="text" 
+                    id="macAddress"
+                    placeholder="Ex: AA:BB:CC:DD:EE:FF"
+                    value={newSensorForm.macAddress}
+                    onChange={(e) => setNewSensorForm({...newSensorForm, macAddress: e.target.value.toUpperCase()})}
+                    pattern="^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
+                    required 
+                  />
+                  <small style={{color: 'rgba(255,255,255,0.5)', fontSize: '12px'}}>
+                    Format: XX:XX:XX:XX:XX:XX (récupérable depuis l'ESP32)
+                  </small>
                 </div>
+
                 <div className="form-group">
-                  <label>Type de déchet</label>
-                  <input type="text" defaultValue={activeFilter === 'organic' ? 'Organique' : activeFilter === 'recyclable' ? 'Recyclable' : activeFilter === 'non-recyclable' ? 'Non-Recyclable' : activeFilter === 'electronic' ? 'Électronique' : 'Dangereux'} readOnly style={{cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.03)'}} required />
+                  <label htmlFor="location">
+                    <i className="fas fa-map-marker-alt" /> Emplacement
+                  </label>
+                  <input 
+                    type="text" 
+                    id="location"
+                    placeholder="Ex: Bureau Principal, Zone Production, etc."
+                    value={newSensorForm.location}
+                    onChange={(e) => setNewSensorForm({...newSensorForm, location: e.target.value})}
+                    required 
+                  />
                 </div>
+
                 <div className="form-group">
-                  <label>Seuil d'alerte (kg)</label>
-                  <input type="number" id="addSensorThreshold" placeholder="Ex: 50" step="0.1" required />
+                  <label htmlFor="trashType">Type de déchet</label>
+                  <select
+                    id="trashType"
+                    value={newSensorForm.trashType}
+                    onChange={(e) => setNewSensorForm({...newSensorForm, trashType: e.target.value})}
+                    style={{
+                      padding: '10px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      color: 'white',
+                      width: '100%'
+                    }}
+                    required
+                  >
+                    <option value="ORGANIC">🍃 Organique</option>
+                    <option value="RECYCLABLE">♻️ Recyclable</option>
+                    <option value="NON_RECYCLABLE">🗑️ Non-Recyclable</option>
+                    <option value="ELECTRONIC">💻 Électronique</option>
+                    <option value="DANGEROUS">☢️ Dangereux</option>
+                  </select>
                 </div>
+
+                <div className="form-group">
+                  <label htmlFor="co2Impact">
+                    <i className="fas fa-leaf" /> Impact CO2 (kg)
+                  </label>
+                  <input 
+                    type="number" 
+                    id="co2Impact"
+                    placeholder="Ex: 0.5"
+                    step="0.01"
+                    value={newSensorForm.co2Impact}
+                    onChange={(e) => setNewSensorForm({...newSensorForm, co2Impact: e.target.value})}
+                    required 
+                  />
+                  <small style={{color: 'rgba(255,255,255,0.5)', fontSize: '12px'}}>
+                    Estimation de l'impact carbone par kg de déchets
+                  </small>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="status">Statut</label>
+                  <select
+                    id="status"
+                    value={newSensorForm.status}
+                    onChange={(e) => setNewSensorForm({...newSensorForm, status: e.target.value})}
+                    style={{
+                      padding: '10px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      color: 'white',
+                      width: '100%'
+                    }}
+                    required
+                  >
+                    <option value="ONLINE">✅ Actif</option>
+                    <option value="OFFLINE">⏸️ Inactif</option>
+                  </select>
+                </div>
+
                 <div className="form-actions">
                   <button type="button" className="btn-cancel-modal" onClick={closeModals}>
                     <i className="fas fa-times" /> Annuler
                   </button>
                   <button type="submit" className="btn-submit">
-                    <i className="fas fa-check" /> Ajouter
+                    <i className="fas fa-check" /> Ajouter le Capteur
                   </button>
                 </div>
               </form>
