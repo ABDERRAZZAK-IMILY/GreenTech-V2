@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import KPICard from '../../components/common/KPICard';
 import { useCharts } from '../../hooks/useCharts';
 
@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [selectedMetric, setSelectedMetric] = useState('electricity');
   const [selectedComparison, setSelectedComparison] = useState('electricity');
   const [emissionsPeriod, setEmissionsPeriod] = useState('today');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [metrics, setMetrics] = useState({
     energy: 0,
@@ -19,19 +20,24 @@ const Dashboard = () => {
     co2: 0
   });
 
+  const energyWsRef = useRef(null);
+  const trashWsRef = useRef(null);
+
 
 useEffect(() => {
     const fetchData = async () => {
       try {
 
-        const energyRes = await energyDataService.getEnergyMetrics();
+        const energyRes = await energyDataService.getTodayMetrics();
+        const wasteRes = await trashDataService.getTodayMetrics();
 
-        const wasteRes = await trashDataService.getTrashMetrics();
-
+        // Store real-time data in localStorage for charts
+        localStorage.setItem('realtime_energy', JSON.stringify(energyRes.data));
+        localStorage.setItem('realtime_trash', JSON.stringify(wasteRes.data));
 
         const totalEnergy = energyDataService.calculateTotal(energyRes.data);
-
         const totalWaste = trashDataService.calculateTotal(wasteRes.data);
+
 
         const totalCo2 = (totalEnergy * 0.5) + (totalWaste * 2.0);
 
@@ -41,18 +47,88 @@ useEffect(() => {
           co2: totalCo2.toFixed(1)
         });
       } catch (error) {
-        console.error("Error connecting to Backend:", error);
+        console.error(" Error connecting to Backend:", error);
       }
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
+
+    // Setup WebSocket for real-time energy updates
+    const energyWs = new WebSocket('ws://localhost:8080/iot/energy');
+    energyWsRef.current = energyWs;
+
+    energyWs.onopen = () => {
+      console.log(' Energy WebSocket Connected');
+    };
+
+    energyWs.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        
+        if (message.type === 'ENERGY_UPDATE' && message.data) {
+          console.log(' Real-time Energy Update:', message.data);
+          // Refresh data and trigger charts update
+          fetchData();
+          setRefreshTrigger(prev => prev + 1);
+        }
+      } catch (error) {
+        console.error('Error parsing energy WebSocket message:', error);
+      }
+    };
+
+    energyWs.onerror = (error) => {
+      console.error(' Energy WebSocket Error:', error);
+    };
+
+    energyWs.onclose = () => {
+      console.log(' Energy WebSocket Disconnected');
+    };
+
+    // Setup WebSocket for real-time trash updates
+    const trashWs = new WebSocket('ws://localhost:8080/iot/trash');
+    trashWsRef.current = trashWs;
+
+    trashWs.onopen = () => {
+      console.log(' Trash WebSocket Connected');
+    };
+
+    trashWs.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        
+        if (message.type === 'TRASH_UPDATE' && message.data) {
+          console.log(' Real-time Trash Update:', message.data);
+          // Refresh data and trigger charts update
+          fetchData();
+          setRefreshTrigger(prev => prev + 1);
+        }
+      } catch (error) {
+        console.error('Error parsing trash WebSocket message:', error);
+      }
+    };
+
+    trashWs.onerror = (error) => {
+      console.error(' Trash WebSocket Error:', error);
+    };
+
+    trashWs.onclose = () => {
+      console.log(' Trash WebSocket Disconnected');
+    };
+
+    // Cleanup on unmount
+    return () => {
+      if (energyWsRef.current) {
+        energyWsRef.current.close();
+      }
+      if (trashWsRef.current) {
+        trashWsRef.current.close();
+      }
+    };
   }, []);
 
 
 
-  useCharts(selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod);
+  useCharts(selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod, refreshTrigger);
 
   // Titres des métriques
   const metricTitles = {
