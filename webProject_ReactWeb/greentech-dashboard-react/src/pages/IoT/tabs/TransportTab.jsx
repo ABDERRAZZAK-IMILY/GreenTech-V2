@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTransportMap } from '../../../hooks/useTransportMap';
 import { showNotification } from '../../../utils/notifications';
+import { vehicleDataService } from '../../../services/smartDataService';
 
 const TransportTab = () => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
@@ -367,7 +368,7 @@ const TransportTab = () => {
     showNotification(`Chauffeur ${driverName} supprimé avec succès`, 'success');
   };
 
-  const handleSubmitTransportData = (event) => {
+  const handleSubmitTransportData = async (event) => {
     event.preventDefault();
 
     const driver = document.getElementById('transportDriver').value;
@@ -376,29 +377,59 @@ const TransportTab = () => {
     const fuel = document.getElementById('transportFuel').value;
     const destination = document.getElementById('transportDestination').value;
     const status = document.getElementById('transportStatus').value;
+    const latitude = document.getElementById('transportLatitude').value;
+    const longitude = document.getElementById('transportLongitude').value;
 
-    // Add row to history table
-    const tableBody = document.getElementById('transportHistoryTableBody');
-    const now = new Date();
-    const dateTime = now.toLocaleDateString('fr-FR') + ' ' + now.toLocaleTimeString('fr-FR');
+    // Validate latitude and longitude
+    const lat = parseFloat(latitude);
+    const lon = parseFloat(longitude);
 
-    const newRow = document.createElement('tr');
-    newRow.innerHTML = `
-      <td>${dateTime}</td>
-      <td>${driver}</td>
-      <td>${vehicleType}</td>
-      <td>${plate}</td>
-      <td>${fuel}</td>
-      <td>${destination}</td>
-      <td><span class="status-badge status-${status}">${status === 'moving' ? 'En route' : 'Stationné'}</span></td>
-    `;
+    if (isNaN(lat) || lat < -90 || lat > 90) {
+      showNotification('Latitude doit être entre -90 et 90', 'error');
+      return;
+    }
 
-    tableBody.insertBefore(newRow, tableBody.firstChild);
+    if (isNaN(lon) || lon < -180 || lon > 180) {
+      showNotification('Longitude doit être entre -180 et 180', 'error');
+      return;
+    }
 
-    // Reset form
-    event.target.reset();
+    try {
+      // Submit to backend
+      const payload = {
+        vehicleId: plate,
+        latitude: lat,
+        longitude: lon
+      };
 
-    showNotification('Données de transport enregistrées avec succès !', 'success');
+      await vehicleDataService.submitManualData(payload);
+
+      // Add row to history table
+      const tableBody = document.getElementById('transportHistoryTableBody');
+      const now = new Date();
+      const dateTime = now.toLocaleDateString('fr-FR') + ' ' + now.toLocaleTimeString('fr-FR');
+
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+        <td>${dateTime}</td>
+        <td>${driver}</td>
+        <td>${vehicleType}</td>
+        <td>${plate}</td>
+        <td>${fuel}</td>
+        <td>${destination}</td>
+        <td><span class="status-badge status-${status}">${status === 'moving' ? 'En route' : 'Stationné'}</span></td>
+      `;
+
+      tableBody.insertBefore(newRow, tableBody.firstChild);
+
+      // Reset form
+      event.target.reset();
+
+      showNotification('Données de transport enregistrées avec succès !', 'success');
+    } catch (error) {
+      console.error('Error submitting transport data:', error);
+      showNotification('Erreur lors de l\'enregistrement des données', 'error');
+    }
   };
 
   return (
@@ -1039,6 +1070,26 @@ const TransportTab = () => {
                 type="text"
                 id="transportDestination"
                 placeholder="Ex: Zone Industrielle"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Latitude</label>
+              <input
+                type="number"
+                id="transportLatitude"
+                placeholder="Ex: 33.5731"
+                step="any"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Longitude</label>
+              <input
+                type="number"
+                id="transportLongitude"
+                placeholder="Ex: -7.5898"
+                step="any"
                 required
               />
             </div>
