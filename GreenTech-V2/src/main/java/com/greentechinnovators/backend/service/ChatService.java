@@ -2,6 +2,8 @@ package com.greentechinnovators.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.greentechinnovators.backend.dto.vehicle.responce.DailyDistanceDTO;
+import com.greentechinnovators.backend.mapper.VehicleMapper;
 import com.greentechinnovators.backend.utils.CarbonFootprintService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.*;
 
 @Slf4j
@@ -96,29 +98,43 @@ public class ChatService {
 
 
     private String getChatContextJson() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0);
-        LocalDateTime startOfLastMonth = startOfMonth.minusMonths(1);
+//        LocalDateTime now = LocalDateTime.now();
+//        LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0);
+//        LocalDateTime startOfLastMonth = startOfMonth.minusMonths(1);
 
-        double elecVal = energyService.getConsumedKwhBetweenDates(startOfMonth, now);
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate startOfLastMonth = startOfMonth.minusMonths(1);
+        LocalDate now= LocalDate.now();
+
+
+        //double elecVal = energyService.getConsumedKwhBetweenDates(startOfMonth, now);
         //double gasVal = gasService.sumValueByCreatedAtBetween(startOfMonth, now);
-        double wasteVal = trashService.getConsumeTrashBetweenDates(startOfMonth, now);
-        //double transVal = vehicleLogService.sumDistanceByCreatedAtBetween(startOfMonth, now);
+        //double wasteVal = trashService.getConsumeTrashBetweenDates(startOfMonth, now);
+        List<DailyDistanceDTO> dailyDistanceDTOS =
+                vehicleLogService.getDistanceHistory(startOfMonth, now);
+
+        System.out.println("=============================> " +
+                dailyDistanceDTOS.stream()
+                        .map(DailyDistanceDTO::getTotalDistanceKm)
+                        .toList()
+        );
+
+        return dailyDistanceDTOS.toString();
 
         // 2. Récupérer les valeurs du mois dernier (Pour que l'AI calcule la Tendance)
-        double elecLastVal = energyService.getConsumedKwhBetweenDates(startOfLastMonth, startOfMonth);
-        double wasteLastVal = trashService.getConsumeTrashBetweenDates(startOfLastMonth, startOfMonth);
+//        double elecLastVal = energyService.getConsumedKwhBetweenDates(startOfLastMonth, startOfMonth);
+//        double wasteLastVal = trashService.getConsumeTrashBetweenDates(startOfLastMonth, startOfMonth);
         //double gasLastVal = gasService.sumValueByCreatedAtBetween(startOfLastMonth, startOfMonth.minusNanos(1));
         //double transLastVal = vehicleLogService.sumDistanceByCreatedAtBetween(startOfLastMonth, startOfMonth.minusNanos(1));
 
         // 3. Calculer CO2 et Coûts
         // ✅ Utilisation de CarbonFootprintService l'l'calcul
-        double elecCo2 = carbonFootprintService.calculateEnergyFootprint(elecVal);
-        double wasteCo2 = carbonFootprintService.calculateTrashFootprint(wasteVal);
+//        double elecCo2 = carbonFootprintService.calculateEnergyFootprint(elecVal);
+//        double wasteCo2 = carbonFootprintService.calculateTrashFootprint(wasteVal);
         //double gasCo2 = carbonFootprintService.calculateGasFootprint(gasVal);
-        //double transCo2 = carbonFootprintService.calculateTransportFootprint(transVal);
+//        double transCo2 = carbonFootprintService.calculateTransportFootprint(transVal);
 
-        double elecCost = elecVal * COST_ELEC;
+//        double elecCost = elecVal * COST_ELEC;
         //double gasCost = gasVal * COST_GAS;
 
         // 4. Retourner le JSON (M'kammal w m'qadd)
@@ -128,35 +144,36 @@ public class ChatService {
 //                    "Cout": "%.2f MAD",
 //                    "CO2": "%.2f kg"
 //        },
-//        "TRANSPORT": {
-//            "Distance": "%.2f km",
+//
+//        return String.format("""
+//        {
+//            "ELECTRICITE": {
+//                "Conso": "%.2f kWh",
+//                "LastMonthConso": "%.2f kWh",
+//                "Cout": "%.2f MAD",
+//                "CO2": "%.2f kg"
+//            },
+//            "DECHETS": {
+//                "Poids": "%.2f kg",
+//                "LastMonthPoids": "%.2f kg",
+//                "CO2": "%.2f kg"
+//            },
+//             "TRANSPORT": {
+//                    "Distance": "%.2f km",
 //                    "LastMonthDistance": "%.2f km",
 //                    "CO2": "%.2f kg"
-//        },
-        return String.format("""
-        {
-            "ELECTRICITE": { 
-                "Conso": "%.2f kWh", 
-                "LastMonthConso": "%.2f kWh", 
-                "Cout": "%.2f MAD", 
-                "CO2": "%.2f kg" 
-            },
-            "DECHETS": { 
-                "Poids": "%.2f kg", 
-                "LastMonthPoids": "%.2f kg",
-                "CO2": "%.2f kg" 
-            }
-        }
-        """,
+//             },
+//        }
+//        """
                 // ELECTRICITE
-                elecVal, elecLastVal, elecCost, elecCo2,
+//                 elecLastVal,
                 // GAZ
                 //gasVal, gasLastVal, gasCost, gasCo2,
                 // TRANSPORT
                 //transVal, transLastVal, transCo2,
                 // DECHETS
-                wasteVal, wasteLastVal, wasteCo2
-        );
+//                 wasteLastVal
+//        );
     }
     // Parsing Stream (WebClient)
     private String extractContentFromDeepSeek(String jsonChunk) {
@@ -172,5 +189,19 @@ public class ChatService {
             }
         } catch (Exception e) {}
         return "";
+    }
+
+    public List<DailyDistanceDTO> test() {
+
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate now = LocalDate.now();
+
+
+        List<DailyDistanceDTO> dailyDistanceDTOS = vehicleLogService.getDistanceHistory(startOfMonth, now);
+
+        System.out.println("Result Size: " + dailyDistanceDTOS.size());
+
+        // 4. Return the VARIABLE (not the class name)
+        return dailyDistanceDTOS;
     }
 }
