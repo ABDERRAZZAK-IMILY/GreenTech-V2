@@ -25,6 +25,14 @@ public interface TrashRepository extends MongoRepository<Trash, String> {
             "{ '$sort': { '_id': 1 } }"
     })
     List<DailyStat> getLast7DaysStats(LocalDateTime startDate);
-    List<Trash> findByTrashDateBetween(LocalDateTime start, LocalDateTime end);
+    @Aggregation(pipeline = {
+            // 1. Filter: Get docs where createdAt is >= start (?0) AND <= end (?1)
+            "{ '$match': { 'createdAt': { '$gte': ?0, '$lte': ?1 } } }",
+
+            // 2. Sort: Ensure they come out in time order (Oldest -> Newest)
+            // This is CRUCIAL for your distance calculation algorithm
+            "{ '$sort': { 'createdAt': 1 } }"
+    })
+    List<Trash> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
 }

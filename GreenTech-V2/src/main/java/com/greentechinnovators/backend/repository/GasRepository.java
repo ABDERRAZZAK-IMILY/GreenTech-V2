@@ -23,4 +23,13 @@ public interface GasRepository extends MongoRepository<Gas, String> {
             "{ '$sort': { '_id': 1 } }"
     })
     List<DailyStat> getLast7DaysStats(LocalDateTime startDate);
+    @Aggregation(pipeline = {
+            // 1. Filter: Get docs where createdAt is >= start (?0) AND <= end (?1)
+            "{ '$match': { 'createdAt': { '$gte': ?0, '$lte': ?1 } } }",
+
+            // 2. Sort: Ensure they come out in time order (Oldest -> Newest)
+            // This is CRUCIAL for your distance calculation algorithm
+            "{ '$sort': { 'createdAt': 1 } }"
+    })
+    List<Gas> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

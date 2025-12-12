@@ -82,7 +82,7 @@ public class VehicleService {
         LocalDateTime endOfDay = date.atTime(23, 59, 59);
 
         // Fetch logs sorted by time
-        List<VehicleLog> logs = vehicleLogRepository.findByCreatedAtBetweenOrderByCreatedAtAsc(startOfDay, endOfDay);
+        List<VehicleLog> logs = vehicleLogRepository.findByCreatedAtBetween(startOfDay, endOfDay);
 
         if (logs == null || logs.size() < 2) {
             return 0.0;
