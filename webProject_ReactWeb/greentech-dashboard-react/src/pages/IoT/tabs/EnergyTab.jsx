@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { showNotification } from '../../../utils/notifications';
-import SmartDataService from '../../../services/smartDataService';
+import { energyDataService } from '../../../services/smartDataService';
+
 
 const EnergyTab = () => {
   const [sensors, setSensors] = useState([]);
@@ -14,6 +15,15 @@ const EnergyTab = () => {
   const [currentSensorId, setCurrentSensorId] = useState(null);
   const [currentEquipments, setCurrentEquipments] = useState([]);
 
+  // Form state for adding new sensor
+  const [newSensorForm, setNewSensorForm] = useState({
+    location: '',
+    sensorId: '',
+    macAddress: '',
+    status: 'ONLINE',
+    co2Impact: 0
+  });
+
   // Equipment types configuration for each department
   const equipmentTypesConfig = {
     'production': ['Machine CNC #1', 'Machine CNC #2', 'Compresseur', 'Tour', 'Fraiseuse'],
@@ -25,7 +35,7 @@ const EnergyTab = () => {
   // Fetch energy data from backend
   const fetchEnergyData = async () => {
     try {
-      const response = await SmartDataService.getMetrics('ENERGY');
+      const response = await energyDataService.getMetrics('ENERGY');
       setSensors(response.data);
       setLoading(false);
     } catch (error) {
@@ -202,6 +212,17 @@ const EnergyTab = () => {
   };
 
   const openAddSensorModal = () => {
+    // Generate sensor counter if not exists
+    const sensorCounter = sensors.length + 1;
+    const newSensorId = `ESP32-ENERGY-${String(sensorCounter).padStart(3, '0')}`;
+    
+    setNewSensorForm({
+      location: '',
+      sensorId: newSensorId,
+      macAddress: '',
+      status: 'ONLINE',
+      co2Impact: 0
+    });
     setShowAddModal(true);
   };
 
@@ -213,11 +234,35 @@ const EnergyTab = () => {
     setCurrentSensorId(null);
   };
 
-  const handleAddSensor = (event) => {
+  const handleAddSensor = async (event) => {
     event.preventDefault();
-    // Logic for adding sensor
-    showNotification('Capteur ajouté avec succès !', 'success');
-    closeModals();
+
+    try {
+      // Prepare data for backend
+      const monitorData = {
+        location: newSensorForm.location,
+        sensorId: newSensorForm.sensorId,
+        macAddress: newSensorForm.macAddress,
+        status: newSensorForm.status,
+        co2Impact: parseFloat(newSensorForm.co2Impact) || 0,
+        energyReadings: []
+      };
+
+      // Send to backend
+      const response = await energyDataService.createMonitor(monitorData);
+      
+      console.log('Energy Monitor created:', response.data);
+
+      // Refresh sensors list
+      fetchEnergyData();
+
+      showNotification('Capteur ajouté avec succès !', 'success');
+      closeModals();
+    } catch (error) {
+      console.error('Error adding energy sensor:', error);
+      const errorMessage = error.response?.data?.message || 'Erreur lors de l\'ajout du capteur';
+      showNotification(errorMessage, 'error');
+    }
   };
 
   const handleUpdateSensor = (event) => {
@@ -621,27 +666,113 @@ const EnergyTab = () => {
             <div className="modal-body">
               <form id="addSensorForm" onSubmit={handleAddSensor}>
                 <div className="form-group">
-                  <label>Nom du capteur</label>
-                  <input type="text" defaultValue="ESP32-ELEC-013" readOnly style={{cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.03)'}} required />
+                  <label htmlFor="sensorId">ID du capteur</label>
+                  <input 
+                    type="text" 
+                    id="sensorId"
+                    value={newSensorForm.sensorId}
+                    readOnly 
+                    style={{cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.03)'}} 
+                    required 
+                  />
+                  <small style={{color: 'rgba(255,255,255,0.5)', fontSize: '12px'}}>
+                    Généré automatiquement
+                  </small>
                 </div>
+
                 <div className="form-group">
-                  <label>Type de capteur</label>
-                  <input type="text" defaultValue="Capteur Électricité (SCT013)" readOnly style={{cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.03)'}} required />
+                  <label htmlFor="macAddress">
+                    <i className="fas fa-wifi" /> Adresse MAC du Capteur ESP32
+                  </label>
+                  <input 
+                    type="text" 
+                    id="macAddress"
+                    placeholder="Ex: AA:BB:CC:DD:EE:FF"
+                    value={newSensorForm.macAddress}
+                    onChange={(e) => setNewSensorForm({...newSensorForm, macAddress: e.target.value.toUpperCase()})}
+                    pattern="^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
+                    required 
+                  />
+                  <small style={{color: 'rgba(255,255,255,0.5)', fontSize: '12px'}}>
+                    Format: XX:XX:XX:XX:XX:XX - Identifiant unique du capteur
+                  </small>
                 </div>
+
                 <div className="form-group">
-                  <label>Département</label>
-                  <input type="text" defaultValue={activeFilter === 'production' ? 'Production' : activeFilter === 'bureaux' ? 'Bureaux' : activeFilter === 'entrepot' ? 'Entrepôt' : 'Cafétéria'} readOnly style={{cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.03)'}} required />
+                  <label htmlFor="location">
+                    <i className="fas fa-map-marker-alt" /> Emplacement
+                  </label>
+                  <input 
+                    type="text" 
+                    id="location"
+                    placeholder="Ex: Zone Production, Salle des Serveurs, etc."
+                    value={newSensorForm.location}
+                    onChange={(e) => setNewSensorForm({...newSensorForm, location: e.target.value})}
+                    required 
+                  />
                 </div>
+
                 <div className="form-group">
-                  <label>Seuil d'alerte (kW)</label>
-                  <input type="number" placeholder="Ex: 5.0" step="0.1" required />
+                  <label htmlFor="co2Impact">
+                    <i className="fas fa-leaf" /> Impact CO2 par kWh (kg)
+                  </label>
+                  <input 
+                    type="number" 
+                    id="co2Impact"
+                    placeholder="Ex: 0.233"
+                    step="0.001"
+                    value={newSensorForm.co2Impact}
+                    onChange={(e) => setNewSensorForm({...newSensorForm, co2Impact: e.target.value})}
+                    required 
+                  />
+                  <small style={{color: 'rgba(255,255,255,0.5)', fontSize: '12px'}}>
+                    Facteur d'émission CO2 (moyenne France: 0.0571 kg/kWh)
+                  </small>
                 </div>
+
+                <div className="form-group">
+                  <label htmlFor="status">Statut initial</label>
+                  <select
+                    id="status"
+                    value={newSensorForm.status}
+                    onChange={(e) => setNewSensorForm({...newSensorForm, status: e.target.value})}
+                    style={{
+                      padding: '10px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      color: 'white',
+                      width: '100%'
+                    }}
+                    required
+                  >
+                    <option value="ONLINE">✅ Actif</option>
+                    <option value="OFFLINE">⏸️ Inactif</option>
+                  </select>
+                </div>
+
+                <div style={{
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  marginTop: '15px'
+                }}>
+                  <div style={{display: 'flex', alignItems: 'flex-start', gap: '10px'}}>
+                    <i className="fas fa-info-circle" style={{color: '#3b82f6', marginTop: '2px'}} />
+                    <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.8)'}}>
+                      <strong>Note:</strong> L'adresse MAC doit correspondre exactement à celle de votre ESP32.
+                      Vous pouvez la récupérer via <code>WiFi.macAddress()</code> dans le code Arduino.
+                    </div>
+                  </div>
+                </div>
+
                 <div className="form-actions">
                   <button type="button" className="btn-cancel-modal" onClick={closeModals}>
                     <i className="fas fa-times" /> Annuler
                   </button>
                   <button type="submit" className="btn-submit">
-                    <i className="fas fa-check" /> Ajouter
+                    <i className="fas fa-check" /> Ajouter le Capteur
                   </button>
                 </div>
               </form>

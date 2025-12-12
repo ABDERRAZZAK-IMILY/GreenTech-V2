@@ -18,6 +18,7 @@ public class VehicleLog {
     @Id
     private String id;
     private Double latitude;
+    private String vehicleId;
     private Double longitude;
     private LocalDateTime createdAt;
 }

@@ -23,11 +23,11 @@ public class VehicleLogservice {
     private final CarbonFootprintService carbonFootprintService;
 
     public VehicleLogResponseDTO create(VehicleLogRequestDTO dto){
-        Vehicle vehicle = vehicleRepository.findById(dto.getVehicleId()).orElseThrow(()->{throw  new RuntimeException("vehicle not found");});
+//        Vehicle vehicle = vehicleRepository.findById(dto.getVehicleId()).orElseThrow(()->{throw  new RuntimeException("vehicle not found");});
         VehicleLog vehicleLog= vehicleLogRepository.save(mapper.toVehicleLog(dto));
         vehicleLog = vehicleLogRepository.save(vehicleLog);
-        vehicle.getVehicleLogs().add(vehicleLog);
-        vehicleRepository.save(vehicle);
+//        vehicle.getVehicleLogs().add(vehicleLog);
+//        vehicleRepository.save(vehicle);
         return mapper.toVehicleLogResponse(vehicleLog);
     }
     public List<VehicleLogResponseDTO> findAll(){
