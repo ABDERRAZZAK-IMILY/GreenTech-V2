@@ -40,9 +40,9 @@ public class PredictionService {
     private String model;
 
     // Constants (Prix & CO2)
-    private static final double COST_ELEC = 1.2; // MAD/kWh
-    private static final double COST_GAS = 10.5; // MAD/m3
-    private static final double CO2_ELEC = 0.7;  // kg CO2/kWh
+    private static final double COST_ELEC = 1.2;
+    private static final double COST_GAS = 10.5;
+    private static final double CO2_ELEC = 0.7;
     private static final double CO2_GAS = 2.0;   // kg CO2/m3
     private static final double CO2_TRASH = 0.5; // kg CO2/kg
     private static final double CO2_TRANS = 0.15; // kg CO2/km

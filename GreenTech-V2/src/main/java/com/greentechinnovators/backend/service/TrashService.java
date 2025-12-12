@@ -103,7 +103,7 @@ public class TrashService {
             // Move to next day
             current = current.plusDays(1);
         }
-        return null;
+        return report;
     }
     public Double calculateDailyFootPrint(Double weight) {
         return carbonFootprintService.calculateTransportFootprint(weight);
