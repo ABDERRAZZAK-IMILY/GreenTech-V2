@@ -45,13 +45,9 @@ public class EnergyService {
     }
 
 
-
-
-
     public Double getConsumedKwhBetweenDates(LocalDateTime start, LocalDateTime end) {
 
         List<Energy> allEnergy = repository.findAll();
-
 
         Double consumedEnergy = allEnergy.stream()
                 .filter(e -> {
@@ -64,7 +60,6 @@ public class EnergyService {
                 })
                 .mapToDouble(Energy::getEnergyConsumed)
                 .sum();
-
 
         return consumedEnergy;
     }

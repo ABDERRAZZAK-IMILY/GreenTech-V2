@@ -10,5 +10,5 @@ import java.time.LocalDateTime;
 public class DailyDistanceDTO {
     private LocalDateTime date;
     private Double totalDistanceKm;
-    private Double carbonFootprintKg; // Optional: if you want to include carbon
+    private Double carbonFootprintKg;
 }
