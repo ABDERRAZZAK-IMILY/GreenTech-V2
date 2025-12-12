@@ -1,7 +1,9 @@
 package com.greentechinnovators.backend.config;
 
 import com.greentechinnovators.backend.handler.EnergerIotWebSokrtHandller;
+import com.greentechinnovators.backend.handler.GasIotWebSocketHandler;
 import com.greentechinnovators.backend.handler.TrashIotWebsocketHandeller;
+import com.greentechinnovators.backend.handler.VehicleIotWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -19,6 +21,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSoc
 
     private final EnergerIotWebSokrtHandller energyIotHandler;
     private final TrashIotWebsocketHandeller trashIotHandler;
+    private final GasIotWebSocketHandler gasIotHandler;
+    private final VehicleIotWebSocketHandler vehicleIotHandler;
+    
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
@@ -41,6 +46,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSoc
                 .setAllowedOrigins("*");
 
         registry.addHandler(trashIotHandler, "/iot/trash")
+                .setAllowedOrigins("*");
+
+        registry.addHandler(gasIotHandler, "/iot/gas")
+                .setAllowedOrigins("*");
+
+        registry.addHandler(vehicleIotHandler, "/iot/vehicle")
                 .setAllowedOrigins("*");
     }
 }

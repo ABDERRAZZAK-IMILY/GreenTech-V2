@@ -295,7 +295,6 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
   useEffect(() => {
     if (!isInitialized.current || refreshTrigger === 0) return;
 
-    console.log('🔄 Updating charts with real-time data...');
 
     // Update line chart
     if (chartsRef.current.electricity) {
@@ -321,7 +320,6 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
       chartsRef.current.comparison.update('active');
     }
 
-    console.log('✅ Charts updated successfully');
   }, [refreshTrigger, selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod]);
 
   // Cleanup on unmount

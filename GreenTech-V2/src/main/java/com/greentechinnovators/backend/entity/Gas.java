@@ -18,5 +18,5 @@ public class Gas {
     @Id
     private String id;
     private Double consumedGas;
-    private LocalDateTime createdAt =  LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now();
 }
