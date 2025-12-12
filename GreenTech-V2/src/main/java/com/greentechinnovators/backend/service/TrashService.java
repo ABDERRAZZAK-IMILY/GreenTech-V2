@@ -46,8 +46,22 @@ public class TrashService {
         return trashList.stream().map(mapper::toResponse).toList();
     }
     public Double getConsumeTrashBetweenDates(LocalDateTime start, LocalDateTime end) {
-        List<Trash> trash =repository.findByTrashDateBetween(start, end);
-        Double consumedTrash = trash.stream().mapToDouble(Trash::getWight).sum();
-        return carbonFootprintService.calculateTrashFootprint(consumedTrash);
+
+        List<Trash> allTrash = repository.findAll();
+
+        Double consumedTrash = allTrash.stream()
+                .filter(t -> {
+                    if (t.getCreatedAt() == null || t.getWight() == null) return false;
+
+                    boolean isAfterStart = !t.getCreatedAt().isBefore(start);
+                    boolean isBeforeEnd = !t.getCreatedAt().isAfter(end);
+
+                    return isAfterStart && isBeforeEnd;
+                })
+                .mapToDouble(Trash::getWight)
+                .sum();
+
+
+        return consumedTrash;
     }
 }
