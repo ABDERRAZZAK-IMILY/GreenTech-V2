@@ -57,6 +57,7 @@ public class EnergyMapper {
         EnergyMonitor monitor = new EnergyMonitor();
         monitor.setLocation(dto.getLocation());
         monitor.setSensorId(dto.getSensorId());
+        monitor.setMacAddress(dto.getMacAddress());
         monitor.setStatus(dto.getStatus());
         monitor.setCo2Impact(dto.getCo2Impact());
 
@@ -85,6 +86,7 @@ public class EnergyMapper {
         dto.setId(entity.getId());
         dto.setLocation(entity.getLocation());
         dto.setSensorId(entity.getSensorId());
+        dto.setMacAddress(entity.getMacAddress());
         dto.setStatus(entity.getStatus());
         dto.setCo2Impact(entity.getCo2Impact());
         dto.setTimestamp(entity.getTimestamp());

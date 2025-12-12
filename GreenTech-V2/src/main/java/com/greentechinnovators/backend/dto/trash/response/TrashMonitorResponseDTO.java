@@ -12,6 +12,7 @@ public class TrashMonitorResponseDTO {
     private String id;
     private String location;
     private String sensorId;
+    private String macAddress;
     private Status status;
     private Double co2Impact;
     private TrashType trashType;
