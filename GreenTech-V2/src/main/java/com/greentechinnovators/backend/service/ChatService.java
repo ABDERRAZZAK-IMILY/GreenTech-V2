@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -102,9 +103,16 @@ public class ChatService {
 //        LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0);
 //        LocalDateTime startOfLastMonth = startOfMonth.minusMonths(1);
 
-        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
-        LocalDate startOfLastMonth = startOfMonth.minusMonths(1);
-        LocalDate now= LocalDate.now();
+        LocalDateTime startOfMonth = LocalDate.now()
+                .withDayOfMonth(1)
+                .atStartOfDay();
+
+        LocalDateTime startOfLastMonth = LocalDate.now()
+                .withDayOfMonth(1)
+                .minusMonths(1)
+                .atStartOfDay();
+
+        LocalDateTime now = LocalDateTime.now();
 
 
         //double elecVal = energyService.getConsumedKwhBetweenDates(startOfMonth, now);
@@ -191,17 +199,17 @@ public class ChatService {
         return "";
     }
 
-    public List<DailyDistanceDTO> test() {
-
-        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
-        LocalDate now = LocalDate.now();
-
-
-        List<DailyDistanceDTO> dailyDistanceDTOS = vehicleLogService.getDistanceHistory(startOfMonth, now);
-
-        System.out.println("Result Size: " + dailyDistanceDTOS.size());
-
-        // 4. Return the VARIABLE (not the class name)
-        return dailyDistanceDTOS;
-    }
+//    public List<DailyDistanceDTO> test() {
+//
+//        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+//        LocalDate now = LocalDate.now();
+//
+//
+//        List<DailyDistanceDTO> dailyDistanceDTOS = vehicleLogService.getDistanceHistory(startOfMonth, now);
+//
+//        System.out.println("Result Size: " + dailyDistanceDTOS.size());
+//
+//        // 4. Return the VARIABLE (not the class name)
+//        return dailyDistanceDTOS;
+//    }
 }

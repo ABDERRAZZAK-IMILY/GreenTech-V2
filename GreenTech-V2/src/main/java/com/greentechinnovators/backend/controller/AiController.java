@@ -34,8 +34,8 @@ public class AiController {
 //        return aiService.generatePredictions();
 //    }
 
-        @GetMapping("/test")
-    public  List<DailyDistanceDTO> getPredictions() {
-        return aiService.test();
-    }
+//        @GetMapping("/test")
+//    public  List<DailyDistanceDTO> getPredictions() {
+//        return aiService.test();
+//    }
 }
