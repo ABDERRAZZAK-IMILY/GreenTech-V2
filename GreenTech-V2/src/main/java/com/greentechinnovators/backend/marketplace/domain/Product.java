@@ -14,11 +14,13 @@ public class Product {
     @Id
     private String id;
     private String name;
+    private String emoji;          // Product emoji for UI display (e.g., 🎁, 💰, 🏠)
     private String description;
     private int costInPoints;
     private String imageUrl;
     private int stockQuantity;
     private boolean isActive;
-    private String category; // Product category (e.g., ECO_PRODUCTS, ENERGY_SAVING, RECYCLING)
-    private double rating;   // Product rating (0.0 to 5.0)
+    private String category;       // Product category (e.g., ECO_PRODUCTS, ENERGY_SAVING, RECYCLING)
+    private String badge;          // Special badge (e.g., Populaire, Premium, Meilleure affaire)
+    private double rating;         // Product rating (0.0 to 5.0)
 }
