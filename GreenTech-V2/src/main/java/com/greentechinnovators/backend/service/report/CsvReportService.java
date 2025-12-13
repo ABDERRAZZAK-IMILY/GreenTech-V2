@@ -27,7 +27,7 @@ public class CsvReportService {
         ReportData data = dataFetcher.getMonthlyData(start, now);
         String aiAnalysis = aiAnalyst.generateAnalysis(data);
 
-        String folderName = "generated-reports";
+        String folderName = "iso-reports";
         String rootPath = System.getProperty("user.dir");
         File directory = new File(rootPath, folderName);
 

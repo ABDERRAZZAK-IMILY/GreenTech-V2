@@ -2,6 +2,7 @@ package com.greentechinnovators.backend.service.ai;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.greentechinnovators.backend.dto.gas.responce.GasResponseDTO;
 import com.greentechinnovators.backend.dto.trash.response.DailyTrashDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.DailyDistanceDTO;
 import com.greentechinnovators.backend.service.EnergyService;
@@ -118,7 +119,7 @@ public class AiContextManager {
 
 //    private Map<String, Object> getGasData(LocalDateTime start, LocalDateTime end) {
 //        try {
-//            double currentGas = gasService.sumValueByCreatedAtBetween(start, end);
+//            List<GasResponseDTO> currentGas = gasService.getTodayReadings();
 //            return Map.of("Consumption_Current", String.format("%.2f units", currentGas));
 //        } catch (Exception e) {
 //            return Map.of("Status", "Non configurer");

@@ -13,8 +13,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.greentechinnovators.backend.utils.CarbonFootprintService.FACTOR_TRASH_MIXED;
-
 @Component
 @RequiredArgsConstructor
 public class ReportDataFetcher {
@@ -23,26 +21,32 @@ public class ReportDataFetcher {
     private final TrashService trashService;
     private final VehicleService vehicleService;
 
+    // Facteur d'émission approx pour l'électricité (Maroc)
+    private static final double KWH_TO_CO2_FACTOR = 0.58;
 
     public ReportData getMonthlyData(LocalDateTime start, LocalDateTime end) {
+        // 1. Transport
         List<DailyDistanceDTO> logs = vehicleService.getDistanceHistory(start, end);
         if (logs == null) logs = new ArrayList<>();
 
         double transKm = logs.stream().mapToDouble(DailyDistanceDTO::getTotalDistanceKm).sum();
         double transCo2 = logs.stream().mapToDouble(DailyDistanceDTO::getCarbonFootprintKg).sum();
 
+        // 2. Déchets
         List<DailyTrashDTO> waste = trashService.TrashCarbonFootprint(start, end);
         if (waste == null) waste = new ArrayList<>();
 
         double trashKg = waste.stream().mapToDouble(d -> d.getTotalWeightKg() > 0 ? d.getTotalWeightKg() : 0).sum();
         double trashCo2 = waste.stream().mapToDouble(d -> d.getCarbonFootprintKg() > 0 ? d.getCarbonFootprintKg() : 0).sum();
 
+        // 3. Energie
         double energyKwh = 0.0;
         try {
             energyKwh = energyService.getConsumedKwhBetweenDates(start, end);
         } catch (Exception ignored) {}
 
-        double energyCo2 = energyKwh * FACTOR_TRASH_MIXED;
+        // ✅ Correction: Calcul CO2 spécifique à l'énergie
+        double energyCo2 = energyKwh * KWH_TO_CO2_FACTOR;
 
         return ReportData.builder()
                 .transportKm(transKm)
