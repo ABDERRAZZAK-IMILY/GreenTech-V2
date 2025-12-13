@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/ai/chat/**").permitAll()
                         .requestMatchers("/api/ai/predictions/**").permitAll()
+                        .requestMatchers("/api/reports/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/notifications/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")

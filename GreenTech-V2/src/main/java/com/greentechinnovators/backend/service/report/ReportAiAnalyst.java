@@ -16,12 +16,38 @@ public class ReportAiAnalyst {
     public String generateAnalysis(ReportData data) {
         try {
             String prompt = String.format(
-                    "Agis en tant qu'expert RSE pour GreenTech. Analyse ces données mensuelles : " +
-                            "- Transport: %.2f km (%.2f kg CO2) " +
-                            "- Déchets: %.2f kg (%.2f kg CO2) " +
-                            "- Energie: %.2f kWh (%.2f kg CO2). " +
-                            "Donne un résumé de performance (3 lignes max) et 2 recommandations stratégiques concrètes. " +
-                            "Réponds en texte brut (pas de markdown, pas de gras, pas d'italique).",
+                    "RÔLE : Tu es un Auditeur Environnemental Principal certifié IRCA (ISO 14001:2015). " +
+                            "Ta mission est d'auditer la performance mensuelle d'une entreprise industrielle.\n\n" +
+
+                            "DONNÉES D'ENTRÉE (MOIS EN COURS) :\n" +
+                            "- Transport : %.2f km parcourus | Empreinte : %.2f kg CO2\n" +
+                            "- Déchets   : %.2f kg générés   | Empreinte : %.2f kg CO2\n" +
+                            "- Énergie   : %.2f kWh consommé | Empreinte : %.2f kg CO2\n\n" +
+
+                            "CONSIGNES STRICTES DE RÉDACTION :\n" +
+                            "1. Ton : Formel, factuel, autoritaire et constructif.\n" +
+                            "2. Format : Texte brut uniquement. PAS de gras (**), PAS d'italique (*), PAS de titres Markdown (##).\n" +
+                            "3. Structure : Tu dois suivre EXACTEMENT la structure ci-dessous pour que le parser PDF fonctionne.\n\n" +
+
+                            "STRUCTURE DE LA RÉPONSE ATTENDUE :\n" +
+                            "1. SYNTHÈSE DE CONFORMITÉ\n" +
+                            "   - [Indique ici le statut global : 'Conforme', 'Non-conforme mineure' ou 'Non-conforme majeure' avec une phrase de justification technique.]\n\n" +
+
+                            "2. ANALYSE DES ÉCARTS (ISO 14001 §9.1)\n" +
+                            "   - [Analyse Transport : Compare ratio km/CO2. Utilise des termes comme 'Efficacité de la flotte' ou 'Dérive carburant'.]\n" +
+                            "   - [Analyse Déchets : Mentionne le taux de valorisation ou l'impact pollution.]\n" +
+                            "   - [Analyse Énergie : Identifie si la consommation est anormale (Point critique).]\n\n" +
+
+                            "3. RISQUES ET OPPORTUNITÉS\n" +
+                            "   - Risque Identifié : [Ex: Dépassement des seuils réglementaires, Coût carbone élevé...]\n" +
+                            "   - Opportunité : [Ex: Installation LED, Optimisation des tournées, Recyclage...]\n\n" +
+
+                            "4. PLAN D'ACTION CORRECTIF (PDCA)\n" +
+                            "   - PLANIFIER : [Une action concrète pour analyser la cause racine.]\n" +
+                            "   - RÉALISER : [Une action immédiate pour corriger le tir le mois prochain.]\n" +
+                            "   - VÉRIFIER : [Quel indicateur surveiller pour confirmer l'efficacité ?]\n",
+
+                    // Les variables Java
                     data.getTransportKm(), data.getTransportCo2(),
                     data.getTrashWeight(), data.getTrashCo2(),
                     data.getEnergyKwh(), data.getEnergyCo2()
@@ -32,7 +58,7 @@ public class ReportAiAnalyst {
                     .block();
         } catch (Exception e) {
             log.error("AI Analysis failed", e);
-            return "Le module d'analyse IA est temporairement indisponible.";
+            return "Analyse indisponible - Veuillez consulter l'administrateur.";
         }
     }
 }

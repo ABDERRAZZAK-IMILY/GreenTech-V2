@@ -87,7 +87,7 @@ public class ExcelReportService {
     }
 
     private String saveToFile(Workbook workbook) throws IOException {
-        String folderName = "generated-reports";
+        String folderName = "iso-reports";
         File directory = new File(System.getProperty("user.dir"), folderName);
         if (!directory.exists()) directory.mkdirs();
 
