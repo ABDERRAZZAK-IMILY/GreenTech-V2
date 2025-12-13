@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { getLineChartData, getComparisonData, getEmissionsData } from '../utils/dataGenerator';
 
-export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod) => {
+export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod, refreshTrigger = 0) => {
   const chartsRef = useRef({});
   const isInitialized = useRef(false);
 
@@ -290,6 +290,37 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
 
     chart.update();
   }, [emissionsPeriod]);
+
+  // Update all charts when refreshTrigger changes (real-time data from WebSocket)
+  useEffect(() => {
+    if (!isInitialized.current || refreshTrigger === 0) return;
+
+
+    // Update line chart
+    if (chartsRef.current.electricity) {
+      const lineData = getLineChartData(selectedMetric, selectedPeriod);
+      chartsRef.current.electricity.data.labels = lineData.labels;
+      chartsRef.current.electricity.data.datasets[0].data = lineData.data;
+      chartsRef.current.electricity.update('active');
+    }
+
+    // Update emissions chart
+    if (chartsRef.current.emissions) {
+      const emissionsData = getEmissionsData(emissionsPeriod);
+      chartsRef.current.emissions.data.datasets[0].data = emissionsData.data;
+      chartsRef.current.emissions.data.labels = emissionsData.labels;
+      chartsRef.current.emissions.update('active');
+    }
+
+    // Update comparison chart
+    if (chartsRef.current.comparison) {
+      const comparisonData = getComparisonData(selectedComparison);
+      chartsRef.current.comparison.data.datasets[0].data = comparisonData.previousMonth;
+      chartsRef.current.comparison.data.datasets[1].data = comparisonData.currentMonth;
+      chartsRef.current.comparison.update('active');
+    }
+
+  }, [refreshTrigger, selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod]);
 
   // Cleanup on unmount
   useEffect(() => {

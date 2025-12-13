@@ -6,10 +6,10 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-const char* ssid = "Youcode";
-const char* password = "Youcode@2024";
+const char* ssid = "Boybouch";
+const char* password = "22222222";
 
-const char* ws_host = "192.168.8.54";
+const char* ws_host = "192.168.11.237";
 const int ws_port = 8080;
 const char* ws_path = "/iot/energy";  // Dedicated energy endpoint
 String mac_address = "";

@@ -51,6 +51,20 @@ public class TrashService {
 
         return trashList.stream().map(mapper::toResponse).toList();
     }
+
+    public List<TrashResponseDTO> getTodayReadings() {
+        LocalDateTime startOfToday = LocalDateTime.now().toLocalDate().atStartOfDay();
+        LocalDateTime endOfToday = startOfToday.plusDays(1);
+        
+        List<Trash> trashList = repository.findAll().stream()
+                .filter(t -> t.getCreatedAt() != null && 
+                           !t.getCreatedAt().isBefore(startOfToday) && 
+                           t.getCreatedAt().isBefore(endOfToday))
+                .toList();
+        
+        return trashList.stream().map(mapper::toResponse).toList();
+    }
+
     public Double getConsumeTrashBetweenDates(LocalDateTime start, LocalDateTime end) {
         List<Trash> allTrash = repository.findAll();
 
@@ -89,7 +103,7 @@ public class TrashService {
             // Move to next day
             current = current.plusDays(1);
         }
-        return null;
+        return report;
     }
     public Double calculateDailyFootPrint(Double weight) {
         return carbonFootprintService.calculateTransportFootprint(weight);

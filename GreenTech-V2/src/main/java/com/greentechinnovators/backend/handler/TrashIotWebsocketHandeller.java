@@ -30,8 +30,14 @@ public class TrashIotWebsocketHandeller extends TextWebSocketHandler {
         sessions.put(session.getId(), session);
         log.info("Trash IoT WebSocket connected: {}", session.getId());
         
-        // Send welcome message
-        session.sendMessage(new TextMessage("{\"status\":\"connected\",\"message\":\"Trash IoT WebSocket connected\"}"));
+        // Send welcome message only if session is open
+        try {
+            if (session.isOpen()) {
+                session.sendMessage(new TextMessage("{\"status\":\"connected\",\"message\":\"Trash IoT WebSocket connected\"}"));
+            }
+        } catch (Exception e) {
+            log.warn("Failed to send welcome message to session {}: {}", session.getId(), e.getMessage());
+        }
     }
 
     @Override

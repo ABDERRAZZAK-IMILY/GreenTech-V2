@@ -1,12 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Chart from 'chart.js/auto';
 import { showNotification } from '../../utils/notifications';
 import { useLoading } from '../../contexts/LoadingContext';
-
+import axios from 'axios';
 const Reports = () => {
   const carbonDoughnutRef = useRef(null);
   const carbonDoughnutChartRef = useRef(null);
-
+const [reportFiles, setReportFiles] = useState([]);
   // Use loading context
   const {
     setIsGeneratingCarbon,
@@ -63,42 +63,124 @@ const Reports = () => {
     executeStep();
   };
 
-  // Generate Export/History Report
-  const generateExportReport = () => {
-    setIsGeneratingExport(true);
-    setExportProgress(0);
+  const downloadLatestReport = (type) => {
+    let extension = '';
+    if (type === 'pdf') extension = '.pdf';
+    else if (type === 'excel') extension = '.xlsx';
+    else if (type === 'csv') extension = '.csv';
 
-    const steps = [
-      { progress: 0, message: 'Initialisation...', duration: 400 },
-      { progress: 25, message: 'Préparation des données...', duration: 700 },
-      { progress: 50, message: 'Génération historique...', duration: 900 },
-      { progress: 75, message: 'Création des exports...', duration: 800 },
-      { progress: 100, message: 'Finalisation...', duration: 300 }
-    ];
+    const latestFile = reportFiles.find(file => file.fileName.endsWith(extension));
 
-    let currentStep = 0;
-
-    const executeStep = () => {
-      if (currentStep < steps.length) {
-        const step = steps[currentStep];
-        setExportProgress(step.progress);
-        setExportStep(step.message);
-
-        setTimeout(() => {
-          currentStep++;
-          executeStep();
-        }, step.duration);
-      } else {
-        setTimeout(() => {
-          setIsGeneratingExport(false);
-          setIsExportGenerated(true);
-          showNotification('Export & Historique générés avec succès!', 'success');
-        }, 200);
-      }
-    };
-
-    executeStep();
+    if (latestFile) {
+      downloadRealFile(latestFile.fileName);
+    } else {
+      showNotification(`Aucun rapport ${type.toUpperCase()} trouvé. Veuillez générer d'abord.`, "warning");
+    }
   };
+
+  // Helper bach yjib smiya d fichier l-kher 3la hsab type
+  const getLatestLabel = (type, defaultLabel) => {
+    let extension = '';
+    if (type === 'pdf') extension = '.pdf';
+    else if (type === 'excel') extension = '.xlsx';
+    else if (type === 'csv') extension = '.csv';
+
+    // reportFiles dija mratba (Jdid lfou9), donc l-awwal li nel9awh howa l-latest
+    const file = reportFiles.find(f => f.fileName.endsWith(extension));
+    
+    // Ila l9inah nraj3o smiyto, sinon nraj3o Titre par défaut
+    return file ? file.fileName : defaultLabel;
+  };
+  
+  // --- HADI HIYA L-FONCTION L-JIDIDA (Copy/Coller hadchi) ---
+  const generateExportReport = async () => {
+    // 1. N-lanciw l-loading
+    setIsGeneratingExport(true);
+    setExportProgress(10);
+    setExportStep('Initialisation...');
+
+    try {
+      // Step: Préparation
+      setExportProgress(30);
+      setExportStep('Génération PDF, CSV & Excel sur le serveur...');
+
+      // 🔥 Step 2 : L-APPEL "DA9A WAHDA" (En parallèle)
+      // Promise.all kay-lancer les 3 requêtes f nafs l-wa9t bla maytssanna whda tsali
+      await Promise.all([
+        axios.get('http://localhost:8080/api/reports/monthly'),       // Report 1: PDF
+        axios.get('http://localhost:8080/api/reports/generate-csv'),  // Report 2: CSV
+        axios.get('http://localhost:8080/api/reports/generate-excel') // Report 3: Excel
+      ]);
+
+      // Melli kolchi yjaweb b "OK"
+      setExportProgress(80);
+      setExportStep('Mise à jour de l\'historique...');
+
+      // Step 3 : Refresh la liste lta7t bach ybano les fichiers jdad
+      // (Ta2akkad anna fetchReports() kayna w khddama)
+      await fetchReports();
+
+      // Finalisation
+      setExportProgress(100);
+      setTimeout(() => {
+        setIsGeneratingExport(false);
+        setIsExportGenerated(true);
+        showNotification('Succès ! Tous les rapports ont été générés.', 'success');
+      }, 500);
+
+    } catch (error) {
+      console.error("Erreur lors de la génération groupée", error);
+      showNotification("Erreur technique lors de la génération", "error");
+      // Ila trat erreur, n-wa9fo loading
+      setIsGeneratingExport(false);
+    }
+  };
+// 1. Function bach tjib la liste mn Backend
+  const fetchReports = async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/api/reports/list');
+      // Nratbouhom: Jdid howa lwll
+      const sorted = response.data.sort((a, b) => b.lastModified - a.lastModified);
+      setReportFiles(sorted);
+      
+      // Ila l9ina des fichiers, nbayno l-partie d l'export
+      if (sorted.length > 0) {
+        setIsExportGenerated(true);
+      }
+    } catch (error) {
+      console.error("Erreur fetching reports", error);
+      showNotification("Impossible de récupérer l'historique", "error");
+    }
+  };
+
+  const downloadRealFile = async (fileName) => {
+    try {
+      showNotification(`Téléchargement de ${fileName}...`, 'info');
+      
+      const response = await axios.get(`http://localhost:8080/api/reports/download/${fileName}`, {
+        responseType: 'blob', 
+      });
+
+      // Création du lien de téléchargement
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      showNotification("Téléchargement terminé !", "success");
+    } catch (error) {
+      console.error("Erreur download", error);
+      showNotification("Erreur lors du téléchargement", "error");
+    }
+  };
+
+  // 3. Charger la liste dès le début
+  useEffect(() => {
+    fetchReports();
+  }, []);
 
   // Generate Comparison Report
   const generateComparisonReport = () => {
@@ -420,78 +502,123 @@ const Reports = () => {
           ) : (
             <>
 
-          <div className="export-buttons">
-            <h4>📄 Télécharger les Rapports</h4>
+   <div className="export-buttons">
+            <h4>📄 Télécharger les Derniers Rapports</h4>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '15px' }}>
-              Exportez vos données au format PDF, Excel ou CSV
+              Téléchargez directement les derniers fichiers générés (PDF, Excel, CSV)
             </p>
-            <button className="btn-export" onClick={() => exportReport('monthly-pdf')}>
+            
+            {/* 1. Bouton PDF */}
+            <button 
+              className="btn-export" 
+              onClick={() => downloadLatestReport('pdf')} // <-- Hna Action
+              disabled={reportFiles.length === 0} 
+              style={{ opacity: reportFiles.length === 0 ? 0.6 : 1 }}
+              title={getLatestLabel('pdf', 'Rapport PDF')} // Tooltip
+            >
               <i className="fas fa-file-pdf"></i>
-              <span>Rapport Mensuel PDF</span>
+              <span style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '280px'}}>
+                {getLatestLabel('pdf', 'Rapport Mensuel PDF')}
+              </span>
               <i className="fas fa-download"></i>
             </button>
-            <button className="btn-export" onClick={() => exportReport('carbon-excel')}>
+
+            {/* 2. Bouton Excel */}
+            <button 
+              className="btn-export" 
+              onClick={() => downloadLatestReport('excel')}
+              disabled={reportFiles.length === 0}
+              style={{ opacity: reportFiles.length === 0 ? 0.6 : 1 }}
+              title={getLatestLabel('excel', 'Rapport Excel')}
+            >
               <i className="fas fa-file-excel"></i>
-              <span>Bilan Carbone Excel</span>
+              <span style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '280px'}}>
+                 {getLatestLabel('excel', 'Bilan Carbone Excel')}
+              </span>
               <i className="fas fa-download"></i>
             </button>
-            <button className="btn-export" onClick={() => exportReport('analytics-csv')}>
+
+            {/* 3. Bouton CSV */}
+            <button 
+              className="btn-export" 
+              onClick={() => downloadLatestReport('csv')}
+              disabled={reportFiles.length === 0}
+              style={{ opacity: reportFiles.length === 0 ? 0.6 : 1 }}
+              title={getLatestLabel('csv', 'Données CSV')}
+            >
               <i className="fas fa-file-csv"></i>
-              <span>Données Brutes CSV</span>
+              <span style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '280px'}}>
+                 {getLatestLabel('csv', 'Données Brutes CSV')}
+              </span>
               <i className="fas fa-download"></i>
             </button>
           </div>
 
           <div className="historical-data">
-            <h4>📊 Historique des Rapports Mensuels</h4>
+            <h4>{reportFiles.fileName}</h4>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '15px' }}>
-              Consultez vos performances passées. Chaque ligne = un mois de données (émissions CO2, coûts, nombre d'actions réalisées)
+              Fichiers générés et stockés localement sur le serveur.
             </p>
+            
             <div className="historical-table-container">
               <table className="historical-table" style={{ tableLayout: 'auto' }}>
                 <thead>
                   <tr>
                     <th style={{ paddingRight: '20px' }}>Date</th>
-                    <th style={{ paddingLeft: '20px' }}>Type</th>
-                    <th>CO2</th>
-                    <th>Coût</th>
-                    <th>Actions</th>
-                    <th>Download</th>
+                    <th style={{ paddingLeft: '20px' }}>Fichier</th>
+                    <th>Taille</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td style={{ paddingRight: '20px' }}>Décembre 2025</td>
-                    <td style={{ paddingLeft: '20px' }}>Mensuel</td>
-                    <td>12.5 t</td>
-                    <td>8,450MAD</td>
-                    <td>8</td>
-                    <td><button className="btn-download-row" onClick={() => downloadHistoricalReport('2025-12')}><i className="fas fa-download"></i></button></td>
-                  </tr>
-                  <tr>
-                    <td style={{ paddingRight: '20px' }}>Novembre 2025</td>
-                    <td style={{ paddingLeft: '20px' }}>Mensuel</td>
-                    <td>13.6 t</td>
-                    <td>9,200MAD</td>
-                    <td>5</td>
-                    <td><button className="btn-download-row" onClick={() => downloadHistoricalReport('2025-11')}><i className="fas fa-download"></i></button></td>
-                  </tr>
-                  <tr>
-                    <td style={{ paddingRight: '20px' }}>Octobre 2025</td>
-                    <td style={{ paddingLeft: '20px' }}>Mensuel</td>
-                    <td>14.2 t</td>
-                    <td>9,800MAD</td>
-                    <td>3</td>
-                    <td><button className="btn-download-row" onClick={() => downloadHistoricalReport('2025-10')}><i className="fas fa-download"></i></button></td>
-                  </tr>
-                  <tr>
-                    <td style={{ paddingRight: '20px' }}>Septembre 2025</td>
-                    <td style={{ paddingLeft: '20px' }}>Mensuel</td>
-                    <td>15.1 t</td>
-                    <td>10,200MAD</td>
-                    <td>2</td>
-                    <td><button className="btn-download-row" onClick={() => downloadHistoricalReport('2025-09')}><i className="fas fa-download"></i></button></td>
-                  </tr>
+                  {/* ILA MAKAN WALO */}
+                  {reportFiles.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: '#888' }}>
+                        Aucun rapport disponible sur le serveur.
+                      </td>
+                    </tr>
+                  ) : (
+                    /* BOUCLE 3LA LES FICHIERS REAL */
+                    reportFiles.map((file, index) => (
+                      <tr key={index}>
+                        {/* 1. Date Formatée */}
+                        <td style={{ paddingRight: '20px', fontWeight: 'bold', fontSize:'0.9em' }}>
+                          {new Date(file.lastModified).toLocaleDateString('fr-FR', {
+                             year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'
+                          })}
+                        </td>
+                        
+                        {/* 2. Nom & Type */}
+                        <td style={{ paddingLeft: '20px' }}>
+                           <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                             {file.fileName.endsWith('.pdf') && <i className="fas fa-file-pdf" style={{color:'#e74c3c'}}></i>}
+                             {file.fileName.endsWith('.xlsx') && <i className="fas fa-file-excel" style={{color:'#27ae60'}}></i>}
+                             {file.fileName.endsWith('.csv') && <i className="fas fa-file-csv" style={{color:'#2980b9'}}></i>}
+                             <span style={{fontSize:'0.85em'}}>{file.fileName}</span>
+                           </div>
+                        </td>
+
+                        {/* 3. Taille */}
+                        <td>
+                          <span style={{background:'#f1f2f6', padding:'2px 8px', borderRadius:'4px', fontSize:'0.8em'}}>
+                            {file.size}
+                          </span>
+                        </td>
+
+                        {/* 4. Bouton Download Real */}
+                        <td>
+                          <button 
+                            className="btn-download-row" 
+                            onClick={() => downloadRealFile(file.fileName)}
+                            title="Télécharger"
+                          >
+                            <i className="fas fa-download"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

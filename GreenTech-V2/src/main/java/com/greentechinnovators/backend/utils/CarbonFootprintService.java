@@ -14,7 +14,7 @@ public class CarbonFootprintService {
 
     // 3. TRASH: Mixed Municipal Waste (Landfill)
     // Decomposing organic waste in landfills releases Methane. Approx 0.8 - 1.2 kg CO2e per kg waste
-    private static final double FACTOR_TRASH_MIXED = 0.85;
+    public static final double FACTOR_TRASH_MIXED = 0.85;
 
     // 4. TRANSPORT: Average Car (Mixed Fleet)
     // Average fossil fuel car emits approx 0.17 - 0.22 kg/km

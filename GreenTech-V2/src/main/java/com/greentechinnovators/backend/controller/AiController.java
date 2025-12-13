@@ -1,7 +1,5 @@
 package com.greentechinnovators.backend.controller;
 
-import com.greentechinnovators.backend.dto.AI.PredictionResponse;
-import com.greentechinnovators.backend.dto.vehicle.responce.DailyDistanceDTO;
 import com.greentechinnovators.backend.service.ChatService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;

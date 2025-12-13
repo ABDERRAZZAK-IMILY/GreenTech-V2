@@ -68,6 +68,7 @@ public class VehicleMapper {
         }
 
         VehicleLog log = new VehicleLog();
+        log.setVehicleId(dto.getVehicleId());
         log.setLatitude(dto.getLatitude());
         log.setLongitude(dto.getLongitude());
         log.setCreatedAt(LocalDateTime.now());
@@ -82,6 +83,7 @@ public class VehicleMapper {
 
         VehicleLogResponseDTO dto = new VehicleLogResponseDTO();
         dto.setId(entity.getId());
+        dto.setVehicleId(entity.getVehicleId());
         dto.setLatitude(entity.getLatitude());
         dto.setLongitude(entity.getLongitude());
         dto.setCreatedAt(entity.getCreatedAt());
