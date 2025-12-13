@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Data
 public class VehicleLogResponseDTO {
     private String id;
+    private String vehicleId;
     private Double latitude;
     private Double longitude;
     private LocalDateTime createdAt;

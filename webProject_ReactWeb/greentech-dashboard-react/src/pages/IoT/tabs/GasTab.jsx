@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { showNotification } from '../../../utils/notifications';
+import { gasDataService } from '../../../services/smartDataService';
 
 const GasTab = () => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
@@ -71,7 +72,7 @@ const GasTab = () => {
   };
 
 
-  const submitGasData = (event) => {
+  const submitGasData = async (event) => {
     event.preventDefault();
 
     const gasType = gasTypes[activeFilter];
@@ -81,30 +82,42 @@ const GasTab = () => {
 
     const usageName = usageNames[activeFilter];
 
-    // Get current date and time
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('fr-FR');
-    const timeStr = now.toLocaleTimeString('fr-FR');
+    try {
+      // Submit to backend
+      const payload = {
+        consumedGas: parseFloat(quantity)
+      };
 
-    // Add to history
-    const newEntry = {
-      date: `${dateStr} ${timeStr}`,
-      usage: usageName,
-      gasType: gasType,
-      quantity: quantity,
-      capacity: capacity,
-      status: status
-    };
+      await gasDataService.submitManualData(payload);
 
-    setGasHistory(prev => ({
-      ...prev,
-      [activeFilter]: [newEntry, ...prev[activeFilter]]
-    }));
+      // Get current date and time
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('fr-FR');
+      const timeStr = now.toLocaleTimeString('fr-FR');
 
-    showNotification(`Gaz enregistré: ${usageName} - ${gasType} (${quantity} ${gasType === 'Butane' ? 'bouteilles' : 'kg'})`, 'success');
+      // Add to history
+      const newEntry = {
+        date: `${dateStr} ${timeStr}`,
+        usage: usageName,
+        gasType: gasType,
+        quantity: quantity,
+        capacity: capacity,
+        status: status
+      };
 
-    // Reset form
-    event.target.reset();
+      setGasHistory(prev => ({
+        ...prev,
+        [activeFilter]: [newEntry, ...prev[activeFilter]]
+      }));
+
+      showNotification(`Gaz enregistré: ${usageName} - ${gasType} (${quantity} ${gasType === 'Butane' ? 'bouteilles' : 'kg'})`, 'success');
+
+      // Reset form
+      event.target.reset();
+    } catch (error) {
+      console.error('Error submitting gas data:', error);
+      showNotification('Erreur lors de l\'enregistrement des données', 'error');
+    }
   };
 
   const usageNames = {

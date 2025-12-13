@@ -148,7 +148,7 @@ const EnergyTab = () => {
     showNotification(`Équipement "${deletedEquipment}" supprimé`, 'info');
   };
 
-  const submitEnergyManualData = (event) => {
+  const submitEnergyManualData = async (event) => {
     event.preventDefault();
 
     const dept = document.getElementById('deptManual').value;
@@ -160,28 +160,41 @@ const EnergyTab = () => {
       return;
     }
 
-    // Get current date and time
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('fr-FR');
-    const timeStr = now.toLocaleTimeString('fr-FR');
+    try {
+      // Submit to backend
+      const payload = {
+        energyConsumed: parseFloat(consumption),
+        macAddress: 'MANUAL_ENTRY'
+      };
 
-    // Add to history table
-    const tableBody = document.getElementById('energyHistoryTableBody');
-    const newRow = document.createElement('tr');
-    newRow.innerHTML = `
-      <td>${dateStr} ${timeStr}</td>
-      <td>${deptDisplay}</td>
-      <td>${consumption}</td>
-    `;
+      await energyDataService.submitManualData(payload);
 
-    tableBody.insertBefore(newRow, tableBody.firstChild);
+      // Get current date and time
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('fr-FR');
+      const timeStr = now.toLocaleTimeString('fr-FR');
 
-    // Reset form
-    event.target.reset();
-    // Re-apply the dept after reset
-    updateDeptDisplay(activeFilter);
+      // Add to history table
+      const tableBody = document.getElementById('energyHistoryTableBody');
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+        <td>${dateStr} ${timeStr}</td>
+        <td>${deptDisplay}</td>
+        <td>${consumption}</td>
+      `;
 
-    showNotification('Données d\'énergie enregistrées avec succès !', 'success');
+      tableBody.insertBefore(newRow, tableBody.firstChild);
+
+      // Reset form
+      event.target.reset();
+      // Re-apply the dept after reset
+      updateDeptDisplay(activeFilter);
+
+      showNotification('Données d\'énergie enregistrées avec succès !', 'success');
+    } catch (error) {
+      console.error('Error submitting energy data:', error);
+      showNotification('Erreur lors de l\'enregistrement des données', 'error');
+    }
   };
 
   const viewSensorDetails = (sensorId) => {

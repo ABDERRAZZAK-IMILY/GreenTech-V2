@@ -44,10 +44,23 @@ public class EnergyService {
         return energyList.stream().map(mapper::toResponse).toList();
     }
 
+    public List<EnergyResponseDTO> getTodayReadings() {
+        LocalDateTime startOfToday = LocalDateTime.now().toLocalDate().atStartOfDay();
+        LocalDateTime endOfToday = startOfToday.plusDays(1);
+        
+        List<Energy> energyList = repository.findAll().stream()
+                .filter(e -> e.getCreatedAt() != null && 
+                           !e.getCreatedAt().isBefore(startOfToday) && 
+                           e.getCreatedAt().isBefore(endOfToday))
+                .toList();
+        
+        return energyList.stream().map(mapper::toResponse).toList();
+    }
 
     public Double getConsumedKwhBetweenDates(LocalDateTime start, LocalDateTime end) {
 
         List<Energy> allEnergy = repository.findAll();
+
 
         Double consumedEnergy = allEnergy.stream()
                 .filter(e -> {
@@ -60,6 +73,7 @@ public class EnergyService {
                 })
                 .mapToDouble(Energy::getEnergyConsumed)
                 .sum();
+
 
         return consumedEnergy;
     }

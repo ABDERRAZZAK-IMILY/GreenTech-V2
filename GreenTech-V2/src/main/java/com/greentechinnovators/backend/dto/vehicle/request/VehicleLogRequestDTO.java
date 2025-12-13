@@ -4,9 +4,11 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class VehicleLogRequestDTO {
     // The ID of the vehicle reporting this log
     @NotBlank(message = "Vehicle ID is required")

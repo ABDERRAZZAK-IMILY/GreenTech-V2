@@ -152,7 +152,7 @@ const WasteTab = () => {
     showNotification(`Sous-type "${deletedSubtype}" supprimé`, 'info');
   };
 
-  const submitWasteManualData = (event) => {
+  const submitWasteManualData = async (event) => {
     event.preventDefault();
 
     const wasteType = document.getElementById('wasteTypeManual').value;
@@ -164,28 +164,41 @@ const WasteTab = () => {
       return;
     }
 
-    // Get current date and time
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('fr-FR');
-    const timeStr = now.toLocaleTimeString('fr-FR');
+    try {
+      // Submit to backend
+      const payload = {
+        weight: parseFloat(weight),
+        macAddress: 'MANUAL_ENTRY'
+      };
 
-    // Add to history table
-    const tableBody = document.getElementById('wasteHistoryTableBody');
-    const newRow = document.createElement('tr');
-    newRow.innerHTML = `
-      <td>${dateStr} ${timeStr}</td>
-      <td>${wasteTypeDisplay}</td>
-      <td>${weight}</td>
-    `;
+      await trashDataService.submitManualData(payload);
 
-    tableBody.insertBefore(newRow, tableBody.firstChild);
+      // Get current date and time
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('fr-FR');
+      const timeStr = now.toLocaleTimeString('fr-FR');
 
-    // Reset form
-    event.target.reset();
-    // Re-apply the waste type after reset
-    updateWasteTypeDisplay(activeFilter);
+      // Add to history table
+      const tableBody = document.getElementById('wasteHistoryTableBody');
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+        <td>${dateStr} ${timeStr}</td>
+        <td>${wasteTypeDisplay}</td>
+        <td>${weight}</td>
+      `;
 
-    showNotification('Données de déchet enregistrées avec succès !', 'success');
+      tableBody.insertBefore(newRow, tableBody.firstChild);
+
+      // Reset form
+      event.target.reset();
+      // Re-apply the waste type after reset
+      updateWasteTypeDisplay(activeFilter);
+
+      showNotification('Données de déchet enregistrées avec succès !', 'success');
+    } catch (error) {
+      console.error('Error submitting waste data:', error);
+      showNotification('Erreur lors de l\'enregistrement des données', 'error');
+    }
   };
 
   const viewSensorDetails = (sensorId) => {

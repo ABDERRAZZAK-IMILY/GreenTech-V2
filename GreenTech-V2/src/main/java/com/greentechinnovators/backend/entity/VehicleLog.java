@@ -20,5 +20,5 @@ public class VehicleLog {
     private Double latitude;
     private String vehicleId;
     private Double longitude;
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 }

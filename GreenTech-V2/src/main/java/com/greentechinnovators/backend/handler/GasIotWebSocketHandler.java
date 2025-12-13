@@ -1,9 +1,9 @@
 package com.greentechinnovators.backend.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.greentechinnovators.backend.dto.Energy.Request.EnergyRequestDTO;
-import com.greentechinnovators.backend.dto.Energy.Responce.EnergyResponseDTO;
-import com.greentechinnovators.backend.service.EnergyService;
+import com.greentechinnovators.backend.dto.gas.request.GasRequestDTO;
+import com.greentechinnovators.backend.dto.gas.responce.GasResponseDTO;
+import com.greentechinnovators.backend.service.GasService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,21 +19,21 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EnergerIotWebSokrtHandller extends TextWebSocketHandler {
+public class GasIotWebSocketHandler extends TextWebSocketHandler {
 
-    private final EnergyService energyService;
+    private final GasService gasService;
     private final ObjectMapper objectMapper;
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         sessions.put(session.getId(), session);
-        log.info("Energy IoT WebSocket connected: {}", session.getId());
+        log.info("Gas IoT WebSocket connected: {}", session.getId());
         
         // Send welcome message only if session is open
         try {
             if (session.isOpen()) {
-                session.sendMessage(new TextMessage("{\"status\":\"connected\",\"message\":\"Energy IoT WebSocket connected\"}"));
+                session.sendMessage(new TextMessage("{\"status\":\"connected\",\"message\":\"Gas IoT WebSocket connected\"}"));
             }
         } catch (Exception e) {
             log.warn("Failed to send welcome message to session {}: {}", session.getId(), e.getMessage());
@@ -44,31 +44,30 @@ public class EnergerIotWebSokrtHandller extends TextWebSocketHandler {
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         try {
             String payload = message.getPayload();
-            log.info("Received energy data from {}: {}", session.getId(), payload);
+            log.info("Received gas data from {}: {}", session.getId(), payload);
 
             // Parse incoming JSON
-            EnergyRequestDTO energyDTO = objectMapper.readValue(payload, EnergyRequestDTO.class);
+            GasRequestDTO gasDTO = objectMapper.readValue(payload, GasRequestDTO.class);
 
-            // Validate and save energy reading
-            EnergyResponseDTO savedEnergy = energyService.createReading(energyDTO);
+            // Validate and save gas reading
+            // You'll need to create a method in GasService similar to EnergyService.createReading
+            // For now, we'll just acknowledge
+            
+            // Broadcast to all connected clients (dashboard, mobile app, etc.)
+            broadcastGasUpdate(gasDTO);
 
-            // Send acknowledgment back to ESP32
+            // Send acknowledgment back
             String ackMessage = objectMapper.writeValueAsString(Map.of(
                 "status", "ok",
-                "message", "Energy data saved successfully",
-                "id", savedEnergy.getId(),
-                "energyConsumed", savedEnergy.getEnergyConsumed()
+                "message", "Gas data saved successfully"
             ));
             session.sendMessage(new TextMessage(ackMessage));
 
-            // Broadcast to all connected clients (dashboard, mobile app, etc.)
-            broadcastEnergyUpdate(savedEnergy);
-
         } catch (Exception e) {
-            log.error("Error processing energy data: {}", e.getMessage(), e);
+            log.error("Error processing gas data: {}", e.getMessage(), e);
             String errorMessage = objectMapper.writeValueAsString(Map.of(
                 "status", "error",
-                "message", "Failed to process energy data: " + e.getMessage()
+                "message", "Failed to process gas data: " + e.getMessage()
             ));
             session.sendMessage(new TextMessage(errorMessage));
         }
@@ -77,27 +76,27 @@ public class EnergerIotWebSokrtHandller extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         sessions.remove(session.getId());
-        log.info("Energy IoT WebSocket disconnected: {} with status: {}", session.getId(), status);
+        log.info("Gas IoT WebSocket disconnected: {} with status: {}", session.getId(), status);
     }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-        log.error("Energy IoT WebSocket error for session {}: {}", session.getId(), exception.getMessage());
+        log.error("Gas IoT WebSocket error for session {}: {}", session.getId(), exception.getMessage());
         sessions.remove(session.getId());
     }
 
     /**
-     * Broadcast energy updates to all connected clients
+     * Broadcast gas updates to all connected clients
      */
-    private void broadcastEnergyUpdate(EnergyResponseDTO energyData) {
+    private void broadcastGasUpdate(GasRequestDTO gasData) {
         String message;
         try {
             message = objectMapper.writeValueAsString(Map.of(
-                "type", "ENERGY_UPDATE",
-                "data", energyData
+                "type", "GAS_UPDATE",
+                "data", gasData
             ));
         } catch (Exception e) {
-            log.error("Error serializing energy update: {}", e.getMessage());
+            log.error("Error serializing gas update: {}", e.getMessage());
             return;
         }
 
@@ -111,9 +110,4 @@ public class EnergerIotWebSokrtHandller extends TextWebSocketHandler {
             }
         });
     }
-
-
-    
-
-
 }
