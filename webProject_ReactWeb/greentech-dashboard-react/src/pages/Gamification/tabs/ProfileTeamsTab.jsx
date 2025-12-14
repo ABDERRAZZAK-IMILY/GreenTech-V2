@@ -6,6 +6,7 @@ import userService from '../../../services/userService';
 import { getAllDepartments } from '../../../services/departmentSerice';
 import EditMemberModal from './EditMemberModal';
 import AddMemberModal from './AddMemberModal';
+import MembersTable from './MembersTable';
 
 const ProfileTeamsTab = () => {
   const [isAdmin] = useState(localStorage.getItem('userRole') === 'admin');
@@ -106,10 +107,10 @@ const ProfileTeamsTab = () => {
   const handleCreateMember = (data) => {
     // 'data' contains { name, email, department, jobTitle }
     console.log("Creating new member:", data);
-    
+
     // Call your API here...
     // axios.post('/api/members', data)...
-    
+
     setShowAddMemberModal(false);
   };
 
@@ -384,173 +385,13 @@ const ProfileTeamsTab = () => {
                 borderRadius: '12px',
                 border: '1px solid rgba(255, 255, 255, 0.1)'
               }}>
-                <table style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  background: 'rgba(255, 255, 255, 0.03)'
-                }}>
-                  <thead style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--card-bg)' }}>
-                    <tr style={{ background: 'rgba(30, 39, 46, 0.98)' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid rgba(255, 255, 255, 0.1)' }}>Nom</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid rgba(255, 255, 255, 0.1)' }}>Département</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid rgba(255, 255, 255, 0.1)' }}>Eco-Coins</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid rgba(255, 255, 255, 0.1)' }}>Gagnés</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid rgba(255, 255, 255, 0.1)' }}>Dépensés</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid rgba(255, 255, 255, 0.1)' }}>Actions</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid rgba(255, 255, 255, 0.1)' }}>Niveau</th>
-                      <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid rgba(255, 255, 255, 0.1)' }}>Gestion</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loading ? (
-                      <tr>
-                        <td colSpan="8" style={{ padding: '40px', textAlign: 'center' }}>
-                          <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-                            <i className="fas fa-spinner fa-spin" style={{ marginRight: '10px' }}></i>
-                            Chargement des membres...
-                          </div>
-                        </td>
-                      </tr>
-                    ) : members.filter(m => m.status === 'active').length === 0 ? (
-                      <tr>
-                        <td colSpan="8" style={{ padding: '40px', textAlign: 'center' }}>
-                          <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-                            <i className="fas fa-users-slash" style={{ marginRight: '10px' }}></i>
-                            Aucun membre actif trouvé
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      members.filter(m => m.status === 'active').map(member => (
-                        <tr key={member.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                          <td style={{ padding: '12px' }}>
-                            <div>
-                              <div style={{ fontWeight: '600' }}>{member.name}</div>
-                              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{member.email}</div>
-                            </div>
-                          </td>
-                          <td style={{ padding: '12px' }}>{member.department}</td>
-                          <td style={{ padding: '12px' }}>
-                            <span style={{ color: 'var(--accent-color)', fontWeight: '700' }}>{member.ecoCoins}</span>
-                          </td>
-                          <td style={{ padding: '12px' }}>
-                            <span style={{ color: '#43e97b' }}>+{member.pointsEarned}</span>
-                          </td>
-                          <td style={{ padding: '12px' }}>
-                            <span style={{ color: '#ff6b6b' }}>-{member.pointsSpent}</span>
-                          </td>
-                          <td style={{ padding: '12px' }}>{member.actionsCompleted}</td>
-                          <td style={{ padding: '12px' }}>
-                            <span style={{
-                              background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
-                              padding: '6px 14px',
-                              borderRadius: '20px',
-                              fontSize: '12px',
-                              fontWeight: '700',
-                              color: 'white',
-                              boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
-                            }}>
-                              Niv. {member.level}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px', textAlign: 'center' }}>
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
-                              <button
-                                onClick={() => openPointsModal(member)}
-                                title="Attribuer/Retirer points"
-                                style={{
-                                  background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
-                                  border: 'none',
-                                  color: 'white',
-                                  width: '36px',
-                                  height: '36px',
-                                  borderRadius: '10px',
-                                  cursor: 'pointer',
-                                  fontSize: '14px',
-                                  fontWeight: '600',
-                                  transition: 'all 0.3s ease',
-                                  boxShadow: '0 3px 10px rgba(102, 126, 234, 0.4)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center'
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
-                                  e.currentTarget.style.boxShadow = '0 6px 15px rgba(102, 126, 234, 0.6)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                  e.currentTarget.style.boxShadow = '0 3px 10px rgba(102, 126, 234, 0.4)';
-                                }}
-                              >
-                                <i className="fas fa-coins"></i>
-                              </button>
-                              <button
-                                onClick={() => openEditModal(member)}
-                                title="Modifier"
-                                style={{
-                                  background: 'linear-gradient(135deg, #c9971f, #d47d1f)',
-                                  border: 'none',
-                                  color: 'white',
-                                  width: '36px',
-                                  height: '36px',
-                                  borderRadius: '10px',
-                                  cursor: 'pointer',
-                                  fontSize: '14px',
-                                  fontWeight: '600',
-                                  transition: 'all 0.3s ease',
-                                  boxShadow: '0 3px 10px rgba(201, 151, 31, 0.4)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center'
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
-                                  e.currentTarget.style.boxShadow = '0 6px 15px rgba(201, 151, 31, 0.6)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                  e.currentTarget.style.boxShadow = '0 3px 10px rgba(201, 151, 31, 0.4)';
-                                }}
-                              >
-                                <i className="fas fa-edit"></i>
-                              </button>
-                              <button
-                                onClick={() => handleDeleteMember(member.id)}
-                                title="Supprimer"
-                                style={{
-                                  background: 'linear-gradient(135deg, #c94b4b, #b84855)',
-                                  border: 'none',
-                                  color: 'white',
-                                  width: '36px',
-                                  height: '36px',
-                                  borderRadius: '10px',
-                                  cursor: 'pointer',
-                                  fontSize: '14px',
-                                  fontWeight: '600',
-                                  transition: 'all 0.3s ease',
-                                  boxShadow: '0 3px 10px rgba(201, 75, 75, 0.4)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center'
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
-                                  e.currentTarget.style.boxShadow = '0 6px 15px rgba(201, 75, 75, 0.6)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                  e.currentTarget.style.boxShadow = '0 3px 10px rgba(201, 75, 75, 0.4)';
-                                }}
-                              >
-                                <i className="fas fa-trash"></i>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )))}
-                  </tbody>
-                </table>
+                <MembersTable
+                  members={members}
+                  loading={loading}
+                  onOpenPoints={openPointsModal}
+                  onEdit={openEditModal}
+                  onDelete={handleDeleteMember}
+                />
               </div>
             </div>
           </div>
