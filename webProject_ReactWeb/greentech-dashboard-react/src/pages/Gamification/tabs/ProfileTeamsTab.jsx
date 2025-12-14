@@ -5,6 +5,7 @@ import gamificationService from '../../../services/gamificationService';
 import userService from '../../../services/userService';
 import { getAllDepartments } from '../../../services/departmentSerice';
 import EditMemberModal from './EditMemberModal';
+import AddMemberModal from './AddMemberModal';
 
 const ProfileTeamsTab = () => {
   const [isAdmin] = useState(localStorage.getItem('userRole') === 'admin');
@@ -102,75 +103,14 @@ const ProfileTeamsTab = () => {
     : '0';
 
   // Handlers
-  const handleAddMember = async (e) => {
-    e.preventDefault();
-
-    if (!formData.name || !formData.email) {
-      showNotification('Veuillez remplir tous les champs requis', 'warning');
-      return;
-    }
-
-    try {
-      const newUserData = {
-        name: formData.name,
-        email: formData.email,
-        password: 'GreenTech2024', // Default password
-        role: 'USER', // All members are users by default
-        department: formData.department || 'General',
-        jobTitle: formData.jobTitle || 'Employee'
-      };
-
-      await userService.createUser(newUserData);
-      showNotification(`Membre ${formData.name} ajouté avec succès !`, 'success');
-
-      // Refresh data
-      await fetchLeaderboard();
-
-      // Reset and close
-      setShowAddMemberModal(false);
-      setFormData({ name: '', email: '', department: '', jobTitle: '' });
-    } catch (error) {
-      console.error('Error adding member:', error);
-      showNotification(
-        error.response?.data?.message || 'Erreur lors de l\'ajout du membre',
-        'error'
-      );
-    }
-  };
-
-  const handleEditMember = async (e) => {
-    e.preventDefault();
-
-    if (!selectedMember) {
-      showNotification('Aucun membre sélectionné', 'error');
-      return;
-    }
-
-    try {
-      const updateData = {
-        name: formData.name,
-        email: formData.email,
-        department: formData.department,
-        jobTitle: formData.jobTitle
-      };
-
-      await userService.updateUser(selectedMember.id, updateData);
-      showNotification('Membre modifié avec succès !', 'success');
-
-      // Refresh data
-      await fetchLeaderboard();
-
-      // Reset and close
-      setShowEditMemberModal(false);
-      setSelectedMember(null);
-      setFormData({ name: '', email: '', department: '', jobTitle: '' });
-    } catch (error) {
-      console.error('Error updating member:', error);
-      showNotification(
-        error.response?.data?.message || 'Erreur lors de la modification',
-        'error'
-      );
-    }
+  const handleCreateMember = (data) => {
+    // 'data' contains { name, email, department, jobTitle }
+    console.log("Creating new member:", data);
+    
+    // Call your API here...
+    // axios.post('/api/members', data)...
+    
+    setShowAddMemberModal(false);
   };
 
   const handleDeleteMember = (memberId) => {
@@ -626,192 +566,20 @@ const ProfileTeamsTab = () => {
 
       {/* Add Member Modal */}
       {showAddMemberModal && (
-        <div className="modal" style={{ display: 'block', background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)' }} onClick={closeModals}>
-          <div className="modal-content" style={{
-            maxWidth: '600px',
-            background: 'linear-gradient(135deg, rgba(30, 39, 46, 0.98) 0%, rgba(45, 52, 54, 0.98) 100%)',
-            borderRadius: '20px',
-            padding: '0',
-            border: '2px solid rgba(102, 126, 234, 0.3)',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
-          }} onClick={(e) => e.stopPropagation()}>
-            <div style={{
-              background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
-              padding: '25px 30px',
-              borderRadius: '18px 18px 0 0',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '12px', fontSize: '20px', fontWeight: '700' }}>
-                <i className="fas fa-user-plus"></i> Ajouter un membre
-              </h3>
-              <button onClick={closeModals} style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: 'none',
-                width: '35px',
-                height: '35px',
-                borderRadius: '50%',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.3s ease'
-              }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}>
-                <i className="fas fa-times" style={{ fontSize: '18px' }}></i>
-              </button>
-            </div>
-            <form onSubmit={handleAddMember} style={{ padding: '30px' }}>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
-                  <i className="fas fa-user" style={{ marginRight: '8px', color: 'var(--primary-color)' }}></i>
-                  Nom complet
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  placeholder="Ex: Youssef Alami"
-                  style={{
-                    width: '100%',
-                    padding: '12px 15px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '2px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '10px',
-                    color: 'var(--text-primary)',
-                    fontSize: '14px',
-                    transition: 'all 0.3s ease',
-                    outline: 'none'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = 'var(--primary-color)'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
-                />
-              </div>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
-                  <i className="fas fa-envelope" style={{ marginRight: '8px', color: 'var(--primary-color)' }}></i>
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                  placeholder="youssef.alami@greentech.com"
-                  style={{
-                    width: '100%',
-                    padding: '12px 15px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '2px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '10px',
-                    color: 'var(--text-primary)',
-                    fontSize: '14px',
-                    transition: 'all 0.3s ease',
-                    outline: 'none'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = 'var(--primary-color)'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
-                />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
-                    <i className="fas fa-building" style={{ marginRight: '8px', color: 'var(--primary-color)' }}></i>
-                    Département
-                  </label>
-                  <select
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 text-sm text-white bg-white/5 border-2 border-white/10 rounded-[10px] 
-             outline-none transition-all duration-300 cursor-pointer 
-             focus:border-blue-500"
-                  >
-
-                    {/* The 'bg-slate-900' ensures the dropdown menu is dark and readable */}
-                    {department.map((dep) => (
-                      <option key={dep.id} value={dep.name} className="bg-slate-900 text-white">{dep.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
-                    <i className="fas fa-briefcase" style={{ marginRight: '8px', color: 'var(--primary-color)' }}></i>
-                    Poste
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.jobTitle}
-                    onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-                    placeholder="Développeur, Manager..."
-                    style={{
-                      width: '100%',
-                      padding: '12px 15px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '2px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '10px',
-                      color: 'var(--text-primary)',
-                      fontSize: '14px',
-                      transition: 'all 0.3s ease',
-                      outline: 'none'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--primary-color)'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
-                  />
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '15px', marginTop: '30px' }}>
-                <button type="button" onClick={closeModals} style={{
-                  flex: 1,
-                  padding: '14px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '10px',
-                  color: 'var(--text-primary)',
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}>
-                  Annuler
-                </button>
-                <button type="submit" style={{
-                  flex: 1,
-                  padding: '14px',
-                  background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
-                  border: 'none',
-                  borderRadius: '10px',
-                  color: 'white',
-                  fontSize: '15px',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-                  }}>
-                  <i className="fas fa-plus"></i> Ajouter
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <AddMemberModal
+          isOpen={showAddMemberModal}
+          onClose={() => setShowAddMemberModal(false)}
+          onSave={handleCreateMember}
+          departments={department}
+        />
       )}
+
+
+
+
+
+
+
 
       {/* Edit Member Modal */}
       {showEditMemberModal && (
