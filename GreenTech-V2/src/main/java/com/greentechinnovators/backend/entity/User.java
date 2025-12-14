@@ -28,7 +28,9 @@ public class User {
     private String email;
     
     private String passwordHash;
-    private Role role;
+    private Role role;  // Application role (USER, ADMIN)
+    private String department;  // Department/Team
+    private String jobTitle;  // Job position (Developer, Manager, etc.)
     
     // Profile fields
     private String profilePicture;   // URL to profile image

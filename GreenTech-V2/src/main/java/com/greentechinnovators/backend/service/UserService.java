@@ -1,5 +1,6 @@
 package com.greentechinnovators.backend.service;
 
+import com.greentechinnovators.backend.dto.user.CreateUserRequestDTO;
 import com.greentechinnovators.backend.dto.user.UpdateProfileRequestDTO;
 import com.greentechinnovators.backend.dto.user.UserProfileDTO;
 import com.greentechinnovators.backend.entity.User;
@@ -7,6 +8,7 @@ import com.greentechinnovators.backend.gamification.domain.UserGamificationStats
 import com.greentechinnovators.backend.gamification.repository.GamificationStatsRepository;
 import com.greentechinnovators.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,12 +22,47 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final GamificationStatsRepository gamificationStatsRepository;
+    private final PasswordEncoder passwordEncoder;
 
 
     public List<UserProfileDTO> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(this::mapToProfileDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public UserProfileDTO createUser(CreateUserRequestDTO request) {
+        // Check if email already exists
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email is already in use");
+        }
+
+        // Create new user
+        User user = User.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole())
+                .department(request.getDepartment())
+                .jobTitle(request.getJobTitle())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        User savedUser = userRepository.save(user);
+
+        // Create initial gamification stats
+        UserGamificationStats stats = UserGamificationStats.builder()
+                .userId(savedUser.getId())
+                .totalPoints(0)
+                .currentLevel(1)
+                .totalActions(0)
+                .totalChallenges(0)
+                .build();
+        gamificationStatsRepository.save(stats);
+
+        return mapToProfileDTO(savedUser);
     }
 
 
@@ -60,6 +97,14 @@ public class UserService {
                         }
                     });
             user.setEmail(request.getEmail());
+        }
+        
+        if (request.getDepartment() != null) {
+            user.setDepartment(request.getDepartment());
+        }
+        
+        if (request.getJobTitle() != null) {
+            user.setJobTitle(request.getJobTitle());
         }
         
         if (request.getProfilePicture() != null) {
@@ -102,6 +147,8 @@ public class UserService {
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
+                .department(user.getDepartment())
+                .jobTitle(user.getJobTitle())
                 .profilePicture(user.getProfilePicture())
                 .totalPoints(stats != null ? stats.getTotalPoints() : 0)
                 .currentLevel(stats != null ? stats.getCurrentLevel() : 1)

@@ -40,6 +40,12 @@ public class MarketplaceController {
         return ResponseEntity.ok(marketplaceService.getOrderDetails(id));
     }
 
+    @GetMapping("/marketplace/my-orders")
+    public ResponseEntity<List<OrderResponseDTO>> getMyOrders(Authentication authentication) {
+        String userId = authentication.getName();
+        return ResponseEntity.ok(marketplaceService.getUserOrders(userId));
+    }
+
     @GetMapping("/users/{id}/orders")
     public ResponseEntity<List<OrderResponseDTO>> getUserOrders(@PathVariable String id, Authentication authentication) {
         return ResponseEntity.ok(marketplaceService.getUserOrders(id));

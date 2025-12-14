@@ -28,6 +28,23 @@ public class GamificationService {
         UserGamificationStats stats = statsRepository.findByUserId(userId)
                 .orElseGet(() -> createInitialStats(userId));
 
+        // Populate user info if not already set
+        if (stats.getUserName() == null) {
+            User user = userRepository.findById(userId).orElse(null);
+            if (user != null) {
+                stats.setUserName(user.getName());
+                stats.setUserEmail(user.getEmail());
+                stats.setRole(user.getRole() != null ? user.getRole().name() : "USER");
+                if (stats.getJoinDate() == null) {
+                    stats.setJoinDate(user.getCreatedAt());
+                }
+                if (stats.getStatus() == null) {
+                    stats.setStatus("active");
+                }
+                statsRepository.save(stats);
+            }
+        }
+
         User user = userRepository.findById(userId).orElse(null);
 
         List<Badge> badges = (stats.getEarnedBadgeIds() != null && !stats.getEarnedBadgeIds().isEmpty())
@@ -43,6 +60,23 @@ public class GamificationService {
         List<UserGamificationStats> topStats = statsRepository.findTop10ByOrderByTotalPointsDesc();
 
         return topStats.stream().map(stats -> {
+            // Populate user info if not already set
+            if (stats.getUserName() == null) {
+                User user = userRepository.findById(stats.getUserId()).orElse(null);
+                if (user != null) {
+                    stats.setUserName(user.getName());
+                    stats.setUserEmail(user.getEmail());
+                    stats.setRole(user.getRole() != null ? user.getRole().name() : "USER");
+                    if (stats.getJoinDate() == null) {
+                        stats.setJoinDate(user.getCreatedAt());
+                    }
+                    if (stats.getStatus() == null) {
+                        stats.setStatus("active");
+                    }
+                    statsRepository.save(stats);
+                }
+            }
+
             User user = userRepository.findById(stats.getUserId()).orElse(null);
 
             int rank = topStats.indexOf(stats) + 1;
@@ -56,12 +90,26 @@ public class GamificationService {
     }
 
     private UserGamificationStats createInitialStats(String userId) {
-        return statsRepository.save(UserGamificationStats.builder()
+        User user = userRepository.findById(userId).orElse(null);
+        
+        UserGamificationStats.UserGamificationStatsBuilder builder = UserGamificationStats.builder()
                 .userId(userId)
                 .totalPoints(0)
+                .pointsEarned(0)
+                .pointsSpent(0)
                 .currentLevel(1)
                 .carbonSaved(0)
-                .build());
+                .actionsCompleted(0)
+                .status("active");
+        
+        if (user != null) {
+            builder.userName(user.getName())
+                   .userEmail(user.getEmail())
+                   .role(user.getRole() != null ? user.getRole().name() : "USER")
+                   .joinDate(user.getCreatedAt());
+        }
+        
+        return statsRepository.save(builder.build());
     }
 
     public void addPoints(String userId, int points) {
@@ -69,10 +117,33 @@ public class GamificationService {
                 .orElseGet(() -> createInitialStats(userId));
 
         stats.setTotalPoints(stats.getTotalPoints() + points);
+        stats.setPointsEarned(stats.getPointsEarned() + points);  // Track total earned
+        
         if (stats.getTotalPoints() > stats.getCurrentLevel() * 1000) {
             stats.setCurrentLevel(stats.getCurrentLevel() + 1);
         }
 
+        statsRepository.save(stats);
+    }
+    
+    public void deductPoints(String userId, int points) {
+        UserGamificationStats stats = statsRepository.findByUserId(userId)
+                .orElseGet(() -> createInitialStats(userId));
+
+        if (stats.getTotalPoints() >= points) {
+            stats.setTotalPoints(stats.getTotalPoints() - points);
+            stats.setPointsSpent(stats.getPointsSpent() + points);  // Track total spent
+            statsRepository.save(stats);
+        } else {
+            throw new IllegalArgumentException("Insufficient points");
+        }
+    }
+    
+    public void incrementActionsCompleted(String userId) {
+        UserGamificationStats stats = statsRepository.findByUserId(userId)
+                .orElseGet(() -> createInitialStats(userId));
+        
+        stats.setActionsCompleted(stats.getActionsCompleted() + 1);
         statsRepository.save(stats);
     }
 }
