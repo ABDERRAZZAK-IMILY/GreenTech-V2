@@ -3,6 +3,7 @@ import { showNotification } from '../../../utils/notifications';
 import AddDepartment from '../AddDepartment';
 import gamificationService from '../../../services/gamificationService';
 import userService from '../../../services/userService';
+import { getAllDepartments } from '../../../services/departmentSerice';
 
 const ProfileTeamsTab = () => {
   const [isAdmin] = useState(localStorage.getItem('userRole') === 'admin');
@@ -19,6 +20,7 @@ const ProfileTeamsTab = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
+  const [department,setDepartments] = useState(null);
   const [DepModel, setDepModel] = useState(false);
 
   // Form states
@@ -39,7 +41,18 @@ const ProfileTeamsTab = () => {
   // --- Fetch Data ---
   useEffect(() => {
     fetchLeaderboard();
+    featchDepartments();
   }, []);
+
+  const featchDepartments = async () => {
+    try {
+      const data = await getAllDepartments();
+      setDepartments(data.data);
+    } catch (error) {
+      console.log(error);
+      showNotification('could not fetch department', 'error');
+    }
+  }
 
   const fetchLeaderboard = async () => {
     try {
@@ -711,8 +724,11 @@ const ProfileTeamsTab = () => {
              outline-none transition-all duration-300 cursor-pointer 
              focus:border-blue-500"
                   >
+
                     {/* The 'bg-slate-900' ensures the dropdown menu is dark and readable */}
-                    <option value="" className="bg-slate-900 text-white">Sélectionner...</option>
+                    {department.map((dep) => (
+                      <option key={dep.id} value={dep.name} className="bg-slate-900 text-white">{dep.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
