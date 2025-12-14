@@ -33,16 +33,20 @@ public class User {
     private String jobTitle;  // Job position (Developer, Manager, etc.)
     
     // Profile fields
-    private String profilePicture;   // URL to profile image
-    private LocalDateTime createdAt;  // Registration date
-    private LocalDateTime updatedAt;  // Last update date
+    @Builder.Default
+    private String profilePicture = "https://static.vecteezy.com/system/resources/previews/019/879/186/large_2x/user-icon-on-transparent-background-free-png.png";   // URL to profile image
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();  // Registration date
+    @Builder.Default
+    private LocalDateTime updatedAt = LocalDateTime.now();  // Last update date
 
-    public User(String name, String email, String passwordHash, Role role) {
+    public User(String name, String email, String passwordHash, Role role, String department, String jobTitle, String profilePicture) {
         this.name = name;
         this.email = email;
         this.passwordHash = passwordHash;
         this.role = role;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.department = department;
+        this.jobTitle = jobTitle;
+        this.profilePicture = profilePicture;
     }
 }

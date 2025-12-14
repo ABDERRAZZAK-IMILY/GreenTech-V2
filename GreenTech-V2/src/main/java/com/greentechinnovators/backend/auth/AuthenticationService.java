@@ -4,6 +4,7 @@ import com.greentechinnovators.backend.dto.auth.AuthResponse;
 import com.greentechinnovators.backend.dto.auth.LoginRequest;
 import com.greentechinnovators.backend.dto.auth.RegisterRequest;
 import com.greentechinnovators.backend.entity.User;
+import com.greentechinnovators.backend.mapper.UserMapper;
 import com.greentechinnovators.backend.repository.UserRepository;
 import com.greentechinnovators.backend.security.JwtUtils;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,15 +21,19 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
+    private final UserMapper userMapper;
+
 
     public AuthenticationService(UserRepository userRepository,
                                  PasswordEncoder passwordEncoder,
                                  JwtUtils jwtUtils,
-                                 AuthenticationManager authenticationManager) {
+                                 AuthenticationManager authenticationManager,
+                                 UserMapper userMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtils = jwtUtils;
         this.authenticationManager = authenticationManager;
+        this.userMapper = userMapper;
     }
 
     public String register(RegisterRequest request) {
@@ -36,12 +41,7 @@ public class AuthenticationService {
             throw new RuntimeException("Email already exists!");
         }
 
-        User user = new User(
-                request.getName(),
-                request.getEmail(),
-                passwordEncoder.encode(request.getPassword()),
-                request.getRole()
-        );
+        User user = userMapper.toEntity(request);
 
         userRepository.save(user);
         return "User registered successfully!";
