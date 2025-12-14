@@ -16,7 +16,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import UserService from '../services/userService';
 import AuthService from '../services/authService'; // Pour le logout
 import colors from '../styles/colors';
-import { log } from 'console';
+// import { log } from 'console';
 
 export default function ProfileScreen({ navigation }) {
   const [user, setUser] = useState(null);
