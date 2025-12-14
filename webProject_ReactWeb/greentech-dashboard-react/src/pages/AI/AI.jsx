@@ -707,8 +707,6 @@ useEffect(() => {
             </div>
         )
     },
-
-    // 7. TABLES: Ila l-IA daret tableau
     table: ({node, ...props}) => (
         <div style={{ overflowX: 'auto', margin: '20px 0' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }} {...props} />
@@ -973,10 +971,7 @@ useEffect(() => {
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '500px', margin: '0 auto 25px' }}>
               Cliquez sur le bouton "Générer les Prédictions" pour analyser vos données historiques et obtenir des prévisions de consommation pour les 30 prochains jours.
             </p>
-            {/* <button onClick={generatePredictions} className="btn-primary">
-              <i className="fas fa-magic"></i>
-              Générer les Prédictions
-            </button> */}
+           
           </div>
         ) : (
           <div className="predictions-intro" style={{ marginBottom: '25px' }}>

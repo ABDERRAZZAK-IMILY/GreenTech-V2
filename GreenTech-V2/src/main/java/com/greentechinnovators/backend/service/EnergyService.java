@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -57,24 +58,24 @@ public class EnergyService {
         return energyList.stream().map(mapper::toResponse).toList();
     }
 
-    public Double getConsumedKwhBetweenDates(LocalDateTime start, LocalDateTime end) {
+    public List<EnergyResponseDTO> getConsumedKwhBetweenDates(LocalDateTime start, LocalDateTime end) {
 
         List<Energy> allEnergy = repository.findAll();
 
-
-        Double consumedEnergy = allEnergy.stream()
+        return allEnergy.stream()
                 .filter(e -> {
-                    if (e.getCreatedAt() == null || e.getEnergyConsumed() == null) return false;
+                    if (e.getCreatedAt() == null) return false;
 
-                    boolean isAfterStart = !e.getCreatedAt().isBefore(start);
-                    boolean isBeforeEnd = !e.getCreatedAt().isAfter(end);
+                    boolean isAfterStart = !e.getCreatedAt().isBefore(start); // >= start
+                    boolean isBeforeEnd = !e.getCreatedAt().isAfter(end);     // <= end
 
                     return isAfterStart && isBeforeEnd;
                 })
-                .mapToDouble(Energy::getEnergyConsumed)
-                .sum();
-
-
-        return consumedEnergy;
+                .map(e -> EnergyResponseDTO.builder()
+                        .id(e.getId().toString())
+                        .energyConsumed(e.getEnergyConsumed())
+                        .createdAt(e.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
