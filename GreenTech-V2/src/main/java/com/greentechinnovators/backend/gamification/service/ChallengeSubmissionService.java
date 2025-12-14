@@ -146,18 +146,33 @@ public class ChallengeSubmissionService {
      */
     public List<SubmissionResponseDTO> getUserSubmissionsDetailed(String userId) {
         List<ChallengeSubmission> submissions = submissionRepository.findByUserId(userId);
+        if (submissions == null || submissions.isEmpty()) {
+            return List.of();
+        }
         return mapSubmissionsToDTO(submissions);
     }
 
     private List<SubmissionResponseDTO> mapSubmissionsToDTO(List<ChallengeSubmission> submissions) {
+        if (submissions == null || submissions.isEmpty()) {
+            return List.of();
+        }
         return submissions.stream().map(submission -> {
-            Challenge challenge = challengeRepository.findById(submission.getChallengeId()).orElse(null);
+            Challenge challenge = null;
+            try {
+                challenge = challengeRepository.findById(submission.getChallengeId()).orElse(null);
+            } catch (Exception e) {
+                // Challenge not found, continue with null
+            }
             
             // Get user name
             String userName = "Unknown User";
-            User user = userRepository.findById(submission.getUserId()).orElse(null);
-            if (user != null) {
-                userName = user.getName();
+            try {
+                User user = userRepository.findById(submission.getUserId()).orElse(null);
+                if (user != null) {
+                    userName = user.getName();
+                }
+            } catch (Exception e) {
+                // User not found, use default name
             }
             
             return SubmissionResponseDTO.builder()
@@ -171,8 +186,7 @@ public class ChallengeSubmissionService {
                     .status(submission.getStatus())
                     .submissionDate(submission.getSubmissionDate())
                     .adminComment(submission.getAdminComment())
-                    .pointsAwarded(challenge != null && submission.getStatus() == SubmissionStatus.APPROVED 
-                            ? challenge.getPointsReward() : (challenge != null ? challenge.getPointsReward() : 0))
+                    .pointsAwarded(challenge != null ? challenge.getPointsReward() : 0)
                     .build();
         }).collect(Collectors.toList());
     }
