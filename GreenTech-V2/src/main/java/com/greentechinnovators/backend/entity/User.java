@@ -36,13 +36,4 @@ public class User {
     private String profilePicture;   // URL to profile image
     private LocalDateTime createdAt;  // Registration date
     private LocalDateTime updatedAt;  // Last update date
-
-    public User(String name, String email, String passwordHash, Role role) {
-        this.name = name;
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.role = role;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
 }
