@@ -144,6 +144,19 @@ class MarketplaceService {
     }
   }
 
+  // Get current user's orders
+  async getMyOrders() {
+    try {
+      const response = await axios.get(`http://localhost:8080/api/v1/marketplace/my-orders`, {
+        headers: this.getAuthHeader()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching my orders:', error);
+      throw error;
+    }
+  }
+
   // Admin: Update order status
   async updateOrderStatus(orderId, status) {
     try {
