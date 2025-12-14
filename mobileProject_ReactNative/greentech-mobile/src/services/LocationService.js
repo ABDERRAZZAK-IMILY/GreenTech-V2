@@ -1,7 +1,10 @@
 import * as Location from 'expo-location';
 import { Alert } from 'react-native';
 
-const WS_URL = "ws://192.168.1.5:8080/ws/location";
+const WS_URL = "ws://172.19.32.1:8080/ws/location";
+
+
+
 
 let locationSubscription = null;
 let websocket = null;

@@ -345,6 +345,37 @@ const ProfileTeamsTab = () => {
                 <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <i className="fas fa-users"></i> Liste des employés
                 </h4>
+                <div id='actionbutton' className='flex'>
+
+                <button
+                  onClick={() => setShowAddMemberModal(true)}
+                  style={{
+                    background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+                  }}
+                >
+                  <i className="fas fa-user-plus"></i>
+                  Ajouter un departement
+                </button>
                 <button
                   onClick={() => setShowAddMemberModal(true)}
                   style={{
@@ -374,6 +405,7 @@ const ProfileTeamsTab = () => {
                   <i className="fas fa-user-plus"></i>
                   Ajouter un membre
                 </button>
+                </div>
               </div>
 
               <div style={{
