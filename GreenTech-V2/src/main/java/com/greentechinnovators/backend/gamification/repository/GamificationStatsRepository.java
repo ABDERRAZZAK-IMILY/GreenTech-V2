@@ -8,7 +8,7 @@ import java.util.Optional;
 public interface GamificationStatsRepository extends MongoRepository<UserGamificationStats, String> {
 
     Optional<UserGamificationStats> findByUserId(String userId);
-
+    Optional<UserGamificationStats> findByUserEmail(String email);
     List<UserGamificationStats> findTop10ByOrderByTotalPointsDesc();
 
     long countByTotalPointsGreaterThan(int totalPoints);
