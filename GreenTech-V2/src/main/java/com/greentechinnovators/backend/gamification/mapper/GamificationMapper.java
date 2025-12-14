@@ -42,10 +42,16 @@ public class GamificationMapper {
     public UserGamificationStatsResponseDTO toStatsResponse(UserGamificationStats stats, int rank) {
         return UserGamificationStatsResponseDTO.builder()
                 .userId(stats.getUserId())
-                .totalPoints(stats.getTotalPoints())
-                .currentLevel(stats.getCurrentLevel())
-                .carbonSaved(stats.getCarbonSaved())
-                .rank(rank)
+                .userName(stats.getUserName())
+                .email(stats.getUserEmail())
+                .role(stats.getRole())
+                .currentPoints(stats.getTotalPoints())
+                .totalPointsEarned(stats.getPointsEarned())
+                .totalPointsSpent(stats.getPointsSpent())
+                .totalActions(stats.getActionsCompleted())
+                .badgesCount(0)
+                .level(stats.getCurrentLevel())
+                .joinDate(stats.getJoinDate())
                 .build();
     }
 
@@ -62,12 +68,17 @@ public class GamificationMapper {
     public UserGamificationStatsResponseDTO toStatsResponse(UserGamificationStats stats, User user, List<Badge> badges, int rank) {
         return UserGamificationStatsResponseDTO.builder()
                 .userId(stats.getUserId())
-                .fullName(user != null ? user.getName() : "Unknown User")
-                .totalPoints(stats.getTotalPoints())
-                .currentLevel(stats.getCurrentLevel())
-                .carbonSaved(stats.getCarbonSaved())
-                .rank(rank)
-                .earnedBadges(badges.stream().map(this::toBadgeResponse).collect(Collectors.toList()))
+                .userName(user != null ? user.getName() : stats.getUserName())
+                .email(user != null ? user.getEmail() : stats.getUserEmail())
+                .department(user != null ? user.getDepartment() : null)
+                .role(user != null && user.getRole() != null ? user.getRole().name() : stats.getRole())
+                .currentPoints(stats.getTotalPoints())
+                .totalPointsEarned(stats.getPointsEarned())
+                .totalPointsSpent(stats.getPointsSpent())
+                .totalActions(stats.getActionsCompleted())
+                .badgesCount(badges != null ? badges.size() : 0)
+                .level(stats.getCurrentLevel())
+                .joinDate(stats.getJoinDate())
                 .build();
     }
 }

@@ -30,7 +30,11 @@ public class UserGamificationStats {
     // Points Statistics
     private int totalPoints;
     private int pointsEarned;  // Total points earned (never decreases)
-    private int pointsSpent;   // Total points spent on marketplace items
+    private int pointsSpent;// Total points spent on marketplace items
+
+    private int totalActions;    // Total number of actions performed
+
+    private int totalChallenges; // Total number of challenges completed
 
     // Game Progress
     private int currentLevel;
