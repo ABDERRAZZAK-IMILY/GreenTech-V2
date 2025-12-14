@@ -30,11 +30,7 @@ const groupDataByHour = (dataList, field) => {
 };
 
 // Fonction pour générer des données aléatoires
-const generateRandomData = (count, min, max) => {
-  return Array.from({ length: count }, () =>
-    Math.floor(Math.random() * (max - min + 1)) + min
-  );
-};
+
 
 // Données pour différentes périodes
 export const getLineChartData = (metric, period) => {
