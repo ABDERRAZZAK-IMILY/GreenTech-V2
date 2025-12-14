@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { showNotification } from '../../../utils/notifications';
-import AddDepartment from '../AddDepartment';
+import AddDepartment from './AddDepartment';
 import gamificationService from '../../../services/gamificationService';
 import userService from '../../../services/userService';
 import { getAllDepartments } from '../../../services/departmentSerice';
+import EditMemberModal from './EditMemberModal';
 
 const ProfileTeamsTab = () => {
   const [isAdmin] = useState(localStorage.getItem('userRole') === 'admin');
@@ -20,7 +21,7 @@ const ProfileTeamsTab = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
-  const [department,setDepartments] = useState(null);
+  const [department, setDepartments] = useState(null);
   const [DepModel, setDepModel] = useState(false);
 
   // Form states
@@ -83,6 +84,11 @@ const ProfileTeamsTab = () => {
     } finally {
       setLoading(false);
     }
+  };
+  const handleSaveMember = (data) => {
+    console.log("Updated Data:", data);
+    // Call your API here: updateMember(selectedMember.id, data)...
+    setShowEditMemberModal(false);
   };
 
   // Calculate statistics
@@ -809,203 +815,13 @@ const ProfileTeamsTab = () => {
 
       {/* Edit Member Modal */}
       {showEditMemberModal && (
-        <div className="modal" style={{ display: 'block', background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)' }} onClick={closeModals}>
-          <div className="modal-content" style={{
-            maxWidth: '600px',
-            background: 'linear-gradient(135deg, rgba(30, 39, 46, 0.98) 0%, rgba(45, 52, 54, 0.98) 100%)',
-            borderRadius: '20px',
-            padding: '0',
-            border: '2px solid rgba(254, 202, 87, 0.3)',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
-          }} onClick={(e) => e.stopPropagation()}>
-            <div style={{
-              background: 'linear-gradient(135deg, #feca57, #ff9f40)',
-              padding: '25px 30px',
-              borderRadius: '18px 18px 0 0',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '12px', fontSize: '20px', fontWeight: '700' }}>
-                <i className="fas fa-edit"></i> Modifier le membre
-              </h3>
-              <button onClick={closeModals} style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: 'none',
-                width: '35px',
-                height: '35px',
-                borderRadius: '50%',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.3s ease'
-              }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}>
-                <i className="fas fa-times" style={{ fontSize: '18px' }}></i>
-              </button>
-            </div>
-            <form onSubmit={handleEditMember} style={{ padding: '30px' }}>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
-                  <i className="fas fa-user" style={{ marginRight: '8px', color: '#feca57' }}></i>
-                  Nom complet
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  placeholder="Ex: Youssef Alami"
-                  style={{
-                    width: '100%',
-                    padding: '12px 15px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '2px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '10px',
-                    color: 'var(--text-primary)',
-                    fontSize: '14px',
-                    transition: 'all 0.3s ease',
-                    outline: 'none'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#feca57'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
-                />
-              </div>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
-                  <i className="fas fa-envelope" style={{ marginRight: '8px', color: '#feca57' }}></i>
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                  placeholder="youssef.alami@greentech.com"
-                  style={{
-                    width: '100%',
-                    padding: '12px 15px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '2px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '10px',
-                    color: 'var(--text-primary)',
-                    fontSize: '14px',
-                    transition: 'all 0.3s ease',
-                    outline: 'none'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#feca57'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
-                />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
-                    <i className="fas fa-building" style={{ marginRight: '8px', color: '#feca57' }}></i>
-                    Département
-                  </label>
-                  <select
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '12px 15px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '2px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '10px',
-                      color: 'var(--text-primary)',
-                      fontSize: '14px',
-                      transition: 'all 0.3s ease',
-                      outline: 'none',
-                      cursor: 'pointer'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#feca57'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
-                  >
-                    <option value="IT" style={{ background: '#1e272e', color: '#fff' }}>IT</option>
-                    <option value="RH" style={{ background: '#1e272e', color: '#fff' }}>RH</option>
-                    <option value="Commercial" style={{ background: '#1e272e', color: '#fff' }}>Commercial</option>
-                    <option value="Logistique" style={{ background: '#1e272e', color: '#fff' }}>Logistique</option>
-                    <option value="Production" style={{ background: '#1e272e', color: '#fff' }}>Production</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
-                    <i className="fas fa-briefcase" style={{ marginRight: '8px', color: '#feca57' }}></i>
-                    Rôle
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    required
-                    placeholder="Développeur Senior"
-                    style={{
-                      width: '100%',
-                      padding: '12px 15px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '2px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '10px',
-                      color: 'var(--text-primary)',
-                      fontSize: '14px',
-                      transition: 'all 0.3s ease',
-                      outline: 'none'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#feca57'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
-                  />
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '15px', marginTop: '30px' }}>
-                <button type="button" onClick={closeModals} style={{
-                  flex: 1,
-                  padding: '14px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '10px',
-                  color: 'var(--text-primary)',
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}>
-                  Annuler
-                </button>
-                <button type="submit" style={{
-                  flex: 1,
-                  padding: '14px',
-                  background: 'linear-gradient(135deg, #feca57, #ff9f40)',
-                  border: 'none',
-                  borderRadius: '10px',
-                  color: 'white',
-                  fontSize: '15px',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 15px rgba(254, 202, 87, 0.4)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(254, 202, 87, 0.6)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(254, 202, 87, 0.4)';
-                  }}>
-                  <i className="fas fa-save"></i> Enregistrer
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <EditMemberModal
+          isOpen={showEditMemberModal}
+          onClose={() => setShowEditMemberModal(false)}
+          onSave={handleSaveMember}
+          initialData={selectedMember}
+          departments={department}
+        />
       )}
 
       {/* Points Attribution Modal */}

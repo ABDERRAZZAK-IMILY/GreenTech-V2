@@ -1,7 +1,7 @@
 import axios from 'axios';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { createDepartment } from '../../services/departmentSerice';
+import { createDepartment } from '../../../services/departmentSerice';
 
 const AddDepartment = ({ closeModals }) => {
     // 1. Initialize React Hook Form
