@@ -7,6 +7,7 @@ import { getAllDepartments } from '../../../services/departmentSerice';
 import EditMemberModal from './EditMemberModal';
 import AddMemberModal from './AddMemberModal';
 import MembersTable from './MembersTable';
+import AdminStatistics from './AdminStatistics';
 
 const ProfileTeamsTab = () => {
   const [isAdmin] = useState(localStorage.getItem('userRole') === 'admin');
@@ -87,6 +88,7 @@ const ProfileTeamsTab = () => {
       setLoading(false);
     }
   };
+
   const handleSaveMember = (data) => {
     console.log("Updated Data:", data);
     // Call your API here: updateMember(selectedMember.id, data)...
@@ -222,76 +224,13 @@ const ProfileTeamsTab = () => {
     <div className="profile-teams-tab">
 
       {/* ADMIN VIEW - Employee Statistics Section */}
-      <div className="admin-statistics-section" style={{
-        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)',
-        backdropFilter: 'blur(10px)',
-        borderRadius: '16px',
-        padding: '25px',
-        marginBottom: '30px',
-        border: '1px solid rgba(102, 126, 234, 0.3)'
-      }}>
-        <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <i className="fas fa-chart-pie"></i> Statistiques des Employés
-        </h3>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-          <div className="stat-box" style={{
-            background: 'rgba(118, 75, 162, 0.25)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            border: '1px solid rgba(118, 75, 162, 0.4)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>👥</div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#a78bfa', marginBottom: '5px' }}>{totalEmployees}</div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Employés Actifs</div>
-          </div>
-          <div className="stat-box" style={{
-            background: 'rgba(67, 233, 123, 0.2)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            border: '1px solid rgba(67, 233, 123, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#43e97b', marginBottom: '5px' }}>{totalActionsCompleted.toLocaleString()}</div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Actions Complétées</div>
-          </div>
-          <div className="stat-box" style={{
-            background: 'rgba(254, 202, 87, 0.2)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            border: '1px solid rgba(254, 202, 87, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🏆</div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#feca57', marginBottom: '5px' }}>{totalBadgesEarned}</div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Badges Obtenus</div>
-          </div>
-          <div className="stat-box" style={{
-            background: 'rgba(240, 147, 251, 0.2)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            border: '1px solid rgba(240, 147, 251, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>⏳</div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#f093fb', marginBottom: '5px' }}>{pendingRequests}</div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Demandes en Attente</div>
-          </div>
-          <div className="stat-box" style={{
-            background: 'rgba(255, 159, 64, 0.2)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            border: '1px solid rgba(255, 159, 64, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📊</div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#ff9f40', marginBottom: '5px' }}>{participationRate}%</div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Taux de Participation</div>
-          </div>
-        </div>
-      </div>
+      <AdminStatistics
+        totalEmployees={totalEmployees}
+        totalActionsCompleted={totalActionsCompleted}
+        totalBadgesEarned={totalBadgesEarned}
+        pendingRequests={pendingRequests}
+        participationRate={participationRate}
+      />
 
       {/* ADMIN SECTION - Only visible for admins */}
       {isAdmin && (
