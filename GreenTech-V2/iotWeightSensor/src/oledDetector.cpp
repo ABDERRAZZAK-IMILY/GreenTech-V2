@@ -18,13 +18,13 @@ struct OLEDConfig {
 };
 
 // Pins I2C possibles sur ESP32 et ESP8266
-// Ordre optimisé : pins les plus courantes en premier
+// Ordre optimise : pins les plus courantes en premier
 #ifdef ESP32
   // ESP32 : toutes les pins GPIO utilisables pour I2C
-  // Priorité : 21/22 (standards), 4/5, puis autres
+  // Priorite : 21/22 (standards), 4/5, puis autres
   const int possiblePins[] = {21, 22, 4, 5, 13, 14, 15, 16, 17, 18, 19, 23, 25, 26, 27, 32, 33};
 #else
-  // ESP8266 : priorité aux pins standards (4/5) et IDEASPARK inversées (14/12)
+  // ESP8266 : priorite aux pins standards (4/5) et IDEASPARK inversees (14/12)
   const int possiblePins[] = {14, 12, 4, 5, 0, 2, 13, 15};
 #endif
 const int numPins = sizeof(possiblePins) / sizeof(possiblePins[0]);
@@ -39,7 +39,7 @@ bool loadOLEDConfig(OLEDConfig &config) {
     config.scl_pin = EEPROM.read(EEPROM_ADDR_SCL);
     config.i2c_address = EEPROM.read(EEPROM_ADDR_I2C);
 
-    Serial.println("[OLED] Config chargée depuis EEPROM");
+    Serial.println("[OLED] Config chargee depuis EEPROM");
     Serial.printf("  SDA=GPIO%d, SCL=GPIO%d, Adr=0x%02X\n",
                   config.sda_pin, config.scl_pin, config.i2c_address);
     return true;
@@ -54,7 +54,7 @@ void saveOLEDConfig(const OLEDConfig &config) {
   EEPROM.write(EEPROM_ADDR_SCL, config.scl_pin);
   EEPROM.write(EEPROM_ADDR_I2C, config.i2c_address);
   EEPROM.commit();
-  Serial.println("[OLED] Config sauvegardée dans EEPROM");
+  Serial.println("[OLED] Config sauvegardee dans EEPROM");
 }
 
 // Scanner toutes les combinaisons
@@ -72,7 +72,7 @@ bool scanForOLED(Adafruit_SSD1306 &display, OLEDConfig &config) {
 
       testCount++;
       if (testCount % 20 == 0) {
-        Serial.printf("  ...testé %d combinaisons\n", testCount);
+        Serial.printf("  ...teste %d combinaisons\n", testCount);
       }
 
       // Fermer l'ancien bus I2C (ESP32 seulement, ESP8266 n'a pas Wire.end())
@@ -80,7 +80,7 @@ bool scanForOLED(Adafruit_SSD1306 &display, OLEDConfig &config) {
         Wire.end();
       #endif
       Wire.begin(sda, scl);
-      delay(50);  // Délai plus long pour stabilisation
+      delay(50);  // Delai plus long pour stabilisation
 
       for (int addr_i = 0; addr_i < numAddresses; addr_i++) {
         uint8_t addr = possibleAddresses[addr_i];
@@ -89,15 +89,15 @@ bool scanForOLED(Adafruit_SSD1306 &display, OLEDConfig &config) {
         uint8_t error = Wire.endTransmission();
 
         if (error == 0) {
-          Serial.printf("[OLED] Réponse I2C détectée sur SDA=%d, SCL=%d, Adr=0x%02X\n", sda, scl, addr);
+          Serial.printf("[OLED] Reponse I2C detectee sur SDA=%d, SCL=%d, Adr=0x%02X\n", sda, scl, addr);
 
-          // Réinitialiser complètement le display
+          // Reinitialiser completement le display
           bool success = display.begin(SSD1306_SWITCHCAPVCC, addr);
 
           if (success) {
-            Serial.printf("[OLED] Trouvé! SDA=GPIO%d, SCL=GPIO%d, Adr=0x%02X\n", sda, scl, addr);
+            Serial.printf("[OLED] Trouve! SDA=GPIO%d, SCL=GPIO%d, Adr=0x%02X\n", sda, scl, addr);
 
-            // Tester que l'écran répond
+            // Tester que l'ecran repond
             display.clearDisplay();
             display.display();
             delay(10);
@@ -108,14 +108,14 @@ bool scanForOLED(Adafruit_SSD1306 &display, OLEDConfig &config) {
 
             return true;
           } else {
-            Serial.printf("[OLED] display.begin() retourné: %d\n", success);
+            Serial.printf("[OLED] display.begin() retourne: %d\n", success);
           }
         }
       }
     }
   }
 
-  Serial.printf("[OLED] Aucun écran trouvé après %d tests!\n", testCount);
+  Serial.printf("[OLED] Aucun ecran trouve apres %d tests!\n", testCount);
   return false;
 }
 
@@ -130,15 +130,15 @@ bool initOLED(Adafruit_SSD1306 &display) {
     Wire.begin(config.sda_pin, config.scl_pin);
     delay(100);
 
-    // Vérifier que l'OLED répond vraiment
+    // Verifier que l'OLED repond vraiment
     Wire.beginTransmission(config.i2c_address);
     if (Wire.endTransmission() == 0) {
       if (display.begin(SSD1306_SWITCHCAPVCC, config.i2c_address)) {
-        Serial.println("[OLED] Démarrage OK avec config sauvegardée");
+        Serial.println("[OLED] Demarrage OK avec config sauvegardee");
         return true;
       }
     }
-    Serial.println("[OLED] Config sauvegardée ne fonctionne plus, scan...");
+    Serial.println("[OLED] Config sauvegardee ne fonctionne plus, scan...");
   }
 
   // Scanner

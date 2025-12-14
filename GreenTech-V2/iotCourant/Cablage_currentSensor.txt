@@ -1,0 +1,4 @@
+Ligne A : GND + R1 patte1 + SCT blanc/jaune
+Ligne B : 3.3V + R2 patte1
+Ligne C : R1 patte2 + R2 patte2 + GPIO34 + R100Ω patte1
+Ligne D : R100Ω patte2 + SCT rouge/org

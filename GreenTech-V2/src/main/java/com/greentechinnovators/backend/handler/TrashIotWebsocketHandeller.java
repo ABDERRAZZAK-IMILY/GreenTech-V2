@@ -46,8 +46,26 @@ public class TrashIotWebsocketHandeller extends TextWebSocketHandler {
             String payload = message.getPayload();
             log.info("Received trash data from {}: {}", session.getId(), payload);
 
+            // Skip STOMP control frames (CONNECT, SUBSCRIBE, UNSUBSCRIBE, DISCONNECT, etc.)
+            if (isStompControlFrame(payload)) {
+                log.debug("Skipping STOMP control frame");
+                handleStompControlFrame(session, payload);
+                return;
+            }
+
+            // Extract JSON body from STOMP frame if present
+            String jsonPayload = extractJsonFromStompFrame(payload);
+            
+            // Skip if no valid JSON found
+            if (jsonPayload == null || jsonPayload.trim().isEmpty()) {
+                log.debug("No JSON payload found, skipping");
+                return;
+            }
+            
+            log.debug("Extracted JSON payload: {}", jsonPayload);
+
             // Parse incoming JSON
-            TrashRequestDTO trashDTO = objectMapper.readValue(payload, TrashRequestDTO.class);
+            TrashRequestDTO trashDTO = objectMapper.readValue(jsonPayload, TrashRequestDTO.class);
 
             // Validate and save trash reading
             TrashResponseDTO savedTrash = trashService.saveReading(trashDTO);
@@ -110,6 +128,96 @@ public class TrashIotWebsocketHandeller extends TextWebSocketHandler {
                 log.error("Error broadcasting to session {}: {}", session.getId(), e.getMessage());
             }
         });
+    }
+
+    /**
+     * Extract JSON body from STOMP frame format.
+     * STOMP frames have the format:
+     * COMMAND
+     * header1:value1
+     * header2:value2
+     * 
+     * {json body}
+     * 
+     * This method extracts just the JSON body if the message is in STOMP format,
+     * or returns the original payload if it's already plain JSON.
+     */
+    private String extractJsonFromStompFrame(String payload) {
+        if (payload == null || payload.isEmpty()) {
+            return payload;
+        }
+        
+        // Check if this looks like a STOMP frame (starts with a command like SEND, MESSAGE, etc.)
+        String trimmedPayload = payload.trim();
+        if (trimmedPayload.startsWith("{") || trimmedPayload.startsWith("[")) {
+            // Already JSON format, return as-is
+            return trimmedPayload;
+        }
+        
+        // Try to find JSON object or array in the payload
+        int jsonStart = payload.indexOf('{');
+        int arrayStart = payload.indexOf('[');
+        
+        // Find the earliest JSON start
+        int start = -1;
+        if (jsonStart >= 0 && arrayStart >= 0) {
+            start = Math.min(jsonStart, arrayStart);
+        } else if (jsonStart >= 0) {
+            start = jsonStart;
+        } else if (arrayStart >= 0) {
+            start = arrayStart;
+        }
+        
+        if (start >= 0) {
+            // Extract from JSON start to end, removing any trailing null characters
+            String jsonPart = payload.substring(start).trim();
+            // Remove STOMP null terminator if present (character \u0000)
+            int nullIndex = jsonPart.indexOf('\u0000');
+            if (nullIndex >= 0) {
+                jsonPart = jsonPart.substring(0, nullIndex);
+            }
+            return jsonPart.trim();
+        }
+        
+        // No JSON found, return null to skip processing
+        return null;
+    }
+
+    /**
+     * Check if the payload is a STOMP control frame (not data)
+     */
+    private boolean isStompControlFrame(String payload) {
+        if (payload == null || payload.isEmpty()) {
+            return false;
+        }
+        String trimmed = payload.trim();
+        return trimmed.startsWith("CONNECT") ||
+               trimmed.startsWith("STOMP") ||
+               trimmed.startsWith("SUBSCRIBE") ||
+               trimmed.startsWith("UNSUBSCRIBE") ||
+               trimmed.startsWith("DISCONNECT") ||
+               trimmed.startsWith("ACK") ||
+               trimmed.startsWith("NACK") ||
+               trimmed.startsWith("BEGIN") ||
+               trimmed.startsWith("COMMIT") ||
+               trimmed.startsWith("ABORT");
+    }
+
+    /**
+     * Handle STOMP control frames by sending appropriate responses
+     */
+    private void handleStompControlFrame(WebSocketSession session, String payload) {
+        try {
+            String trimmed = payload.trim();
+            if (trimmed.startsWith("CONNECT") || trimmed.startsWith("STOMP")) {
+                // Send CONNECTED response for STOMP handshake
+                String connectedFrame = "CONNECTED\nversion:1.2\nheart-beat:0,0\n\n\u0000";
+                session.sendMessage(new TextMessage(connectedFrame));
+                log.info("Sent STOMP CONNECTED response to session {}", session.getId());
+            }
+        } catch (Exception e) {
+            log.error("Error handling STOMP control frame: {}", e.getMessage());
+        }
     }
 
 
