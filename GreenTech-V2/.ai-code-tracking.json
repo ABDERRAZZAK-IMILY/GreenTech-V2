@@ -1353,12 +1353,23 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 149
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/ai/DeepSeekClient.java",
+      "timestamp": 1765723516637,
+      "startOffset": 1216,
+      "endOffset": 1831,
+      "codeContent": "return webClient.post()\n                .header(\"Authorization\", \"Bearer \" + apiKey)\n                .bodyValue(body)\n                .retrieve()\n                .bodyToFlux(String.class)\n                \n                // ✅ Vérifiez si vous voyez des logs dans la console après ce point.\n                .doOnNext(chunk -\u003e log.info(\"DeepSeek RAW Chunk: {}\", chunk))\n                \n                .map(this::extractContent)\n                .filter(content -\u003e !content.isEmpty())\n                .doOnError(e -\u003e log.error(\"Stream Error during DeepSeek chat\", e)); // Zid hada bach tchouf les erreurs de connexion",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 12
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 123,
-      "totalLines": 1711
+      "usageCount": 124,
+      "totalLines": 1723
     }
   }
 }
