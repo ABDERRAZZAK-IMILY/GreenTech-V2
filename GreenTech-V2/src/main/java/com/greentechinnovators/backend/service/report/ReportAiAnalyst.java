@@ -22,7 +22,8 @@ public class ReportAiAnalyst {
                             "DONNÉES D'ENTRÉE (MOIS EN COURS) :\n" +
                             "- Transport : %.2f km parcourus | Empreinte : %.2f kg CO2\n" +
                             "- Déchets   : %.2f kg générés   | Empreinte : %.2f kg CO2\n" +
-                            "- Énergie   : %.2f kWh consommé | Empreinte : %.2f kg CO2\n\n" +
+                            "- Énergie   : %.2f kWh consommé | Empreinte : %.2f kg CO2\n" +
+                            "- Gaz (LPG) : %.2f kg consommé  | Empreinte : %.2f kg CO2\n\n" +
 
                             "CONSIGNES STRICTES DE RÉDACTION :\n" +
                             "1. Ton : Formel, factuel, autoritaire et constructif.\n" +
@@ -36,21 +37,22 @@ public class ReportAiAnalyst {
                             "2. ANALYSE DES ÉCARTS (ISO 14001 §9.1)\n" +
                             "   - [Analyse Transport : Compare ratio km/CO2. Utilise des termes comme 'Efficacité de la flotte' ou 'Dérive carburant'.]\n" +
                             "   - [Analyse Déchets : Mentionne le taux de valorisation ou l'impact pollution.]\n" +
-                            "   - [Analyse Énergie : Identifie si la consommation est anormale (Point critique).]\n\n" +
+                            "   - [Analyse Énergie : Identifie si la consommation est anormale (Point critique).]\n" +
+                            "   - [Analyse Gaz : Vérifie la consommation thermique et l'impact carbone direct.]\n\n" +
 
                             "3. RISQUES ET OPPORTUNITÉS\n" +
-                            "   - Risque Identifié : [Ex: Dépassement des seuils réglementaires, Coût carbone élevé...]\n" +
-                            "   - Opportunité : [Ex: Installation LED, Optimisation des tournées, Recyclage...]\n\n" +
+                            "   - Risque Identifié : [Ex: Dépassement des seuils réglementaires, Coût carbone élevé, Fuite de gaz...]\n" +
+                            "   - Opportunité : [Ex: Installation LED, Optimisation des tournées, Recyclage, Changement de brûleurs...]\n\n" +
 
                             "4. PLAN D'ACTION CORRECTIF (PDCA)\n" +
                             "   - PLANIFIER : [Une action concrète pour analyser la cause racine.]\n" +
                             "   - RÉALISER : [Une action immédiate pour corriger le tir le mois prochain.]\n" +
                             "   - VÉRIFIER : [Quel indicateur surveiller pour confirmer l'efficacité ?]\n",
 
-                    // Les variables Java
                     data.getTransportKm(), data.getTransportCo2(),
                     data.getTrashWeight(), data.getTrashCo2(),
-                    data.getEnergyKwh(), data.getEnergyCo2()
+                    data.getEnergyKwh(), data.getEnergyCo2(),
+                    data.getGasWeight(), data.getGasCo2()
             );
 
             return chatService.askAIStream(prompt, null)

@@ -601,7 +601,7 @@ const [reportFiles, setReportFiles] = useState([]);
 
                         {/* 3. Taille */}
                         <td>
-                          <span style={{background:'#f1f2f6', padding:'2px 8px', borderRadius:'4px', fontSize:'0.8em'}}>
+                          <span style={{background:'rgba(51, 255, 68, 0.36)', padding:'2px 8px', borderRadius:'4px', fontSize:'0.8em'}}>
                             {file.size}
                           </span>
                         </td>
