@@ -1,25 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { showNotification } from '../../../utils/notifications';
 import AddDepartment from '../AddDepartment';
+import gamificationService from '../../../services/gamificationService';
+import userService from '../../../services/userService';
 
 const ProfileTeamsTab = () => {
-  const [isAdmin] = useState(true); // Hardcoded for now - will be from auth context later
+  const [isAdmin] = useState(localStorage.getItem('userRole') === 'admin');
+  const [loading, setLoading] = useState(true);
 
-  // Members management state with Moroccan names
-  const [members, setMembers] = useState([
-    { id: 1, name: 'Youssef Alami', email: 'youssef.alami@greentech.com', department: 'IT', role: 'Développeur Senior', ecoCoins: 12450, pointsEarned: 15200, pointsSpent: 2750, actionsCompleted: 127, badges: 8, level: 6, joinDate: '2023-01-15', status: 'active' },
-    { id: 2, name: 'Fatima Zahra Bennani', email: 'fatima.bennani@greentech.com', department: 'RH', role: 'Responsable RH', ecoCoins: 11800, pointsEarned: 13500, pointsSpent: 1700, actionsCompleted: 115, badges: 7, level: 6, joinDate: '2023-02-10', status: 'active' },
-    { id: 3, name: 'Mehdi Tazi', email: 'mehdi.tazi@greentech.com', department: 'Commercial', role: 'Chef de Ventes', ecoCoins: 10500, pointsEarned: 12000, pointsSpent: 1500, actionsCompleted: 98, badges: 6, level: 5, joinDate: '2023-03-20', status: 'active' },
-    { id: 4, name: 'Salma Idrissi', email: 'salma.idrissi@greentech.com', department: 'IT', role: 'Développeur Full Stack', ecoCoins: 8450, pointsEarned: 10200, pointsSpent: 1750, actionsCompleted: 87, badges: 6, level: 5, joinDate: '2023-01-10', status: 'active' },
-    { id: 5, name: 'Amine Berrada', email: 'amine.berrada@greentech.com', department: 'IT', role: 'DevOps Engineer', ecoCoins: 9200, pointsEarned: 10500, pointsSpent: 1300, actionsCompleted: 92, badges: 5, level: 5, joinDate: '2023-04-05', status: 'active' },
-    { id: 6, name: 'Karima Lahlou', email: 'karima.lahlou@greentech.com', department: 'Logistique', role: 'Responsable Logistique', ecoCoins: 8800, pointsEarned: 10100, pointsSpent: 1300, actionsCompleted: 84, badges: 5, level: 5, joinDate: '2023-05-12', status: 'active' },
-    { id: 7, name: 'Omar El Fassi', email: 'omar.elfassi@greentech.com', department: 'RH', role: 'Chargé RH', ecoCoins: 7650, pointsEarned: 8900, pointsSpent: 1250, actionsCompleted: 76, badges: 4, level: 4, joinDate: '2023-06-18', status: 'active' },
-    { id: 8, name: 'Zineb Chaoui', email: 'zineb.chaoui@greentech.com', department: 'Commercial', role: 'Commerciale', ecoCoins: 7200, pointsEarned: 8300, pointsSpent: 1100, actionsCompleted: 71, badges: 4, level: 4, joinDate: '2023-07-22', status: 'active' },
-    { id: 9, name: 'Hamza Benjelloun', email: 'hamza.benjelloun@greentech.com', department: 'IT', role: 'UX Designer', ecoCoins: 6850, pointsEarned: 7800, pointsSpent: 950, actionsCompleted: 65, badges: 4, level: 4, joinDate: '2023-08-30', status: 'active' },
-    { id: 10, name: 'Khadija Amrani', email: 'khadija.amrani@greentech.com', department: 'Logistique', role: 'Agent Logistique', ecoCoins: 5950, pointsEarned: 6700, pointsSpent: 750, actionsCompleted: 58, badges: 3, level: 3, joinDate: '2023-09-14', status: 'active' },
-    { id: 11, name: 'Rachid Moussaoui', email: 'rachid.moussaoui@greentech.com', department: 'Production', role: 'Chef Production', ecoCoins: 7450, pointsEarned: 8800, pointsSpent: 1350, actionsCompleted: 79, badges: 5, level: 4, joinDate: '2023-07-01', status: 'active' },
-    { id: 12, name: 'Imane Kadiri', email: 'imane.kadiri@greentech.com', department: 'Commercial', role: 'Commerciale', ecoCoins: 6200, pointsEarned: 7100, pointsSpent: 900, actionsCompleted: 62, badges: 3, level: 3, joinDate: '2023-08-15', status: 'active' }
-  ]);
+  // Members state (Populated from API)
+  const [members, setMembers] = useState([]);
 
   // Modal states
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
@@ -36,7 +26,7 @@ const ProfileTeamsTab = () => {
     name: '',
     email: '',
     department: '',
-    role: ''
+    jobTitle: ''
   });
 
   const [pointsData, setPointsData] = useState({
@@ -46,42 +36,122 @@ const ProfileTeamsTab = () => {
     type: 'add' // 'add' or 'remove'
   });
 
+  // --- Fetch Data ---
+  useEffect(() => {
+    fetchLeaderboard();
+  }, []);
+
+  const fetchLeaderboard = async () => {
+    try {
+      setLoading(true);
+      const data = await gamificationService.getLeaderboard();
+      
+      // Map API response to Component State format
+      const formattedMembers = data.map(stat => ({
+          id: stat.userId,
+          name: stat.userName,
+          email: stat.email || 'N/A',
+          department: stat.department || 'General',
+          role: stat.role || 'Member',
+          ecoCoins: stat.currentPoints,
+          pointsEarned: stat.totalPointsEarned,
+          pointsSpent: stat.totalPointsSpent || 0,
+          actionsCompleted: stat.totalActions || 0,
+          badges: stat.badgesCount || 0,
+          level: stat.level,
+          joinDate: stat.joinDate || new Date().toISOString().split('T')[0],
+          status: 'active'
+      }));
+      
+      setMembers(formattedMembers);
+    } catch (error) {
+      console.error("Error fetching leaderboard", error);
+      showNotification('Erreur de chargement du classement', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Calculate statistics
   const activeMembers = members.filter(m => m.status === 'active');
   const totalEmployees = activeMembers.length;
   const totalActionsCompleted = activeMembers.reduce((sum, m) => sum + m.actionsCompleted, 0);
   const totalBadgesEarned = activeMembers.reduce((sum, m) => sum + m.badges, 0);
   const pendingRequests = 0; // Moved to MarketplaceTab
-  const participationRate = ((activeMembers.filter(m => m.actionsCompleted > 0).length / totalEmployees) * 100).toFixed(1);
+  const participationRate = totalEmployees > 0 
+    ? ((activeMembers.filter(m => m.actionsCompleted > 0).length / totalEmployees) * 100).toFixed(1)
+    : '0';
 
   // Handlers
-  const handleAddMember = (e) => {
+  const handleAddMember = async (e) => {
     e.preventDefault();
-    const newMember = {
-      id: members.length + 1,
-      ...formData,
-      ecoCoins: 0,
-      pointsEarned: 0,
-      pointsSpent: 0,
-      actionsCompleted: 0,
-      badges: 0,
-      level: 1,
-      joinDate: new Date().toISOString().split('T')[0],
-      status: 'active'
-    };
-    setMembers([...members, newMember]);
-    setShowAddMemberModal(false);
-    setFormData({ name: '', email: '', department: '', role: '' });
-    showNotification(`Membre ${newMember.name} ajouté avec succès !`, 'success');
+    
+    if (!formData.name || !formData.email) {
+      showNotification('Veuillez remplir tous les champs requis', 'warning');
+      return;
+    }
+
+    try {
+      const newUserData = {
+        name: formData.name,
+        email: formData.email,
+        password: 'GreenTech2024', // Default password
+        role: 'USER', // All members are users by default
+        department: formData.department || 'General',
+        jobTitle: formData.jobTitle || 'Employee'
+      };
+
+      await userService.createUser(newUserData);
+      showNotification(`Membre ${formData.name} ajouté avec succès !`, 'success');
+      
+      // Refresh data
+      await fetchLeaderboard();
+      
+      // Reset and close
+      setShowAddMemberModal(false);
+      setFormData({ name: '', email: '', department: '', jobTitle: '' });
+    } catch (error) {
+      console.error('Error adding member:', error);
+      showNotification(
+        error.response?.data?.message || 'Erreur lors de l\'ajout du membre',
+        'error'
+      );
+    }
   };
 
-  const handleEditMember = (e) => {
+  const handleEditMember = async (e) => {
     e.preventDefault();
-    setMembers(members.map(m => m.id === selectedMember.id ? { ...m, ...formData } : m));
-    setShowEditMemberModal(false);
-    setSelectedMember(null);
-    setFormData({ name: '', email: '', department: '', role: '' });
-    showNotification('Membre modifié avec succès !', 'success');
+    
+    if (!selectedMember) {
+      showNotification('Aucun membre sélectionné', 'error');
+      return;
+    }
+
+    try {
+      const updateData = {
+        name: formData.name,
+        email: formData.email,
+        department: formData.department,
+        jobTitle: formData.jobTitle
+      };
+
+      await userService.updateUser(selectedMember.id, updateData);
+      showNotification('Membre modifié avec succès !', 'success');
+      
+      // Refresh data
+      await fetchLeaderboard();
+      
+      // Reset and close
+      setShowEditMemberModal(false);
+      setSelectedMember(null);
+      setFormData({ name: '', email: '', department: '', jobTitle: '' });
+    } catch (error) {
+      console.error('Error updating member:', error);
+      showNotification(
+        error.response?.data?.message || 'Erreur lors de la modification',
+        'error'
+      );
+    }
   };
 
   const handleDeleteMember = (memberId) => {
@@ -89,39 +159,70 @@ const ProfileTeamsTab = () => {
     setConfirmAction({
       type: 'delete',
       title: 'Supprimer le membre',
-      message: `Êtes-vous sûr de vouloir désactiver ${member.name} ? Cette action peut être annulée en réactivant le membre ultérieurement.`,
-      onConfirm: () => {
-        setMembers(members.map(m => m.id === memberId ? { ...m, status: 'inactive' } : m));
-        setShowConfirmModal(false);
-        setConfirmAction(null);
-        showNotification(`${member.name} a été désactivé avec succès`, 'success');
+      message: `Êtes-vous sûr de vouloir supprimer ${member.name} ? Cette action est irréversible.`,
+      onConfirm: async () => {
+        try {
+          await userService.deleteUser(memberId);
+          showNotification(`${member.name} a été supprimé avec succès`, 'success');
+          
+          // Refresh data
+          await fetchLeaderboard();
+          
+          setShowConfirmModal(false);
+          setConfirmAction(null);
+        } catch (error) {
+          console.error('Error deleting member:', error);
+          showNotification(
+            error.response?.data?.message || 'Erreur lors de la suppression',
+            'error'
+          );
+        }
       }
     });
     setShowConfirmModal(true);
   };
 
-  const handleAttributePoints = (e) => {
+  const handleAttributePoints = async (e) => {
     e.preventDefault();
     const member = members.find(m => m.id === pointsData.memberId);
-    if (member) {
+    
+    if (!member) {
+      showNotification('Membre introuvable', 'error');
+      return;
+    }
+
+    if (!pointsData.points || !pointsData.reason.trim()) {
+      showNotification('Veuillez remplir tous les champs', 'warning');
+      return;
+    }
+
+    try {
       if (pointsData.type === 'add') {
-        setMembers(members.map(m =>
-          m.id === pointsData.memberId
-            ? { ...m, ecoCoins: m.ecoCoins + pointsData.points, pointsEarned: m.pointsEarned + pointsData.points }
-            : m
-        ));
+        await gamificationService.awardPoints(
+          pointsData.memberId, 
+          pointsData.points, 
+          pointsData.reason
+        );
         showNotification(`${pointsData.points} points ajoutés à ${member.name}`, 'success');
       } else {
-        setMembers(members.map(m =>
-          m.id === pointsData.memberId
-            ? { ...m, ecoCoins: Math.max(0, m.ecoCoins - pointsData.points), pointsSpent: m.pointsSpent + pointsData.points }
-            : m
-        ));
+        await gamificationService.deductPoints(
+          pointsData.memberId, 
+          pointsData.points, 
+          pointsData.reason
+        );
         showNotification(`${pointsData.points} points retirés de ${member.name}`, 'success');
       }
+      
+      // Refresh leaderboard
+      await fetchLeaderboard();
+      
+      // Reset form
+      setShowPointsModal(false);
+      setPointsData({ memberId: null, points: 0, reason: '', type: 'add' });
+    } catch (error) {
+      console.error('Error attributing points:', error);
+      showNotification('Erreur lors de l\'attribution des points', 'error');
     }
-    setShowPointsModal(false);
-    setPointsData({ memberId: null, points: 0, reason: '', type: 'add' });
   };
   const closeDepModel = () => {
     setDepModel(false);
@@ -137,7 +238,7 @@ const ProfileTeamsTab = () => {
       name: member.name,
       email: member.email,
       department: member.department,
-      role: member.role
+      jobTitle: member.jobTitle || ''
     });
     setShowEditMemberModal(true);
   };
@@ -153,7 +254,7 @@ const ProfileTeamsTab = () => {
     setShowPointsModal(false);
     setShowHistoryModal(false);
     setSelectedMember(null);
-    setFormData({ name: '', email: '', department: '', role: '' });
+    setFormData({ name: '', email: '', department: '', jobTitle: '' });
     setPointsData({ memberId: null, points: 0, reason: '', type: 'add' });
   };
 
@@ -342,7 +443,26 @@ const ProfileTeamsTab = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {members.filter(m => m.status === 'active').map(member => (
+                    {loading ? (
+                      <tr>
+                        <td colSpan="8" style={{ padding: '40px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                            <i className="fas fa-spinner fa-spin" style={{ marginRight: '10px' }}></i>
+                            Chargement des membres...
+                          </div>
+                        </td>
+                      </tr>
+                    ) : members.filter(m => m.status === 'active').length === 0 ? (
+                      <tr>
+                        <td colSpan="8" style={{ padding: '40px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                            <i className="fas fa-users-slash" style={{ marginRight: '10px' }}></i>
+                            Aucun membre actif trouvé
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      members.filter(m => m.status === 'active').map(member => (
                       <tr key={member.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
                         <td style={{ padding: '12px' }}>
                           <div>
@@ -469,7 +589,7 @@ const ProfileTeamsTab = () => {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    )))}
                   </tbody>
                 </table>
               </div>
@@ -613,14 +733,13 @@ const ProfileTeamsTab = () => {
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
                     <i className="fas fa-briefcase" style={{ marginRight: '8px', color: 'var(--primary-color)' }}></i>
-                    Rôle
+                    Poste
                   </label>
                   <input
                     type="text"
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    required
-                    placeholder="Développeur Senior"
+                    value={formData.jobTitle}
+                    onChange={(e) => setFormData({...formData, jobTitle: e.target.value})}
+                    placeholder="Développeur, Manager..."
                     style={{
                       width: '100%',
                       padding: '12px 15px',

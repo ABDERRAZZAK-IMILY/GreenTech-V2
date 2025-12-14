@@ -13,6 +13,8 @@ public class UserProfileDTO {
     private String name;
     private String email;
     private Role role;
+    private String department;
+    private String jobTitle;
     
     // Profile information
     private String profilePicture;

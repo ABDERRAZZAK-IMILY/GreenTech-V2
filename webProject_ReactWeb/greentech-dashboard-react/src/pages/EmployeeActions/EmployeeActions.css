@@ -728,6 +728,18 @@
   border-color: var(--accent-color);
 }
 
+.action-item.approved {
+  opacity: 0.8;
+  background: rgba(34, 197, 94, 0.15);
+  border-color: #22c55e;
+}
+
+.action-item.rejected {
+  opacity: 0.6;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
 .completion-badge.pending-validation {
   display: flex;
   align-items: center;
@@ -739,6 +751,32 @@
   font-size: 12px;
   font-weight: 600;
   border: 1px solid #f59e0b;
+}
+
+.completion-badge.approved {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #22c55e;
+}
+
+.completion-badge.rejected {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #ef4444;
 }
 
 .validation-text {

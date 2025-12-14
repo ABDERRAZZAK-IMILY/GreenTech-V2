@@ -64,7 +64,12 @@ public class GamificationController {
 
     @GetMapping("/my-submissions")
     public ResponseEntity<List<SubmissionResponseDTO>> getMySubmissions(Authentication authentication) {
-        String userId = authentication.getName();
-        return ResponseEntity.ok(submissionService.getUserSubmissionsDetailed(userId));
+        try {
+            String userId = authentication.getName();
+            List<SubmissionResponseDTO> submissions = submissionService.getUserSubmissionsDetailed(userId);
+            return ResponseEntity.ok(submissions != null ? submissions : List.of());
+        } catch (Exception e) {
+            return ResponseEntity.ok(List.of());
+        }
     }
 }

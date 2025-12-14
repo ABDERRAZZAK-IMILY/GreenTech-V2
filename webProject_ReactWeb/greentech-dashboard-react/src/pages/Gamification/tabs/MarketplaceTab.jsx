@@ -1,47 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { showNotification } from '../../../utils/notifications';
+import marketplaceService from '../../../services/marketplaceService';
+import authService from '../../../services/authService';
 
 const MarketplaceTab = () => {
-  const [isAdmin] = useState(true); // Hardcoded for now
+  const [isAdmin, setIsAdmin] = useState(localStorage.getItem('userRole') === 'admin'); 
+  const [loading, setLoading] = useState(true);
 
-  // Products state
-  const [products, setProducts] = useState([
-    { id: 1, name: 'Bon d\'achat Jumia - 1200MAD', emoji: '🎁', description: 'Carte cadeau Jumia', cost: 2000, category: 'rewards', badge: 'Populaire', stock: 'Disponible', active: true },
-    { id: 2, name: 'Journée Télétravail Bonus', emoji: '🏠', description: '1 jour télétravail supplémentaire', cost: 1500, category: 'perks', badge: '', stock: 'Disponible', active: true },
-    { id: 3, name: 'Parking Premium - 1 Mois', emoji: '🅿️', description: 'Place de parking réservée', cost: 1000, category: 'benefits', badge: '', stock: 'Disponible', active: true },
-    { id: 4, name: 'Café Gratuit - 1 Semaine', emoji: '☕', description: 'Café/thé illimité 1 semaine', cost: 500, category: 'benefits', badge: 'Meilleure affaire', stock: 'Disponible', active: true },
-    { id: 5, name: 'Prime Verte - 1500MAD', emoji: '💰', description: 'Prime exceptionnelle sur salaire', cost: 5000, category: 'perks', badge: 'Premium', stock: 'Disponible', active: true },
-    { id: 7, name: 'Déjeuner Équipe Offert', emoji: '🍽️', description: 'Restaurant pour toute l\'équipe', cost: 8000, category: 'rewards', badge: 'Collectif', stock: '2 disponibles', active: true },
-    { id: 9, name: 'Week-end Éco-Tourisme', emoji: '🏕️', description: 'Week-end écologique pour 2', cost: 12000, category: 'rewards', badge: 'Expérience', stock: 'Disponible', active: true }
-  ]);
+  // States
+  const [products, setProducts] = useState([]);
+  const [purchaseRequests, setPurchaseRequests] = useState([]); // This represents Orders
+  const [employeeExchanges, setEmployeeExchanges] = useState([]); // For KPIs
 
-  // Employee exchanges data (for admin analytics)
-  const [employeeExchanges] = useState([
-    { id: 1, employeeName: 'Youssef Alami', department: 'IT', totalExchanges: 8, pointsSpent: 15200, lastExchange: 'Prime Verte - 1500MAD', lastDate: '2024-11-28', favoriteCategory: 'Primes' },
-    { id: 2, employeeName: 'Fatima Zahra Bennani', department: 'RH', totalExchanges: 12, pointsSpent: 18500, lastExchange: 'Week-end Éco-Tourisme', lastDate: '2024-11-25', favoriteCategory: 'Récompenses' },
-    { id: 3, employeeName: 'Mohamed El Fassi', department: 'Commercial', totalExchanges: 6, pointsSpent: 9800, lastExchange: 'Bon d\'achat Jumia - 1200MAD', lastDate: '2024-11-22', favoriteCategory: 'Récompenses' },
-    { id: 4, employeeName: 'Sanaa Idrissi', department: 'Logistique', totalExchanges: 15, pointsSpent: 22400, lastExchange: 'Déjeuner Équipe Offert', lastDate: '2024-11-30', favoriteCategory: 'Avantages' },
-    { id: 5, employeeName: 'Karim Benjelloun', department: 'Production', totalExchanges: 4, pointsSpent: 6500, lastExchange: 'Parking Premium - 1 Mois', lastDate: '2024-11-20', favoriteCategory: 'Avantages' },
-    { id: 6, employeeName: 'Amina Tazi', department: 'IT', totalExchanges: 10, pointsSpent: 13700, lastExchange: 'Journée Télétravail Bonus', lastDate: '2024-11-27', favoriteCategory: 'Primes' },
-    { id: 7, employeeName: 'Omar Chraibi', department: 'RH', totalExchanges: 5, pointsSpent: 7200, lastExchange: 'Café Gratuit - 1 Semaine', lastDate: '2024-11-18', favoriteCategory: 'Avantages' },
-    { id: 8, employeeName: 'Laila Bennani', department: 'Commercial', totalExchanges: 9, pointsSpent: 12100, lastExchange: 'Prime Verte - 1500MAD', lastDate: '2024-11-26', favoriteCategory: 'Primes' }
-  ]);
-
-  // Purchase requests state
-  const [purchaseRequests, setPurchaseRequests] = useState([
-    { id: 1, memberId: 4, memberName: 'Salma Idrissi', product: 'Bon Amazon 20MAD', cost: 2000, date: '2024-03-18 14:32', status: 'pending' },
-    { id: 2, memberId: 7, memberName: 'Omar El Fassi', product: 'Télétravail Bonus', cost: 1500, date: '2024-03-18 10:15', status: 'pending' },
-    { id: 3, memberId: 9, memberName: 'Hamza Benjelloun', product: 'Café Gratuit 1 Semaine', cost: 500, date: '2024-03-17 16:45', status: 'pending' },
-    { id: 4, memberId: 5, memberName: 'Amine Berrada', product: 'Parking Premium 1 mois', cost: 1000, date: '2024-03-17 09:22', status: 'pending' },
-    { id: 5, memberId: 8, memberName: 'Zineb Chaoui', product: 'Formation Éco-Conduite', cost: 3000, date: '2024-03-16 11:08', status: 'pending' },
-    { id: 6, memberId: 11, memberName: 'Rachid Moussaoui', product: 'Prime Verte 50MAD', cost: 5000, date: '2024-03-15 16:20', status: 'pending' },
-    { id: 7, memberId: 12, memberName: 'Imane Kadiri', product: 'Café Gratuit 1 Semaine', cost: 500, date: '2024-03-14 09:45', status: 'pending' }
-  ]);
-
-  // Sub-tab state
-  const [activeSubTab, setActiveSubTab] = useState('exchanges'); // exchanges, requests, products
-
-  const [exchangeSortBy, setExchangeSortBy] = useState('pointsSpent'); // pointsSpent, totalExchanges, recent
+  // Modal & UI States
+  const [activeSubTab, setActiveSubTab] = useState('exchanges');
+  const [exchangeSortBy, setExchangeSortBy] = useState('pointsSpent');
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showEditProductModal, setShowEditProductModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -56,56 +29,123 @@ const MarketplaceTab = () => {
     cost: 0,
     category: 'rewards',
     badge: '',
-    stock: 'Disponible',
+    stock: 100,
     imageUrl: ''
   });
 
-  // Sort employee exchanges
-  const sortedExchanges = [...employeeExchanges].sort((a, b) => {
-    if (exchangeSortBy === 'pointsSpent') return b.pointsSpent - a.pointsSpent;
-    if (exchangeSortBy === 'totalExchanges') return b.totalExchanges - a.totalExchanges;
-    if (exchangeSortBy === 'recent') return new Date(b.lastDate) - new Date(a.lastDate);
-    return 0;
-  });
+  // --- Fetch Data ---
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  // Calculate KPIs
-  const totalPointsSpent = employeeExchanges.reduce((sum, emp) => sum + emp.pointsSpent, 0);
-  const totalExchanges = employeeExchanges.reduce((sum, emp) => sum + emp.totalExchanges, 0);
-  const avgPointsPerEmployee = Math.round(totalPointsSpent / employeeExchanges.length);
-  const topSpender = employeeExchanges.reduce((max, emp) => emp.pointsSpent > max.pointsSpent ? emp : max, employeeExchanges[0]);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const productsData = await marketplaceService.getAllProducts();
+      setProducts(productsData);
 
-  // Calculate most popular product
-  const productCounts = {};
-  employeeExchanges.forEach(emp => {
-    const product = emp.lastExchange;
-    productCounts[product] = (productCounts[product] || 0) + 1;
-  });
-  const mostPopularProduct = Object.keys(productCounts).reduce((a, b) =>
-    productCounts[a] > productCounts[b] ? a : b
-  );
-  const mostPopularCount = productCounts[mostPopularProduct];
-
-  // Handlers
-  const handleAddProduct = (e) => {
-    e.preventDefault();
-    const newProduct = {
-      id: products.length + 1,
-      ...productForm,
-      active: true
-    };
-    setProducts([...products, newProduct]);
-    setShowAddProductModal(false);
-    setProductForm({ name: '', emoji: '', description: '', cost: 0, category: 'rewards', badge: '', stock: 'Disponible', imageUrl: '' });
-    showNotification('Produit ajouté avec succès !', 'success');
+      if (isAdmin) {
+        const ordersData = await marketplaceService.getAllOrders();
+        const formattedOrders = ordersData.map(order => ({
+            id: order.id,
+            memberId: order.userId,
+            memberName: order.userName || 'Employé',
+            product: order.productName,
+            cost: order.cost,
+            date: new Date(order.orderDate).toLocaleString('fr-FR'),
+            status: order.status,
+            category: order.category
+        }));
+        
+        setPurchaseRequests(formattedOrders.filter(o => o.status === 'PENDING'));
+        
+        const completed = formattedOrders.filter(o => o.status === 'APPROVED');
+        processExchangesStats(completed);
+      } else {
+        const user = authService.getCurrentUser();
+        const myOrders = await marketplaceService.getUserOrders(user.id);
+        setPurchaseRequests(myOrders);
+      }
+    } catch (error) {
+      console.error("Error fetching marketplace data", error);
+      showNotification('Erreur de chargement des données', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEditProduct = (e) => {
+  const processExchangesStats = (completedOrders) => {
+      const statsMap = {};
+      
+      completedOrders.forEach(order => {
+          if (!statsMap[order.memberName]) {
+              statsMap[order.memberName] = {
+                  id: order.memberId,
+                  employeeName: order.memberName,
+                  department: 'General',
+                  totalExchanges: 0,
+                  pointsSpent: 0,
+                  lastExchange: order.product,
+                  lastDate: order.date,
+                  categories: {}
+              };
+          }
+          const emp = statsMap[order.memberName];
+          emp.totalExchanges += 1;
+          emp.pointsSpent += order.cost;
+          emp.categories[order.category] = (emp.categories[order.category] || 0) + 1;
+      });
+
+      const processedExchanges = Object.values(statsMap).map(emp => {
+          const favCategory = Object.keys(emp.categories).reduce((a, b) => emp.categories[a] > emp.categories[b] ? a : b, 'None');
+          return { ...emp, favoriteCategory: favCategory };
+      });
+
+      setEmployeeExchanges(processedExchanges);
+  };
+
+  // --- Handlers ---
+
+  const handleAddProduct = async (e) => {
     e.preventDefault();
-    setProducts(products.map(p => p.id === selectedProduct.id ? { ...p, ...productForm } : p));
-    setShowEditProductModal(false);
-    setSelectedProduct(null);
-    setProductForm({ name: '', emoji: '', description: '', cost: 0, category: 'rewards', badge: '', stock: 'Disponible', imageUrl: '' });
-    showNotification('Produit modifié avec succès !', 'success');
+    try {
+      await marketplaceService.createProduct({
+          name: productForm.name,
+          description: productForm.description,
+          costInPoints: productForm.cost,
+          category: productForm.category,
+          stockQuantity: parseInt(productForm.stock) || 100,
+          imageUrl: productForm.imageUrl,
+          isActive: true
+      });
+      showNotification('Produit ajouté avec succès !', 'success');
+      setShowAddProductModal(false);
+      setProductForm({ name: '', emoji: '🎁', description: '', cost: 0, category: 'rewards', badge: '', stock: 100, imageUrl: '' });
+      fetchData(); // Refresh list
+    } catch (error) {
+      showNotification('Erreur lors de l\'ajout', 'error');
+    }
+  };
+
+  const handleEditProduct = async (e) => {
+    e.preventDefault();
+    try {
+      await marketplaceService.updateProduct(selectedProduct.id, {
+          name: productForm.name,
+          description: productForm.description,
+          costInPoints: productForm.cost,
+          category: productForm.category,
+          stockQuantity: parseInt(productForm.stock) || selectedProduct.stockQuantity || 100,
+          imageUrl: productForm.imageUrl,
+          isActive: selectedProduct.isActive !== undefined ? selectedProduct.isActive : true
+      });
+      showNotification('Produit modifié avec succès !', 'success');
+      setShowEditProductModal(false);
+      setSelectedProduct(null);
+      fetchData(); // Refresh
+    } catch (error) {
+      showNotification('Erreur lors de la modification', 'error');
+    }
   };
 
   const handleDeleteProduct = (productId) => {
@@ -113,19 +153,30 @@ const MarketplaceTab = () => {
     setConfirmAction({
       type: 'delete',
       title: 'Supprimer le produit',
-      message: `Êtes-vous sûr de vouloir désactiver "${product.name}" ? Cette action peut être annulée en réactivant le produit ultérieurement.`,
-      onConfirm: () => {
-        setProducts(products.map(p => p.id === productId ? { ...p, active: false } : p));
-        setShowConfirmModal(false);
-        setConfirmAction(null);
-        showNotification(`Le produit "${product.name}" a été désactivé avec succès`, 'success');
+      message: `Êtes-vous sûr de vouloir supprimer "${product.name}" ?`,
+      onConfirm: async () => {
+        try {
+          await marketplaceService.deleteProduct(productId);
+          showNotification(`Le produit a été supprimé`, 'success');
+          setShowConfirmModal(false);
+          setConfirmAction(null);
+          fetchData(); // Refresh
+        } catch (error) {
+           showNotification('Erreur lors de la suppression', 'error');
+        }
       }
     });
     setShowConfirmModal(true);
   };
 
-  const handleToggleActive = (productId) => {
-    setProducts(products.map(p => p.id === productId ? { ...p, active: !p.active } : p));
+  const handleToggleActive = async (productId) => {
+      const product = products.find(p => p.id === productId);
+      try {
+          await marketplaceService.updateProduct(productId, { ...product, active: !product.active });
+          fetchData();
+      } catch (error) {
+          console.error(error);
+      }
   };
 
   // Purchase request handlers
@@ -134,12 +185,17 @@ const MarketplaceTab = () => {
     setConfirmAction({
       type: 'approve',
       title: 'Valider la demande',
-      message: `Voulez-vous valider la demande de ${request.memberName} pour "${request.product}" (${request.cost} Eco-Coins) ?`,
-      onConfirm: () => {
-        setPurchaseRequests(purchaseRequests.filter(r => r.id !== requestId));
-        setShowConfirmModal(false);
-        setConfirmAction(null);
-        showNotification(`Demande de ${request.memberName} approuvée avec succès !`, 'success');
+      message: `Voulez-vous valider la demande de ${request.memberName} ?`,
+      onConfirm: async () => {
+        try {
+            await marketplaceService.updateOrderStatus(requestId, 'APPROVED');
+            showNotification(`Demande approuvée !`, 'success');
+            setShowConfirmModal(false);
+            setConfirmAction(null);
+            fetchData();
+        } catch (error) {
+            showNotification('Erreur lors de la validation', 'error');
+        }
       }
     });
     setShowConfirmModal(true);
@@ -150,22 +206,28 @@ const MarketplaceTab = () => {
     setConfirmAction({
       type: 'reject',
       title: 'Refuser la demande',
-      message: `Voulez-vous refuser la demande de ${request.memberName} pour "${request.product}" ?`,
-      onConfirm: () => {
-        setPurchaseRequests(purchaseRequests.filter(r => r.id !== requestId));
-        setShowConfirmModal(false);
-        setConfirmAction(null);
-        showNotification(`Demande de ${request.memberName} refusée`, 'success');
+      message: `Voulez-vous refuser la demande ?`,
+      onConfirm: async () => {
+        try {
+            await marketplaceService.updateOrderStatus(requestId, 'REJECTED');
+            showNotification(`Demande refusée`, 'success');
+            setShowConfirmModal(false);
+            setConfirmAction(null);
+            fetchData();
+        } catch (error) {
+            showNotification('Erreur', 'error');
+        }
       }
     });
     setShowConfirmModal(true);
   };
 
+  // Helper functions like openEditModal, closeModals remain the same...
   const openEditModal = (product) => {
     setSelectedProduct(product);
     setProductForm({
       name: product.name,
-      emoji: product.emoji,
+      emoji: product.emoji || '🎁',
       description: product.description,
       cost: product.cost,
       category: product.category,
@@ -182,8 +244,50 @@ const MarketplaceTab = () => {
     setShowConfirmModal(false);
     setSelectedProduct(null);
     setConfirmAction(null);
-    setProductForm({ name: '', emoji: '', description: '', cost: 0, category: 'rewards', badge: '', stock: 'Disponible', imageUrl: '' });
+    setProductForm({ name: '', emoji: '🎁', description: '', cost: 0, category: 'rewards', badge: '', stock: 100, imageUrl: '' });
   };
+
+  // Sorting Logic (Keep existing logic but handle empty data)
+  const sortedExchanges = [...employeeExchanges].sort((a, b) => {
+    if (exchangeSortBy === 'pointsSpent') return b.pointsSpent - a.pointsSpent;
+    if (exchangeSortBy === 'totalExchanges') return b.totalExchanges - a.totalExchanges;
+    if (exchangeSortBy === 'recent') return new Date(b.lastDate) - new Date(a.lastDate);
+    return 0;
+  });
+
+  // Calculate KPIs (Handle empty arrays safely)
+  const totalPointsSpent = employeeExchanges.reduce((sum, emp) => sum + emp.pointsSpent, 0);
+  const totalExchanges = employeeExchanges.reduce((sum, emp) => sum + emp.totalExchanges, 0);
+  const avgPointsPerEmployee = employeeExchanges.length > 0 ? Math.round(totalPointsSpent / employeeExchanges.length) : 0;
+  const topSpender = employeeExchanges.length > 0 ? employeeExchanges.reduce((max, emp) => emp.pointsSpent > max.pointsSpent ? emp : max, employeeExchanges[0]) : { employeeName: 'N/A', pointsSpent: 0 };
+
+  // Calculate most popular product
+  const productCounts = {};
+  employeeExchanges.forEach(emp => {
+    const product = emp.lastExchange;
+    productCounts[product] = (productCounts[product] || 0) + 1;
+  });
+  
+  let mostPopularProduct = "Aucun";
+  if (Object.keys(productCounts).length > 0) {
+      mostPopularProduct = Object.keys(productCounts).reduce((a, b) => productCounts[a] > productCounts[b] ? a : b);
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '400px',
+        color: 'var(--text-secondary)' 
+      }}>
+        <i className="fas fa-spinner fa-spin" style={{ fontSize: '32px', marginRight: '12px' }}></i>
+        <span style={{ fontSize: '16px' }}>Chargement des données...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="marketplace-tab">
@@ -544,7 +648,15 @@ const MarketplaceTab = () => {
               </tr>
             </thead>
             <tbody>
-              {sortedExchanges.map((exchange, index) => (
+              {sortedExchanges.length === 0 ? (
+                <tr>
+                  <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                    <i className="fas fa-inbox" style={{ fontSize: '48px', marginBottom: '12px', display: 'block', opacity: 0.5 }}></i>
+                    Aucun échange enregistré pour le moment
+                  </td>
+                </tr>
+              ) : (
+              sortedExchanges.map((exchange, index) => (
                 <tr key={exchange.id} style={{
                   borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                   transition: 'all 0.3s ease'
@@ -613,7 +725,8 @@ const MarketplaceTab = () => {
                     </span>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>
@@ -666,7 +779,15 @@ const MarketplaceTab = () => {
               </tr>
             </thead>
             <tbody>
-              {purchaseRequests.map(request => (
+              {purchaseRequests.length === 0 ? (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                    <i className="fas fa-check-circle" style={{ fontSize: '48px', marginBottom: '12px', display: 'block', opacity: 0.5, color: '#43e97b' }}></i>
+                    Aucune demande en attente
+                  </td>
+                </tr>
+              ) : (
+              purchaseRequests.map(request => (
                 <tr key={request.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
                   <td style={{ padding: '12px' }}>{request.memberName}</td>
                   <td style={{ padding: '12px' }}>{request.product}</td>
@@ -708,7 +829,8 @@ const MarketplaceTab = () => {
                     </button>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>
@@ -784,7 +906,15 @@ const MarketplaceTab = () => {
                 </tr>
               </thead>
               <tbody>
-                {products.map(product => (
+                {products.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                      <i className="fas fa-gift" style={{ fontSize: '48px', marginBottom: '12px', display: 'block', opacity: 0.5 }}></i>
+                      Aucun produit disponible
+                    </td>
+                  </tr>
+                ) : (
+                products.map(product => (
                   <tr key={product.id} style={{
                     borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                     opacity: product.active ? 1 : 0.5
@@ -934,7 +1064,8 @@ const MarketplaceTab = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                ))
+                )}
               </tbody>
             </table>
           </div>
@@ -1203,11 +1334,12 @@ const MarketplaceTab = () => {
                     Stock
                   </label>
                   <input
-                    type="text"
+                    type="number"
+                    min="0"
                     value={productForm.stock}
-                    onChange={(e) => setProductForm({...productForm, stock: e.target.value})}
+                    onChange={(e) => setProductForm({...productForm, stock: parseInt(e.target.value) || 0})}
                     required
-                    placeholder="Disponible"
+                    placeholder="100"
                     style={{
                       width: '100%',
                       padding: '12px 15px',
@@ -1523,11 +1655,12 @@ const MarketplaceTab = () => {
                     Stock
                   </label>
                   <input
-                    type="text"
+                    type="number"
+                    min="0"
                     value={productForm.stock}
-                    onChange={(e) => setProductForm({...productForm, stock: e.target.value})}
+                    onChange={(e) => setProductForm({...productForm, stock: parseInt(e.target.value) || 0})}
                     required
-                    placeholder="Ex: Disponible, 5 restants..."
+                    placeholder="100"
                     style={{
                       width: '100%',
                       padding: '12px 16px',

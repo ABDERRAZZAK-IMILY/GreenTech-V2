@@ -13,6 +13,10 @@ public class UpdateProfileRequestDTO {
     @Email(message = "Invalid email format")
     private String email;
     
+    private String department;
+    
+    private String jobTitle;
+    
     private String profilePicture;
 
 
