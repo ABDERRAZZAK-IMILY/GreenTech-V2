@@ -21,18 +21,24 @@ public interface TrashRepository extends MongoRepository<Trash, String> {
 
     @Aggregation(pipeline = {
             "{ '$match': { 'createdAt': { '$gte': ?0 } } }",
-            "{ '$group': { '_id': { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } }, 'total': { '$sum': '$weight' } } }", // <-- weight
-            "{ '$sort': { '_id': 1 } }"
+            "{ '$project': { " +
+                    "    'date': { '$dateToString': { 'format': '%Y-%m-%d', 'date': '$createdAt' } }, " +
+                    "    'wight': 1 " +
+                    "} }",
+
+            "{ '$group': { " +
+                    "    '_id': '$date', " +
+                    "    'total': { '$sum': '$wight' } " +
+                    "} }",
+
+            "{ '$project': { " +
+                    "    '_id': 0, " +
+                    "    'date': '$_id', " +
+                    "    'total': 1 " +
+                    "} }",
+
+            "{ '$sort': { 'date': 1 } }"
     })
     List<DailyStat> getLast7DaysStats(LocalDateTime startDate);
-    @Aggregation(pipeline = {
-            // 1. Filter: Get docs where createdAt is >= start (?0) AND <= end (?1)
-            "{ '$match': { 'createdAt': { '$gte': ?0, '$lte': ?1 } } }",
-
-            // 2. Sort: Ensure they come out in time order (Oldest -> Newest)
-            // This is CRUCIAL for your distance calculation algorithm
-            "{ '$sort': { 'createdAt': 1 } }"
-    })
-    List<Trash> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
 }

@@ -9,96 +9,68 @@ import com.greentechinnovators.backend.entity.GasMonitor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 public class GasMapper {
 
-    // ========================================================================
-    // 1. Gas (Child) Mappings
-    // ========================================================================
 
     public Gas toEntity(GasRequestDTO dto) {
-        if (dto == null) {
-            return null;
-        }
+        if (dto == null) return null;
 
         Gas gas = new Gas();
         gas.setConsumedGas(dto.getConsumedGas());
-        // createdAt is set by default in the Entity
+        // createdAt est géré par l'entité (par défaut)
         return gas;
     }
 
     public GasResponseDTO toResponse(Gas entity) {
-        if (entity == null) {
-            return null;
-        }
+        if (entity == null) return null;
 
-        GasResponseDTO dto = new GasResponseDTO();
-        dto.setId(entity.getId());
-        dto.setConsumedGas(entity.getConsumedGas());
-        dto.setCreatedAt(entity.getCreatedAt());
-
-        return dto;
+        return GasResponseDTO.builder()
+                .id(entity.getId())
+                .consumedGas(entity.getConsumedGas())
+                .createdAt(entity.getCreatedAt())
+                .build();
     }
 
-    // ========================================================================
-    // 2. Gas Monitor (Parent) Mappings
-    // ========================================================================
 
     public GasMonitor toEntity(GasMonitorRequestDTO dto) {
-        if (dto == null) {
-            return null;
-        }
+        if (dto == null) return null;
 
         GasMonitor monitor = new GasMonitor();
         monitor.setLocation(dto.getLocation());
         monitor.setSensorId(dto.getSensorId());
         monitor.setStatus(dto.getStatus());
         monitor.setCo2Impact(dto.getCo2Impact());
-
-        // Set timestamp for new monitor creation
         monitor.setTimestamp(LocalDateTime.now());
 
-        // Map List<GasRequestDTO> -> List<Gas>
-        // Assuming your GasMonitor entity field is named 'gas' or 'gasReadings'
-        if (dto.getGasReadings() != null) {
-            List<Gas> gasList = dto.getGasReadings().stream()
-                    .map(this::toEntity)
-                    .collect(Collectors.toList());
-            monitor.setGas(gasList); // Make sure your Entity has setGas(List<Gas>)
-        } else {
-            monitor.setGas(new ArrayList<>());
-        }
+        List<Gas> gasList = (dto.getGasReadings() == null) ? Collections.emptyList() :
+                dto.getGasReadings().stream()
+                        .map(this::toEntity)
+                        .collect(Collectors.toList());
 
+        monitor.setGas(gasList);
         return monitor;
     }
 
     public GasMonitorResponseDTO toResponse(GasMonitor entity) {
-        if (entity == null) {
-            return null;
-        }
+        if (entity == null) return null;
 
-        GasMonitorResponseDTO dto = new GasMonitorResponseDTO();
-        dto.setId(entity.getId());
-        dto.setLocation(entity.getLocation());
-        dto.setSensorId(entity.getSensorId());
-        dto.setStatus(entity.getStatus());
-        dto.setCo2Impact(entity.getCo2Impact());
-        dto.setTimestamp(entity.getTimestamp());
-
-        // Map List<Gas> -> List<GasResponseDTO>
-        if (entity.getGas() != null) {
-            List<GasResponseDTO> gasDtoList = entity.getGas().stream()
-                    .map(this::toResponse)
-                    .collect(Collectors.toList());
-            dto.setGasReadings(gasDtoList);
-        } else {
-            dto.setGasReadings(new ArrayList<>());
-        }
-
-        return dto;
+        return GasMonitorResponseDTO.builder()
+                .id(entity.getId())
+                .location(entity.getLocation())
+                .sensorId(entity.getSensorId())
+                .status(entity.getStatus())
+                .co2Impact(entity.getCo2Impact())
+                .timestamp(entity.getTimestamp())
+                // Mapping de la liste imbriquée
+                .gasReadings(entity.getGas() == null ? Collections.emptyList() :
+                        entity.getGas().stream()
+                                .map(this::toResponse)
+                                .collect(Collectors.toList()))
+                .build();
     }
 }

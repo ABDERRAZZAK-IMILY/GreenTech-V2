@@ -46,15 +46,14 @@ public class PdfReportService {
         try {
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime start = now.withDayOfMonth(1);
+
             ReportData data = dataFetcher.getMonthlyData(start, now);
 
-            // L'AI fait l'audit complet
             String aiAuditResult = aiAnalyst.generateAnalysis(data);
 
             Document document = new Document(PageSize.A4);
             PdfWriter writer = PdfWriter.getInstance(document, outputStream);
 
-            // Footer event (Numéro de page)
             writer.setPageEvent(new PdfPageEventHelper() {
                 public void onEndPage(PdfWriter writer, Document document) {
                     PdfContentByte cb = writer.getDirectContent();
@@ -75,7 +74,7 @@ public class PdfReportService {
             styler.addAuditTable(document, "Flotte & Transport",
                     fmt(data.getTransportKm()) + " km",
                     fmt(data.getTransportCo2()) + " kg",
-                    checkLimit(data.getTransportCo2(), 500)); // Exemple de seuil (Target)
+                    checkLimit(data.getTransportCo2(), 500)); // Exemple de seuil
 
             // Tableau Déchets
             styler.addAuditTable(document, "Gestion des Déchets",
@@ -87,7 +86,12 @@ public class PdfReportService {
             styler.addAuditTable(document, "Efficacité Énergétique",
                     fmt(data.getEnergyKwh()) + " kWh",
                     fmt(data.getEnergyCo2()) + " kg",
-                    checkLimit(data.getEnergyCo2(), 1000));
+                    checkLimit(data.getEnergyCo2(), 500));
+
+            styler.addAuditTable(document, "Consommation de Gaz (LPG)",
+                    fmt(data.getGasWeight()) + " kg",
+                    fmt(data.getGasCo2()) + " kg",
+                    checkLimit(data.getGasCo2(), 300));
 
             // 2. Rapport d'Audit Détaillé (L'AI)
             styler.addSectionTitle(document, "2. RAPPORT D'AUDIT & PLAN D'ACTION (ACT)");
@@ -123,7 +127,7 @@ public class PdfReportService {
     }
 
     private void addSignatureSection(Document doc) throws DocumentException {
-        Paragraph p = new Paragraph("\n\n\napprobation Direction : ____________________        Responsable HSE : ____________________", PdfStyler.DATA_FONT);
+        Paragraph p = new Paragraph("\n\n\nApprobation Direction : ____________________        Responsable HSE : ____________________", PdfStyler.DATA_FONT);
         p.setAlignment(Element.ALIGN_CENTER);
         doc.add(p);
     }

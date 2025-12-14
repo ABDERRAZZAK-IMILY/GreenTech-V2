@@ -53,40 +53,35 @@ public class VehicleService {
     }
 
     public List<DailyDistanceDTO> getDistanceHistory(LocalDateTime start, LocalDateTime end) {
+
+        List<VehicleLog> allLogs = vehicleLogRepository.findAll();
+
         List<DailyDistanceDTO> report = new ArrayList<>();
         LocalDateTime current = start;
 
         while (!current.isAfter(end)) {
-            LocalDate date = start.toLocalDate();
-            LocalDateTime startDay = date.atStartOfDay();
-            LocalDateTime endDay = date.plusDays(1).atStartOfDay();
 
-            List<VehicleLog> dailyLogs = vehicleLogRepository.findByCreatedAtBetween(startDay, endDay);
+            LocalDateTime dayStart = current.toLocalDate().atStartOfDay();
+            LocalDateTime dayEnd = dayStart.plusDays(1);
 
-            if (!dailyLogs.isEmpty()) {
-                System.out.println(" Date: " + current + " | Logs Found: " + dailyLogs.size());
-            }
+            List<VehicleLog> dailyLogs = allLogs.stream()
+                    .filter(log -> {
+                        if (log.getCreatedAt() == null) return false;
+                        return !log.getCreatedAt().isBefore(dayStart) &&
+                                log.getCreatedAt().isBefore(dayEnd);
+                    })
+                    .collect(Collectors.toList());
 
-            // 2. Grouping by VehicleId
             Map<String, List<VehicleLog>> logsPerCar = dailyLogs.stream()
                     .filter(log -> log.getVehicleId() != null)
                     .collect(Collectors.groupingBy(VehicleLog::getVehicleId));
 
             double totalFleetDistance = 0.0;
 
-            for (Map.Entry<String, List<VehicleLog>> entry : logsPerCar.entrySet()) {
-                String carId = entry.getKey();
-                List<VehicleLog> carLogs = entry.getValue();
-
+            for (List<VehicleLog> carLogs : logsPerCar.values()) {
                 carLogs.sort(Comparator.comparing(VehicleLog::getCreatedAt));
 
-                double carDist = calculateSingleCarDistance(carLogs);
-
-                if (carDist > 0) {
-                    System.out.println("   🚗 Car: " + carId + " | Distance: " + carDist + " km");
-                }
-
-                totalFleetDistance += carDist;
+                totalFleetDistance += calculateSingleCarDistance(carLogs);
             }
 
             report.add(DailyDistanceDTO.builder()
@@ -102,7 +97,6 @@ public class VehicleService {
 
     // Helper Method
     private Double calculateSingleCarDistance(List<VehicleLog> logs) {
-        //
         if (logs.size() < 2) return 0.0;
 
         double dist = 0.0;

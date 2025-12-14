@@ -61,6 +61,6 @@ public class AuthenticationService {
 
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
 
-        return new AuthResponse(token, user.getEmail(), user.getRole().name());
+        return new AuthResponse(token, user.getEmail(),user.getId(), user.getRole().name());
     }
 }

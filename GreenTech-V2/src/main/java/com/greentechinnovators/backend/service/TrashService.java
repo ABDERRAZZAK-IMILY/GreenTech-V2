@@ -68,57 +68,60 @@ public class TrashService {
     public Double getConsumeTrashBetweenDates(LocalDateTime start, LocalDateTime end) {
         List<Trash> allTrash = repository.findAll();
 
-        Double consumedTrash = allTrash.stream()
+        return allTrash.stream()
                 .filter(t -> {
                     if (t.getCreatedAt() == null || t.getWight() == null) return false;
-
                     boolean isAfterStart = !t.getCreatedAt().isBefore(start);
                     boolean isBeforeEnd = !t.getCreatedAt().isAfter(end);
-
                     return isAfterStart && isBeforeEnd;
                 })
                 .mapToDouble(Trash::getWight)
                 .sum();
-
-
-        return consumedTrash;
     }
+
     public List<DailyTrashDTO> TrashCarbonFootprint(LocalDateTime start, LocalDateTime end) {
+
+        List<Trash> allTrash = repository.findAll();
+
         List<DailyTrashDTO> report = new ArrayList<>();
         LocalDateTime current = start;
+
         while (!current.isAfter(end)) {
 
-            // 1. Calculate distance for THIS specific day
-            Double totalWight = totalWeightBerDay(current);
-            Double dailyCarbon = calculateDailyFootPrint(totalWight);
+            // N7eddo bdaya w nihaya dyal had nhar (current)
+            LocalDateTime startOfDay = current.toLocalDate().atStartOfDay();
+            LocalDateTime endOfDay = startOfDay.plusDays(1);
 
+            // 2. N-filtriw mn la liste li déjà 3ndna (Bla ma nmchiw l DB)
+            Double totalWeight = allTrash.stream()
+                    .filter(t -> {
+                        if (t.getCreatedAt() == null || t.getWight() == null) return false;
 
-            // 3. Add to report
+                        // Wach Trash dial had nhar b ddbet?
+                        return !t.getCreatedAt().isBefore(startOfDay) &&
+                                t.getCreatedAt().isBefore(endOfDay);
+                    })
+                    .mapToDouble(Trash::getWight)
+                    .sum();
+
+            // 3. Calcul Carbon
+            Double dailyCarbon = calculateDailyFootPrint(totalWeight);
+
+            // 4. Add to report
             report.add(DailyTrashDTO.builder()
                     .date(current)
-                    .totalWeightKg(totalWight)
+                    .totalWeightKg(totalWeight)
                     .carbonFootprintKg(dailyCarbon)
                     .build());
 
-            // Move to next day
             current = current.plusDays(1);
         }
         return report;
     }
+
     public Double calculateDailyFootPrint(Double weight) {
-        return carbonFootprintService.calculateTransportFootprint(weight);
+        return carbonFootprintService.calculateTrashFootprint(weight);
     }
-    public Double totalWeightBerDay(LocalDateTime dateTimeInput) {
-        LocalDate date = dateTimeInput.toLocalDate();
 
-        LocalDateTime startOfDay = date.atStartOfDay();
 
-        LocalDateTime startOfNextDay = date.plusDays(1).atStartOfDay();
-        List<Trash> trashes = repository.findByCreatedAtBetween(startOfDay, startOfNextDay);
-        if (trashes == null || trashes.isEmpty()) {
-            return 0.0;
-        }
-
-        return trashes.stream().mapToDouble(Trash::getWight).sum();
-    }
 }

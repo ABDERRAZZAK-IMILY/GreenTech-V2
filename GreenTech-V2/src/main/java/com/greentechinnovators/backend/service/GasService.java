@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,5 +40,26 @@ public class GasService {
                 .toList();
         
         return gasList.stream().map(gasMapper::toResponse).toList();
+    }
+
+    public List<GasResponseDTO> getConsumedGasBetweenDates(LocalDateTime start, LocalDateTime end) {
+
+        List<Gas> allGas = gasRepository.findAll();
+
+        return allGas.stream()
+                .filter(g -> {
+                    if (g.getCreatedAt() == null) return false;
+
+                    boolean isAfterStart = !g.getCreatedAt().isBefore(start); // >= start
+                    boolean isBeforeEnd = !g.getCreatedAt().isAfter(end);     // <= end
+
+                    return isAfterStart && isBeforeEnd;
+                })
+                .map(g -> GasResponseDTO.builder()
+                        .id(g.getId().toString())
+                        .consumedGas(g.getConsumedGas())
+                        .createdAt(g.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

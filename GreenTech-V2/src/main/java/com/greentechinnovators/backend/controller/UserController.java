@@ -51,12 +51,14 @@ public class UserController {
             @PathVariable String id,
             @Valid @RequestBody UpdateProfileRequestDTO request,
             Authentication authentication) {
-        
-        String currentUserId = authentication.getName();
-        
-        // Check if user is updating their own profile or is admin
-        if (!currentUserId.equals(id) && !authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+
+        String authenticatedEmail = authentication.getName();
+
+        UserProfileDTO targetUser = userService.getUserById(id);
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!authenticatedEmail.equals(targetUser.getEmail()) && !isAdmin) {
             return ResponseEntity.status(403).build();
         }
         
@@ -69,12 +71,14 @@ public class UserController {
             @PathVariable String id,
             @Valid @RequestBody UpdateProfileRequestDTO request,
             Authentication authentication) {
-        
-        String currentUserId = authentication.getName();
-        
-        // Check if user is updating their own profile or is admin
-        if (!currentUserId.equals(id) && !authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+
+        String authenticatedEmail = authentication.getName();
+        UserProfileDTO targetUser = userService.getUserById(id);
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!authenticatedEmail.equals(targetUser.getEmail()) && !isAdmin) {
             return ResponseEntity.status(403).build();
         }
         

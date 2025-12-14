@@ -16,23 +16,31 @@ public interface EnergyRepository extends MongoRepository<Energy, String> {
 
     @Aggregation(pipeline = {
             "{ '$match': { 'createdAt': { '$gte': ?0 } } }",
-            "{ '$group': { '_id': null, 'total': { '$sum': '$value' } } }"
+            "{ '$group': { '_id': null, 'total': { '$sum': '$energyConsumed' } } }"
     })
     Double sumValueByCreatedAtAfter(LocalDateTime date);
 
     @Aggregation(pipeline = {
             "{ '$match': { 'createdAt': { '$gte': ?0 } } }",
-            "{ '$group': { '_id': { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, 'total': { '$sum': '$value' } } }",
-            "{ '$sort': { '_id': 1 } }"
+
+            "{ '$project': { " +
+                    "    'date': { '$dateToString': { 'format': '%Y-%m-%d', 'date': '$createdAt' } }, " +
+                    "    'energyConsumed': 1 " +
+                    "} }",
+
+            "{ '$group': { " +
+                    "    '_id': '$date', " +
+                    "    'total': { '$sum': '$energyConsumed' } " +
+                    "} }",
+
+            "{ '$project': { " +
+                    "    '_id': 0, " +
+                    "    'date': '$_id', " +
+                    "    'total': 1 " +
+                    "} }",
+
+            "{ '$sort': { 'date': 1 } }"
     })
     List<DailyStat> getLast7DaysStats(LocalDateTime startDate);
-    @Aggregation(pipeline = {
-            // 1. Filter: Get docs where createdAt is >= start (?0) AND <= end (?1)
-            "{ '$match': { 'createdAt': { '$gte': ?0, '$lte': ?1 } } }",
 
-            // 2. Sort: Ensure they come out in time order (Oldest -> Newest)
-            // This is CRUCIAL for your distance calculation algorithm
-            "{ '$sort': { 'createdAt': 1 } }"
-    })
-    List<Energy> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

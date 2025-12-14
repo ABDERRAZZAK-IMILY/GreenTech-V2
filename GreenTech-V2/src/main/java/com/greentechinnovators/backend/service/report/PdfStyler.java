@@ -71,8 +71,7 @@ public class PdfStyler {
         table.setSpacingBefore(10);
         table.setSpacingAfter(10);
 
-        // ✅ FIX IMPORTANT: Hado homa li kaymn3o l-boite tahrb l page jaya
-        table.setSplitLate(false); // Matstannach hta lkher, 9assam dba
+        table.setSplitLate(false);
         table.setSplitRows(true);  // Kheli stoura yt9assmo
 
         // 1. Header Cell

@@ -36,6 +36,7 @@ const useAIPrediction = () => {
           try {
             const data = await getAIPredictions();
             setPredictionData(data);
+            console.log(data)
           } catch (error) {
             console.error(error);
             showNotification("Impossible de récupérer les prédictions", "error");

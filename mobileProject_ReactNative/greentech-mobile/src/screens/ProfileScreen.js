@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,65 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
+  RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { employeeData } from '../data/employeeData';
-import colors from '../styles/colors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native'; 
 
-export default function ProfileScreen() {
+import UserService from '../services/userService';
+import AuthService from '../services/authService'; // Pour le logout
+import colors from '../styles/colors';
+import { log } from 'console';
+
+export default function ProfileScreen({ navigation }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  // Fonction pour charger les données
+  const fetchUserData = async () => {
+    try {
+      // 1. Récupérer l'ID stocké lors du login
+      const userId = await AsyncStorage.getItem('userId');
+      
+      if (!userId) {
+        Alert.alert("Erreur", "Utilisateur non identifié");
+        return;
+      }
+
+      // 2. Appeler les services (Info de base + Stats Profil)
+      // On utilise Promise.all pour lancer les deux requêtes en parallèle
+      const [userInfo, userProfile] = await Promise.all([
+        UserService.getUserById(userId),
+        UserService.getUserProfile(userId)
+      ]);
+
+      // 3. Fusionner les données pour l'affichage
+      setUser({ ...userInfo, ...userProfile });
+
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erreur", "Impossible de charger le profil");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Charger les données au démarrage
+ useFocusEffect(
+    useCallback(() => {
+      fetchUserData();
+    }, [])
+  );
+
+  // Recharger les données quand on "tire" l'écran vers le bas
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchUserData();
+  }, []);
+
   const handleLogout = () => {
     Alert.alert(
       'Déconnexion',
@@ -21,112 +74,106 @@ export default function ProfileScreen() {
         {
           text: 'Déconnexion',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert('Déconnecté', 'Vous avez été déconnecté avec succès');
+          onPress: async () => {
+            await AuthService.logout();
+            // Rediriger vers le Stack Login (LoginScreen)
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
           },
         },
       ]
     );
   };
 
-  const settingsOptions = [
-    {
-      id: 1,
-      section: 'Compte',
-      items: [
-        { id: 'edit-profile', title: 'Modifier le profil', icon: 'person-outline', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
-        { id: 'change-password', title: 'Changer le mot de passe', icon: 'key-outline', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
-        { id: 'email', title: 'Adresse email', icon: 'mail-outline', subtitle: 'm.alami@greentech.ma', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
-      ]
-    },
-    {
-      id: 2,
-      section: 'Préférences',
-      items: [
-        { id: 'notifications', title: 'Notifications', icon: 'notifications-outline', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
-        { id: 'language', title: 'Langue', icon: 'language-outline', subtitle: 'Français', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
-        { id: 'theme', title: 'Thème', icon: 'moon-outline', subtitle: 'Sombre', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
-      ]
-    },
-    {
-      id: 3,
-      section: 'Assistance',
-      items: [
-        { id: 'help', title: 'Centre d\'aide', icon: 'help-circle-outline', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
-        { id: 'contact', title: 'Nous contacter', icon: 'chatbubble-outline', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
-        { id: 'about', title: 'À propos', icon: 'information-circle-outline', action: () => Alert.alert('GreenTech PME', 'Version 1.0.0') },
-      ]
-    },
-  ];
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+      }
+    >
       {/* Profile Header */}
       <View style={styles.profileHeader}>
         <View style={styles.avatarContainer}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
-              {employeeData.name.split(' ').map(n => n[0]).join('')}
+              {user?.name ? user.name.charAt(0).toUpperCase():""}
             </Text>
           </View>
-          <View style={styles.levelBadge}>
+          <View style={styles.currentLevel}>
             <Ionicons name="star" size={14} color="#fff" />
-            <Text style={styles.levelBadgeText}>{employeeData.level}</Text>
+            <Text style={styles.levelBadgeText}>{user?.level || 'Niv 1'}</Text>
           </View>
         </View>
-        <Text style={styles.profileName}>{employeeData.name}</Text>
-        <Text style={styles.profileRole}>Employé · GreenTech PME</Text>
+        <Text style={styles.profileName}>
+          {user?.name} {user?.name.charAt(0).toUpperCase() }
+        </Text>
+        <Text style={styles.profileRole}>
+          {user?.role || 'Employé'} · GreenTech PME
+        </Text>
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{employeeData.currentPoints}</Text>
+            <Text style={styles.statValue}>{user?.totalPoints || 0}</Text>
             <Text style={styles.statLabel}>Points</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>#{employeeData.rank}</Text>
+            <Text style={styles.statValue}>#{user?.rank || '-'}</Text>
             <Text style={styles.statLabel}>Classement</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{employeeData.badges.filter(b => b.unlocked).length}</Text>
+            <Text style={styles.statValue}>{user?.badgesCount || 0}</Text>
             <Text style={styles.statLabel}>Badges</Text>
           </View>
         </View>
       </View>
 
       {/* Settings Sections */}
-      {settingsOptions.map(section => (
-        <View key={section.id} style={styles.settingsSection}>
-          <Text style={styles.sectionTitle}>{section.section}</Text>
-          <View style={styles.settingsCard}>
-            {section.items.map((item, index) => (
-              <TouchableOpacity
-                key={item.id}
-                style={[
-                  styles.settingItem,
-                  index !== section.items.length - 1 && styles.settingItemBorder
-                ]}
-                onPress={item.action}
-              >
-                <View style={styles.settingLeft}>
-                  <View style={styles.settingIconContainer}>
-                    <Ionicons name={item.icon} size={20} color={colors.accent} />
-                  </View>
-                  <View style={styles.settingContent}>
-                    <Text style={styles.settingTitle}>{item.title}</Text>
-                    {item.subtitle && (
-                      <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
-                    )}
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-            ))}
-          </View>
+      <View style={styles.settingsSection}>
+        <Text style={styles.sectionTitle}>Compte</Text>
+        <View style={styles.settingsCard}>
+          <TouchableOpacity 
+            style={[styles.settingItem, styles.settingItemBorder]} 
+            onPress={() => navigation.navigate('EditProfile', { user: user })} 
+          >
+             <View style={styles.settingLeft}>
+               <View style={styles.settingIconContainer}>
+                 <Ionicons name="person-outline" size={20} color={colors.accent} />
+               </View>
+               <View style={styles.settingContent}>
+                 <Text style={styles.settingTitle}>Modifier le profil</Text>
+               </View>
+             </View>
+             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.settingItem} onPress={() => {}}>
+             <View style={styles.settingLeft}>
+               <View style={styles.settingIconContainer}>
+                 <Ionicons name="mail-outline" size={20} color={colors.accent} />
+               </View>
+               <View style={styles.settingContent}>
+                 <Text style={styles.settingTitle}>Email</Text>
+                 <Text style={styles.settingSubtitle}>{user?.email}</Text>
+               </View>
+             </View>
+          </TouchableOpacity>
         </View>
-      ))}
+      </View>
 
       {/* Logout Button */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -134,7 +181,6 @@ export default function ProfileScreen() {
         <Text style={styles.logoutText}>Déconnexion</Text>
       </TouchableOpacity>
 
-      {/* App Version */}
       <View style={styles.versionContainer}>
         <Text style={styles.versionText}>Version 1.0.0</Text>
         <Text style={styles.copyrightText}>© 2024 GreenTech PME</Text>

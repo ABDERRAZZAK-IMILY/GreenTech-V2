@@ -4,6 +4,8 @@ import com.greentechinnovators.backend.dto.AI.DailyStat;
 import com.greentechinnovators.backend.entity.Gas;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -19,17 +21,20 @@ public interface GasRepository extends MongoRepository<Gas, String> {
 
     @Aggregation(pipeline = {
             "{ '$match': { 'createdAt': { '$gte': ?0 } } }",
-            "{ '$group': { '_id': { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, 'total': { '$sum': '$consumedGas' } } }",
-            "{ '$sort': { '_id': 1 } }"
+            "{ '$project': { " +
+                    "    'date': { '$dateToString': { 'format': '%Y-%m-%d', 'date': '$createdAt' } }, " +
+                    "    'consumedGas': 1 " +
+                    "} }",
+            "{ '$group': { " +
+                    "    '_id': '$date', " +
+                    "    'total': { '$sum': '$consumedGas' } " +
+                    "} }",
+            "{ '$project': { " +
+                    "    '_id': 0, " +
+                    "    'date': '$_id', " +
+                    "    'total': 1 " +
+                    "} }",
+            "{ '$sort': { 'date': 1 } }"
     })
     List<DailyStat> getLast7DaysStats(LocalDateTime startDate);
-    @Aggregation(pipeline = {
-            // 1. Filter: Get docs where createdAt is >= start (?0) AND <= end (?1)
-            "{ '$match': { 'createdAt': { '$gte': ?0, '$lte': ?1 } } }",
-
-            // 2. Sort: Ensure they come out in time order (Oldest -> Newest)
-            // This is CRUCIAL for your distance calculation algorithm
-            "{ '$sort': { 'createdAt': 1 } }"
-    })
-    List<Gas> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

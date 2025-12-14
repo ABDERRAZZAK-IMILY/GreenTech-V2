@@ -1,12 +1,14 @@
 package com.greentechinnovators.backend.dto.gas.responce;
 
 import com.greentechinnovators.backend.Enums.Status;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
+@Builder
 public class GasMonitorResponseDTO {
     private String id;
     private String location;

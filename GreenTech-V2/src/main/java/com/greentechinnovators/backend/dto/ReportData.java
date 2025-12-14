@@ -12,4 +12,6 @@ public class ReportData {
     private double trashCo2;
     private double energyKwh;
     private double energyCo2;
+    private double gasWeight;
+    private double gasCo2;
 }
