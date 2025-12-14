@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { showNotification } from '../../../utils/notifications';
+import AddDepartment from '../AddDepartment';
 
 const ProfileTeamsTab = () => {
   const [isAdmin] = useState(true); // Hardcoded for now - will be from auth context later
@@ -28,6 +29,7 @@ const ProfileTeamsTab = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
+  const [DepModel, setDepModel] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -121,6 +123,13 @@ const ProfileTeamsTab = () => {
     setShowPointsModal(false);
     setPointsData({ memberId: null, points: 0, reason: '', type: 'add' });
   };
+  const closeDepModel = () => {
+    setDepModel(false);
+  }
+  const OpenDepModel = () => {
+    setDepModel(true);
+  }
+
 
   const openEditModal = (member) => {
     setSelectedMember(member);
@@ -244,66 +253,67 @@ const ProfileTeamsTab = () => {
                 <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <i className="fas fa-users"></i> Liste des employés
                 </h4>
-                <div id='actionbutton' className='flex'>
-
-                <button
-                  onClick={() => setShowAddMemberModal(true)}
-                  style={{
-                    background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-                  }}
-                >
-                  <i className="fas fa-user-plus"></i>
-                  Ajouter un departement
-                </button>
-                <button
-                  onClick={() => setShowAddMemberModal(true)}
-                  style={{
-                    background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-                  }}
-                >
-                  <i className="fas fa-user-plus"></i>
-                  Ajouter un membre
-                </button>
+                <div id='actionbutton' className='flex flex-col w-[20%] h-[9em] gap-1'>
+                  {/* department button */}
+                  <button
+                    onClick={() => OpenDepModel()}
+                    style={{
+                      background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+                    }}
+                  >
+                    <i className="fas fa-user-plus"></i>
+                    Ajouter un departement
+                  </button>
+                  {/* add member button */}
+                  <button
+                    onClick={() => setShowAddMemberModal(true)}
+                    style={{
+                      background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+                    }}
+                  >
+                    <i className="fas fa-user-plus"></i>
+                    Ajouter un membre
+                  </button>
                 </div>
               </div>
 
@@ -469,10 +479,15 @@ const ProfileTeamsTab = () => {
       )}
 
       {/* MODALS */}
+      {/* add department model */}
+      {DepModel && (
+
+        <AddDepartment closeModals={closeDepModel}  />
+      )}
 
       {/* Add Member Modal */}
       {showAddMemberModal && (
-        <div className="modal" style={{display: 'block', background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)'}} onClick={closeModals}>
+        <div className="modal" style={{ display: 'block', background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)' }} onClick={closeModals}>
           <div className="modal-content" style={{
             maxWidth: '600px',
             background: 'linear-gradient(135deg, rgba(30, 39, 46, 0.98) 0%, rgba(45, 52, 54, 0.98) 100%)',
@@ -504,8 +519,8 @@ const ProfileTeamsTab = () => {
                 justifyContent: 'center',
                 transition: 'all 0.3s ease'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}>
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}>
                 <i className="fas fa-times" style={{ fontSize: '18px' }}></i>
               </button>
             </div>
@@ -518,7 +533,7 @@ const ProfileTeamsTab = () => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                   placeholder="Ex: Youssef Alami"
                   style={{
@@ -544,7 +559,7 @@ const ProfileTeamsTab = () => {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                   placeholder="youssef.alami@greentech.com"
                   style={{
@@ -570,7 +585,7 @@ const ProfileTeamsTab = () => {
                   </label>
                   <select
                     value={formData.department}
-                    onChange={(e) => setFormData({...formData, department: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                     required
                     style={{
                       width: '100%',
@@ -603,7 +618,7 @@ const ProfileTeamsTab = () => {
                   <input
                     type="text"
                     value={formData.role}
-                    onChange={(e) => setFormData({...formData, role: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     required
                     placeholder="Développeur Senior"
                     style={{
@@ -635,8 +650,8 @@ const ProfileTeamsTab = () => {
                   cursor: 'pointer',
                   transition: 'all 0.3s ease'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}>
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}>
                   Annuler
                 </button>
                 <button type="submit" style={{
@@ -656,14 +671,14 @@ const ProfileTeamsTab = () => {
                   justifyContent: 'center',
                   gap: '8px'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-                }}>
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+                  }}>
                   <i className="fas fa-plus"></i> Ajouter
                 </button>
               </div>
@@ -674,7 +689,7 @@ const ProfileTeamsTab = () => {
 
       {/* Edit Member Modal */}
       {showEditMemberModal && (
-        <div className="modal" style={{display: 'block', background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)'}} onClick={closeModals}>
+        <div className="modal" style={{ display: 'block', background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)' }} onClick={closeModals}>
           <div className="modal-content" style={{
             maxWidth: '600px',
             background: 'linear-gradient(135deg, rgba(30, 39, 46, 0.98) 0%, rgba(45, 52, 54, 0.98) 100%)',
@@ -706,8 +721,8 @@ const ProfileTeamsTab = () => {
                 justifyContent: 'center',
                 transition: 'all 0.3s ease'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}>
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}>
                 <i className="fas fa-times" style={{ fontSize: '18px' }}></i>
               </button>
             </div>
@@ -720,7 +735,7 @@ const ProfileTeamsTab = () => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                   placeholder="Ex: Youssef Alami"
                   style={{
@@ -746,7 +761,7 @@ const ProfileTeamsTab = () => {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                   placeholder="youssef.alami@greentech.com"
                   style={{
@@ -772,7 +787,7 @@ const ProfileTeamsTab = () => {
                   </label>
                   <select
                     value={formData.department}
-                    onChange={(e) => setFormData({...formData, department: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                     required
                     style={{
                       width: '100%',
@@ -804,7 +819,7 @@ const ProfileTeamsTab = () => {
                   <input
                     type="text"
                     value={formData.role}
-                    onChange={(e) => setFormData({...formData, role: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     required
                     placeholder="Développeur Senior"
                     style={{
@@ -836,8 +851,8 @@ const ProfileTeamsTab = () => {
                   cursor: 'pointer',
                   transition: 'all 0.3s ease'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}>
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}>
                   Annuler
                 </button>
                 <button type="submit" style={{
@@ -857,14 +872,14 @@ const ProfileTeamsTab = () => {
                   justifyContent: 'center',
                   gap: '8px'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(254, 202, 87, 0.6)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(254, 202, 87, 0.4)';
-                }}>
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(254, 202, 87, 0.6)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(254, 202, 87, 0.4)';
+                  }}>
                   <i className="fas fa-save"></i> Enregistrer
                 </button>
               </div>
@@ -875,7 +890,7 @@ const ProfileTeamsTab = () => {
 
       {/* Points Attribution Modal */}
       {showPointsModal && (
-        <div className="modal" style={{display: 'block', background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)'}} onClick={closeModals}>
+        <div className="modal" style={{ display: 'block', background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)' }} onClick={closeModals}>
           <div className="modal-content" style={{
             maxWidth: '600px',
             background: 'linear-gradient(135deg, rgba(30, 39, 46, 0.98) 0%, rgba(45, 52, 54, 0.98) 100%)',
@@ -907,8 +922,8 @@ const ProfileTeamsTab = () => {
                 justifyContent: 'center',
                 transition: 'all 0.3s ease'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}>
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}>
                 <i className="fas fa-times" style={{ fontSize: '18px' }}></i>
               </button>
             </div>
@@ -920,7 +935,7 @@ const ProfileTeamsTab = () => {
                 </label>
                 <select
                   value={pointsData.type}
-                  onChange={(e) => setPointsData({...pointsData, type: e.target.value})}
+                  onChange={(e) => setPointsData({ ...pointsData, type: e.target.value })}
                   required
                   style={{
                     width: '100%',
@@ -950,7 +965,7 @@ const ProfileTeamsTab = () => {
                   type="number"
                   min="1"
                   value={pointsData.points}
-                  onChange={(e) => setPointsData({...pointsData, points: parseInt(e.target.value)})}
+                  onChange={(e) => setPointsData({ ...pointsData, points: parseInt(e.target.value) })}
                   required
                   placeholder="Ex: 500"
                   style={{
@@ -975,7 +990,7 @@ const ProfileTeamsTab = () => {
                 </label>
                 <textarea
                   value={pointsData.reason}
-                  onChange={(e) => setPointsData({...pointsData, reason: e.target.value})}
+                  onChange={(e) => setPointsData({ ...pointsData, reason: e.target.value })}
                   required
                   placeholder="Ex: Action écologique complétée"
                   rows="4"
@@ -1009,8 +1024,8 @@ const ProfileTeamsTab = () => {
                   cursor: 'pointer',
                   transition: 'all 0.3s ease'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}>
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}>
                   Annuler
                 </button>
                 <button type="submit" style={{
@@ -1030,14 +1045,14 @@ const ProfileTeamsTab = () => {
                   justifyContent: 'center',
                   gap: '8px'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-                }}>
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+                  }}>
                   <i className="fas fa-check"></i> Confirmer
                 </button>
               </div>
@@ -1048,7 +1063,7 @@ const ProfileTeamsTab = () => {
 
       {/* Confirmation Modal */}
       {showConfirmModal && confirmAction && (
-        <div className="modal" style={{display: 'block', background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)'}} onClick={() => setShowConfirmModal(false)}>
+        <div className="modal" style={{ display: 'block', background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)' }} onClick={() => setShowConfirmModal(false)}>
           <div className="modal-content" style={{
             maxWidth: '450px',
             background: 'linear-gradient(135deg, rgba(30, 39, 46, 0.98) 0%, rgba(45, 52, 54, 0.98) 100%)',
@@ -1085,8 +1100,8 @@ const ProfileTeamsTab = () => {
                 justifyContent: 'center',
                 transition: 'all 0.3s ease'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}>
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}>
                 <i className="fas fa-times" style={{ fontSize: '16px' }}></i>
               </button>
             </div>
@@ -1107,8 +1122,8 @@ const ProfileTeamsTab = () => {
                   cursor: 'pointer',
                   transition: 'all 0.3s ease'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}>
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}>
                   Annuler
                 </button>
                 <button type="button" onClick={confirmAction.onConfirm} style={{
@@ -1132,18 +1147,18 @@ const ProfileTeamsTab = () => {
                   justifyContent: 'center',
                   gap: '8px'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = confirmAction.type === 'approve'
-                    ? '0 6px 20px rgba(45, 149, 97, 0.6)'
-                    : '0 6px 20px rgba(201, 75, 75, 0.6)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = confirmAction.type === 'approve'
-                    ? '0 4px 15px rgba(45, 149, 97, 0.4)'
-                    : '0 4px 15px rgba(201, 75, 75, 0.4)';
-                }}>
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = confirmAction.type === 'approve'
+                      ? '0 6px 20px rgba(45, 149, 97, 0.6)'
+                      : '0 6px 20px rgba(201, 75, 75, 0.6)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = confirmAction.type === 'approve'
+                      ? '0 4px 15px rgba(45, 149, 97, 0.4)'
+                      : '0 4px 15px rgba(201, 75, 75, 0.4)';
+                  }}>
                   <i className={confirmAction.type === 'approve' ? 'fas fa-check' : (confirmAction.type === 'delete' ? 'fas fa-trash' : 'fas fa-times')}></i>
                   {confirmAction.type === 'approve' ? 'Valider' : (confirmAction.type === 'delete' ? 'Supprimer' : 'Refuser')}
                 </button>
