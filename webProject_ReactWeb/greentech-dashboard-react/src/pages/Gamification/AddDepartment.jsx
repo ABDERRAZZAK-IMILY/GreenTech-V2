@@ -1,5 +1,7 @@
+import axios from 'axios';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { createDepartment } from '../../services/departmentSerice';
 
 const AddDepartment = ({ closeModals }) => {
     // 1. Initialize React Hook Form
@@ -10,10 +12,16 @@ const AddDepartment = ({ closeModals }) => {
     } = useForm();
 
     // 2. Handle Form Submission
-    const onSubmit = (data) => {
-        console.log("Department Data:", data);
-        // Add your API logic here
-        closeModals(false); 
+    const onSubmit = async (data) => {
+        const response = await createDepartment(data);
+        if (response) {
+            if (response.status === 200) {
+            closeModals(false); 
+        }else {
+            console.log(response.data);
+        }
+        }
+        
     };
 
     return (
@@ -57,10 +65,10 @@ const AddDepartment = ({ closeModals }) => {
                                     ? 'border-red-500 focus:border-red-500' 
                                     : 'border-white/10 focus:border-blue-500'
                                 }`}
-                            {...register("departmentName", { 
+                            {...register("name", { 
                                 required: "Le nom du département est requis",
                                 minLength: {
-                                    value: 3,
+                                    value: 1,
                                     message: "Le nom doit contenir au moins 3 caractères"
                                 }
                             })}
