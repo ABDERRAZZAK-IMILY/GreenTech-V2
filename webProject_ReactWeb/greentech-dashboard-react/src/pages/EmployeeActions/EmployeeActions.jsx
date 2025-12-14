@@ -1,21 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './EmployeeActions.css';
-import { usePendingActions } from '../../contexts/PendingActionsContext';
 import { useLoading } from '../../contexts/LoadingContext';
+import gamificationService from '../../services/gamificationService';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 const EmployeeActions = () => {
-  const [dailyActions, setDailyActions] = useState([
-    { id: 1, title: 'Éteindre ordinateur en pause', icon: 'desktop', points: 15, completed: false, submitted: false, category: 'energie', requiresProof: true, proofDescription: 'Screenshot de l\'historique d\'extinction de votre ordinateur (Windows/Mac)' },
-    { id: 2, title: 'Apporter sa tasse/mug personnel', icon: 'coffee', points: 10, completed: false, submitted: false, category: 'dechets', requiresProof: true, proofDescription: 'Photo de votre tasse/mug personnel sur votre bureau' },
-    { id: 3, title: 'Utiliser un pass transport en commun', icon: 'bus', points: 20, completed: false, submitted: false, category: 'transport', requiresProof: true, proofDescription: 'Photo de votre pass de transport en commun mensuel actif' },
-    { id: 4, title: 'Marcher pour venir au travail', icon: 'walking', points: 25, completed: false, submitted: false, category: 'transport', requiresProof: true, proofDescription: 'Screenshot de votre application podomètre montrant les pas effectués aujourd\'hui' },
-    { id: 5, title: 'Utiliser une trottinette électrique', icon: 'bolt', points: 20, completed: false, submitted: false, category: 'transport', requiresProof: true, proofDescription: 'Photo de votre trottinette électrique au parking de l\'entreprise' },
-    { id: 6, title: 'Déjeuner avec lunch box réutilisable', icon: 'utensils', points: 15, completed: false, submitted: false, category: 'dechets', requiresProof: true, proofDescription: 'Photo de votre lunch box réutilisable avec votre repas' },
-    { id: 7, title: 'Participer à une action de nettoyage', icon: 'hands-helping', points: 50, completed: false, submitted: false, category: 'collectif', requiresProof: true, proofDescription: 'Photo de vous avec l\'équipe pendant l\'action de nettoyage' },
-    { id: 8, title: 'Installer une plante au bureau', icon: 'leaf', points: 30, completed: false, submitted: false, category: 'bureau', requiresProof: true, proofDescription: 'Photo de la plante installée sur votre bureau avec votre espace visible' }
-  ]);
+  // State for challenges from backend
+  const [challenges, setChallenges] = useState([]);
+  const [mySubmissions, setMySubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [selectedAction, setSelectedAction] = useState(null);
   const [proofImage, setProofImage] = useState(null);
@@ -24,7 +19,6 @@ const EmployeeActions = () => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
 
-  const { submitActionForApproval } = usePendingActions();
   const {
     setIsProcessingPurchase,
     setPurchaseProgress,
@@ -49,6 +43,64 @@ const EmployeeActions = () => {
     co2Saved: 1.8,
     fuelSaved: 0.7
   });
+
+  // Map category to icon
+  const getCategoryIcon = (category) => {
+    const icons = {
+      'Transport': 'bus',
+      'transport': 'bus',
+      'energy': 'bolt',
+      'Énergie': 'bolt',
+      'trash': 'trash',
+      'Déchet': 'trash',
+      'dechets': 'trash',
+      'water': 'tint',
+      'Eau': 'tint',
+      'office': 'building',
+      'Bureau': 'building',
+      'bureau': 'building',
+      'collective': 'users',
+      'Collectif': 'users'
+    };
+    return icons[category] || 'leaf';
+  };
+
+  // Check if a challenge is submitted by the user
+  const isSubmitted = (challengeId) => {
+    return mySubmissions.some(sub => sub.challengeId === challengeId);
+  };
+
+  // Get submission status for a challenge
+  const getSubmissionStatus = (challengeId) => {
+    const submission = mySubmissions.find(sub => sub.challengeId === challengeId);
+    return submission ? submission.status : null;
+  };
+
+  // Fetch challenges and submissions from backend
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch active challenges and user's submissions in parallel
+        const [challengesData, submissionsData] = await Promise.all([
+          gamificationService.getActiveChallenges(),
+          gamificationService.getMySubmissions()
+        ]);
+
+        setChallenges(challengesData || []);
+        setMySubmissions(submissionsData || []);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Erreur lors du chargement des données');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Initialize map
   useEffect(() => {
@@ -90,18 +142,14 @@ const EmployeeActions = () => {
     };
   }, [currentPosition.lat, currentPosition.lng, currentPosition.address, currentPosition.speed]);
 
-  const handleActionClick = (action) => {
-    if (action.submitted) return; // Already submitted
+  const handleActionClick = (challenge) => {
+    const submitted = isSubmitted(challenge.id);
+    if (submitted) return; // Already submitted
 
-    if (action.requiresProof) {
-      // Open upload modal for proof
-      setSelectedAction(action);
-      setShowUploadModal(true);
-      setProofImage(null);
-    } else {
-      // Submit without proof
-      submitActionWithoutProof(action);
-    }
+    // Open upload modal for proof
+    setSelectedAction(challenge);
+    setShowUploadModal(true);
+    setProofImage(null);
   };
 
   const handleFileSelect = (event) => {
@@ -124,86 +172,154 @@ const EmployeeActions = () => {
     setPurchaseProgress(0);
     setPurchaseStep('Envoi de la preuve...');
 
-    // Simulate upload progress
-    for (let i = 0; i <= 50; i += 10) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setPurchaseProgress(i);
-    }
+    try {
+      // Simulate upload progress
+      for (let i = 0; i <= 50; i += 10) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        setPurchaseProgress(i);
+      }
 
-    setPurchaseStep('Création de la demande...');
-    for (let i = 50; i <= 90; i += 10) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setPurchaseProgress(i);
-    }
+      setPurchaseStep('Création de la demande...');
+      
+      // Submit to backend
+      await gamificationService.submitChallenge(selectedAction.id, proofImage);
 
-    // Submit to pending actions
-    submitActionForApproval({
-      employeeName: "Mohammed Alami",
-      actionName: selectedAction.title,
-      points: selectedAction.points,
-      proofImage: proofImage
-    });
+      for (let i = 50; i <= 90; i += 10) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        setPurchaseProgress(i);
+      }
 
-    // Mark as submitted
-    setDailyActions(dailyActions.map(action =>
-      action.id === selectedAction.id
-        ? { ...action, submitted: true, completed: true }
-        : action
-    ));
+      // Refresh submissions after successful submit
+      const updatedSubmissions = await gamificationService.getMySubmissions();
+      setMySubmissions(updatedSubmissions || []);
 
-    setPurchaseStep('✅ Demande envoyée pour validation!');
-    setPurchaseProgress(100);
+      setPurchaseStep('✅ Demande envoyée pour validation!');
+      setPurchaseProgress(100);
 
-    setTimeout(() => {
-      setIsProcessingPurchase(false);
+      setTimeout(() => {
+        setIsProcessingPurchase(false);
+        setPurchaseProgress(0);
+        setPurchaseStep('');
+        setPurchaseProductName('');
+        setShowUploadModal(false);
+        setSelectedAction(null);
+        setProofImage(null);
+      }, 2000);
+    } catch (err) {
+      console.error('Error submitting challenge:', err);
+      setPurchaseStep('❌ Erreur lors de l\'envoi');
       setPurchaseProgress(0);
-      setPurchaseStep('');
-      setPurchaseProductName('');
-      setShowUploadModal(false);
-      setSelectedAction(null);
-      setProofImage(null);
-    }, 2000);
+      setTimeout(() => {
+        setIsProcessingPurchase(false);
+        setPurchaseStep('');
+        setPurchaseProductName('');
+      }, 2000);
+    }
   };
 
-  const submitActionWithoutProof = async (action) => {
-    // For actions that don't require proof (like eco-driving tracked automatically)
-    setPurchaseProductName(action.title);
+  const submitActionWithoutProof = async (challenge) => {
+    // For actions that don't require proof
+    setPurchaseProductName(challenge.title);
     setIsProcessingPurchase(true);
     setPurchaseProgress(0);
-    setPurchaseStep('Validation automatique...');
+    setPurchaseStep('Envoi de la demande...');
 
-    for (let i = 0; i <= 100; i += 20) {
-      await new Promise(resolve => setTimeout(resolve, 80));
-      setPurchaseProgress(i);
+    try {
+      for (let i = 0; i <= 50; i += 20) {
+        await new Promise(resolve => setTimeout(resolve, 80));
+        setPurchaseProgress(i);
+      }
+
+      // Submit to backend
+      await gamificationService.submitChallenge(challenge.id, null);
+
+      for (let i = 50; i <= 100; i += 20) {
+        await new Promise(resolve => setTimeout(resolve, 80));
+        setPurchaseProgress(i);
+      }
+
+      // Refresh submissions
+      const updatedSubmissions = await gamificationService.getMySubmissions();
+      setMySubmissions(updatedSubmissions || []);
+
+      setPurchaseStep('✅ Demande envoyée pour validation!');
+
+      setTimeout(() => {
+        setIsProcessingPurchase(false);
+        setPurchaseProgress(0);
+        setPurchaseStep('');
+        setPurchaseProductName('');
+      }, 2000);
+    } catch (err) {
+      console.error('Error submitting challenge:', err);
+      setPurchaseStep('❌ Erreur lors de l\'envoi');
+      setTimeout(() => {
+        setIsProcessingPurchase(false);
+        setPurchaseProgress(0);
+        setPurchaseStep('');
+        setPurchaseProductName('');
+      }, 2000);
     }
-
-    // Submit to pending actions
-    submitActionForApproval({
-      employeeName: "Mohammed Alami",
-      actionName: action.title,
-      points: action.points,
-      proofImage: null
-    });
-
-    setDailyActions(dailyActions.map(a =>
-      a.id === action.id
-        ? { ...a, submitted: true, completed: true }
-        : a
-    ));
-
-    setPurchaseStep('✅ Demande envoyée pour validation!');
-
-    setTimeout(() => {
-      setIsProcessingPurchase(false);
-      setPurchaseProgress(0);
-      setPurchaseStep('');
-      setPurchaseProductName('');
-    }, 2000);
   };
 
-  const completedActions = dailyActions.filter(a => a.submitted).length;
-  const totalPoints = dailyActions.filter(a => a.submitted).reduce((sum, a) => sum + a.points, 0);
-  const completionPercentage = (completedActions / dailyActions.length) * 100;
+  // Calculate stats from submissions and challenges
+  const submittedChallenges = challenges.filter(c => isSubmitted(c.id));
+  const approvedSubmissions = mySubmissions.filter(s => s.status === 'APPROVED');
+  const completedActions = submittedChallenges.length;
+  const totalPoints = approvedSubmissions.reduce((sum, s) => sum + (s.pointsAwarded || 0), 0);
+  const completionPercentage = challenges.length > 0 ? (completedActions / challenges.length) * 100 : 0;
+
+  // Get status badge for submission
+  const getStatusBadge = (challengeId) => {
+    const status = getSubmissionStatus(challengeId);
+    if (!status) return null;
+
+    const statusConfig = {
+      'PENDING': { icon: 'clock', text: 'En validation', className: 'pending-validation' },
+      'APPROVED': { icon: 'check-circle', text: 'Approuvé', className: 'approved' },
+      'REJECTED': { icon: 'times-circle', text: 'Refusé', className: 'rejected' }
+    };
+
+    const config = statusConfig[status] || statusConfig['PENDING'];
+    return (
+      <div className={`completion-badge ${config.className}`}>
+        <i className={`fas fa-${config.icon}`}></i>
+        <span className="validation-text">{config.text}</span>
+      </div>
+    );
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <section className="employee-actions">
+        <div className="loading-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+          <div className="loading-spinner">
+            <i className="fas fa-spinner fa-spin" style={{ fontSize: '48px', color: 'var(--accent-color)' }}></i>
+            <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>Chargement des défis...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <section className="employee-actions">
+        <div className="error-container" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+          <i className="fas fa-exclamation-triangle" style={{ fontSize: '48px', color: '#ef4444' }}></i>
+          <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            style={{ marginTop: '16px', padding: '10px 20px', background: 'var(--accent-color)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+          >
+            Réessayer
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="employee-actions">
@@ -221,39 +337,49 @@ const EmployeeActions = () => {
         <div className="section-header">
           <h2>
             <i className="fas fa-tasks"></i>
-            Checklist du Jour
+            Défis du Jour
           </h2>
           <div className="streak-badge">
-            <i className="fas fa-fire"></i>
-            <span>7 jours consécutifs</span>
+            <i className="fas fa-leaf"></i>
+            <span>{challenges.length} défis disponibles</span>
           </div>
         </div>
         <div className="actions-grid">
-          {dailyActions.map(action => (
-            <div
-              key={action.id}
-              className={`action-item ${action.submitted ? 'submitted' : ''}`}
-              onClick={() => handleActionClick(action)}
-              style={{ cursor: action.submitted ? 'not-allowed' : 'pointer' }}
-            >
-              <div className="action-checkbox">
-                <i className={`fas ${action.submitted ? 'fa-check-circle' : 'fa-circle'}`}></i>
-              </div>
-              <div className="action-content">
-                <div className="action-title">{action.title}</div>
-                <div className="action-points">
-                  <i className="fas fa-coins"></i>
-                  +{action.points} points
-                </div>
-              </div>
-              {action.submitted && (
-                <div className="completion-badge pending-validation">
-                  <i className="fas fa-clock"></i>
-                  <span className="validation-text">En validation</span>
-                </div>
-              )}
+          {challenges.length === 0 ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+              <i className="fas fa-inbox" style={{ fontSize: '48px', marginBottom: '16px', display: 'block' }}></i>
+              <p>Aucun défi disponible pour le moment</p>
             </div>
-          ))}
+          ) : (
+            challenges.map(challenge => {
+              const submitted = isSubmitted(challenge.id);
+              const status = getSubmissionStatus(challenge.id);
+              return (
+                <div
+                  key={challenge.id}
+                  className={`action-item ${submitted ? 'submitted' : ''} ${status === 'APPROVED' ? 'approved' : ''} ${status === 'REJECTED' ? 'rejected' : ''}`}
+                  onClick={() => handleActionClick(challenge)}
+                  style={{ cursor: submitted ? 'not-allowed' : 'pointer' }}
+                >
+                  <div className="action-checkbox">
+                    <i className={`fas ${submitted ? (status === 'APPROVED' ? 'fa-check-circle' : status === 'REJECTED' ? 'fa-times-circle' : 'fa-clock') : 'fa-circle'}`}></i>
+                  </div>
+                  <div className="action-content">
+                    <div className="action-title">{challenge.title}</div>
+                    <div className="action-points">
+                      <i className="fas fa-coins"></i>
+                      +{challenge.pointsReward} points
+                    </div>
+                    <div className="action-category" style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                      <i className={`fas fa-${getCategoryIcon(challenge.category)}`} style={{ marginRight: '4px' }}></i>
+                      {challenge.category}
+                    </div>
+                  </div>
+                  {getStatusBadge(challenge.id)}
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -287,15 +413,15 @@ const EmployeeActions = () => {
           <div className="progress-stat">
             <i className="fas fa-check-circle"></i>
             <div>
-              <span className="stat-value">{completedActions}/{dailyActions.length}</span>
-              <span className="stat-label">Actions</span>
+              <span className="stat-value">{completedActions}/{challenges.length}</span>
+              <span className="stat-label">Défis</span>
             </div>
           </div>
           <div className="progress-stat">
             <i className="fas fa-coins"></i>
             <div>
               <span className="stat-value">+{totalPoints}</span>
-              <span className="stat-label">Points</span>
+              <span className="stat-label">Points gagnés</span>
             </div>
           </div>
         </div>
@@ -406,15 +532,6 @@ const EmployeeActions = () => {
               </div>
             </div>
           </div>
-
-          {/* GPS Map */}
-          <div className="tracking-card map-card">
-            <div className="card-header">
-              <i className="fas fa-map"></i>
-              <h3>Carte GPS</h3>
-            </div>
-            <div ref={mapRef} className="map-container"></div>
-          </div>
         </div>
       </div>
 
@@ -437,14 +554,14 @@ const EmployeeActions = () => {
                   <div className="action-title">{selectedAction?.title}</div>
                   <div className="action-points">
                     <i className="fas fa-coins"></i>
-                    +{selectedAction?.points} points
+                    +{selectedAction?.pointsReward} points
                   </div>
                 </div>
               </div>
 
               <div className="proof-instructions">
                 <i className="fas fa-camera"></i>
-                <p>{selectedAction?.proofDescription}</p>
+                <p>{selectedAction?.description || 'Veuillez joindre une photo comme preuve de votre action'}</p>
               </div>
 
               <div className="upload-area">
