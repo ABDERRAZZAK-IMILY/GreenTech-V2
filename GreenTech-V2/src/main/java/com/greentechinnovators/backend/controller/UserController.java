@@ -1,5 +1,6 @@
 package com.greentechinnovators.backend.controller;
 
+import com.greentechinnovators.backend.dto.user.CreateUserRequestDTO;
 import com.greentechinnovators.backend.dto.user.UpdateProfileRequestDTO;
 import com.greentechinnovators.backend.dto.user.UserProfileDTO;
 import com.greentechinnovators.backend.service.UserService;
@@ -24,6 +25,12 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserProfileDTO>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserProfileDTO> createUser(@Valid @RequestBody CreateUserRequestDTO request) {
+        return ResponseEntity.ok(userService.createUser(request));
     }
 
 
