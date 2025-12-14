@@ -1,101 +1,145 @@
 import * as Location from 'expo-location';
+import * as TaskManager from 'expo-task-manager';
 import { Alert } from 'react-native';
 
-const WS_URL = "ws://172.19.32.1:8080/ws/location";
+const WS_URL = "ws://192.168.1.5:8080/ws/location";
+const LOCATION_TASK_NAME = 'background-location-task';
 
-
-
-
-let locationSubscription = null;
 let websocket = null;
-let intervalSender = null;
+let currentUserId = null;
+let currentVehicleType = null;
+let statusCallback = null;
+
+TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
+  if (error) {
+    console.error('Task Manager Error:', error);
+    return;
+  }
+  if (data) {
+    const { locations } = data;
+    const location = locations[0];
+    
+    if (location && websocket && websocket.readyState === WebSocket.OPEN) {
+      sendLocationToWebSocket(location);
+    }
+  }
+});
 
 export const startTracking = async (userId, vehicleType, onStatusChange) => {
-  const { status } = await Location.requestForegroundPermissionsAsync();
+  currentUserId = userId;
+  currentVehicleType = vehicleType;
+  statusCallback = onStatusChange;
 
-  if (status !== 'granted') {
-    Alert.alert('Permission refusée', 'La localisation est nécessaire pour le suivi.');
+  const foreground = await Location.requestForegroundPermissionsAsync();
+  if (foreground.status !== 'granted') {
+    Alert.alert('Permission refusée', 'La localisation est nécessaire.');
     return;
   }
 
-  onStatusChange && onStatusChange("Connexion au serveur WebSocket...");
+  const background = await Location.requestBackgroundPermissionsAsync();
+  if (background.status !== 'granted') {
+    console.log("Background permission not granted, tracking might stop when app is closed.");
+  }
+
+  updateStatus("Connexion au serveur WebSocket...");
+  
+  setupWebSocket();
+};
+
+const setupWebSocket = () => {
+  if (websocket) {
+    websocket.close();
+  }
 
   websocket = new WebSocket(WS_URL);
 
-  websocket.onopen = () => {
-    onStatusChange && onStatusChange("WebSocket connecté. Démarrage du GPS...");
-
-    // 1. Start GPS tracker (high accuracy)
-    startGpsListener(userId, vehicleType, onStatusChange);
+  websocket.onopen = async () => {
+    updateStatus("Connecté. Démarrage du GPS...");
+    
+    await startLocationUpdates();
   };
 
   websocket.onerror = (error) => {
     console.error("WS Error:", error);
-    onStatusChange && onStatusChange("Erreur WebSocket");
+    updateStatus("Erreur de connexion serveur");
   };
 
   websocket.onclose = () => {
-    onStatusChange && onStatusChange("WebSocket déconnecté");
+    updateStatus("Déconnecté du serveur");
   };
 };
 
-/* ---------------- GPS LISTENER ---------------- */
+const startLocationUpdates = async () => {
+  const isTaskDefined = await TaskManager.isTaskDefined(LOCATION_TASK_NAME);
+  
+  if (!isTaskDefined) {
+    console.log("Task not defined, defining now...");
+  }
 
-let lastLocation = null;
+  const hasStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
+  
+  if (hasStarted) {
+    console.log("Tracking déjà actif");
+    return;
+  }
 
-const startGpsListener = async (userId, vehicleType, onStatusChange) => {
-  locationSubscription = await Location.watchPositionAsync(
-    {
-      accuracy: Location.Accuracy.Highest,
-      timeInterval: 1000,   // Fetch location every 1 sec (internal)
-      distanceInterval: 0,
+  await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+    accuracy: Location.Accuracy.High,
+    timeInterval: 2000,
+    distanceInterval: 5,
+    deferredUpdatesInterval: 1000,
+    foregroundService: {
+      notificationTitle: "GreenTech Tracking",
+      notificationBody: "Suivi de votre trajet écologique en cours...",
+      notificationColor: "#2d9561",
     },
-    (location) => {
-      lastLocation = location;
-    }
-  );
-
-  // 2. Send data every 2 seconds regardless of GPS update timing
-  intervalSender = setInterval(() => {
-    if (lastLocation && websocket && websocket.readyState === WebSocket.OPEN) {
-      sendLocation(lastLocation, userId, vehicleType, onStatusChange);
-    }
-  }, 2000);
+    showsBackgroundLocationIndicator: true,
+  });
 };
 
-/* ---------------- SEND DATA THROUGH WS ---------------- */
+const sendLocationToWebSocket = (location) => {
+  if (!currentUserId) return;
 
-const sendLocation = (location, userId, vehicleType, onStatusChange) => {
   const payload = {
-    userId,
+    userId: currentUserId,
     latitude: location.coords.latitude,
     longitude: location.coords.longitude,
-    vehicleType,
+    vehicleType: currentVehicleType,
+    timestamp: new Date().toISOString()
   };
 
-  websocket.send(JSON.stringify(payload));
-
-  onStatusChange &&
-    onStatusChange(
-      `Données envoyées WS: ${payload.latitude.toFixed(4)}, ${payload.longitude.toFixed(4)}`
-    );
+  try {
+    websocket.send(JSON.stringify(payload));
+    updateStatus(`Position envoyée: ${payload.latitude.toFixed(4)}, ${payload.longitude.toFixed(4)}`);
+  } catch (e) {
+    console.error("Send Error", e);
+  }
 };
 
-/* ---------------- STOP TRACKING ---------------- */
+export const stopTracking = async () => {
+  try {
+    const hasStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
+    if (hasStarted) {
+      await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+    }
 
-export const stopTracking = () => {
-  if (locationSubscription) {
-    locationSubscription.remove();
-    locationSubscription = null;
+    if (websocket) {
+      websocket.close();
+      websocket = null;
+    }
+    
+    updateStatus("Tracking arrêté");
+  } catch (error) {
+    console.error("Stop Error:", error);
   }
+};
 
-  if (intervalSender) {
-    clearInterval(intervalSender);
-    intervalSender = null;
-  }
+const updateStatus = (msg) => {
+  if (statusCallback) statusCallback(msg);
+  console.log(`[LocationService]: ${msg}`);
+};
 
-  if (websocket) {
-    websocket.close();
-    websocket = null;
-  }
+export default {
+  startTracking,
+  stopTracking
 };

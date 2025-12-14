@@ -1,5 +1,6 @@
 package com.greentechinnovators.backend.service;
 
+import com.greentechinnovators.backend.Enums.Status;
 import com.greentechinnovators.backend.dto.Energy.Request.EnergyRequestDTO;
 import com.greentechinnovators.backend.dto.Energy.Responce.EnergyResponseDTO;
 import com.greentechinnovators.backend.entity.Energy;
@@ -11,16 +12,19 @@ import com.greentechinnovators.backend.repository.EnergyRepository;
 import com.greentechinnovators.backend.repository.GasMonitorRepository;
 import com.greentechinnovators.backend.utils.CarbonFootprintService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EnergyService {
 
     private final EnergyRepository repository;
@@ -30,10 +34,30 @@ public class EnergyService {
 
     public EnergyResponseDTO createReading(EnergyRequestDTO dto) {
         Energy energy = mapper.toEntity(dto);
-        EnergyMonitor monitor = monitorRepository.findByMacAddress(dto.getMacAddress()).orElseThrow(()->{
-            throw new RuntimeException("Mac address not found");
-        });
-        Energy res =  repository.save(energy);
+        
+        String macAddress = dto.getMacAddress();
+        if (macAddress == null || macAddress.trim().isEmpty()) {
+            log.warn("Received energy data without MAC address, generating default");
+            macAddress = "UNKNOWN-" + System.currentTimeMillis();
+        }
+        
+        final String finalMacAddress = macAddress;
+        
+        // Find or create EnergyMonitor by MAC address
+        EnergyMonitor monitor = monitorRepository.findByMacAddress(finalMacAddress)
+                .orElseGet(() -> {
+                    log.info("Creating new EnergyMonitor for MAC address: {}", finalMacAddress);
+                    EnergyMonitor newMonitor = new EnergyMonitor();
+                    newMonitor.setMacAddress(finalMacAddress);
+                    newMonitor.setLocation("Auto-registered");
+                    newMonitor.setSensorId("SENSOR-" + finalMacAddress.replace(":", ""));
+                    newMonitor.setStatus(Status.ONLINE);
+                    newMonitor.setTimestamp(LocalDateTime.now());
+                    newMonitor.setEnergy(new ArrayList<>());
+                    return monitorRepository.save(newMonitor);
+                });
+        
+        Energy res = repository.save(energy);
         monitor.getEnergy().add(res);
         monitorRepository.save(monitor);
         return mapper.toResponse(res);

@@ -27,8 +27,15 @@ public class EnergyMapper {
         }
 
         Energy energy = new Energy();
-        energy.setEnergyConsumed(dto.getEnergyConsumed());
-        // createdAt is set by default in the Entity constructor/definition
+        
+        Double energyConsumed = dto.getEnergyConsumed();
+        if (energyConsumed == null && dto.getPowerKW() != null) {
+            // powerKW is the instantaneous power, use it as energy consumed
+            // In a real scenario, you'd integrate power over time
+            energyConsumed = dto.getPowerKW();
+        }
+        energy.setEnergyConsumed(energyConsumed);
+        
         return energy;
     }
 

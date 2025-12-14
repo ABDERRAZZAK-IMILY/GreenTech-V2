@@ -1,5 +1,7 @@
 package com.greentechinnovators.backend.service;
 
+import com.greentechinnovators.backend.Enums.Status;
+import com.greentechinnovators.backend.Enums.TrashType;
 import com.greentechinnovators.backend.dto.trash.request.TrashRequestDTO;
 import com.greentechinnovators.backend.dto.trash.response.DailyTrashDTO;
 import com.greentechinnovators.backend.dto.trash.response.TrashResponseDTO;
@@ -14,6 +16,7 @@ import com.greentechinnovators.backend.repository.TrashRepository;
 import com.greentechinnovators.backend.utils.CarbonFootprintService;
 import com.greentechinnovators.backend.utils.GeoUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,6 +26,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TrashService {
 
     private final TrashRepository repository;
@@ -32,18 +36,36 @@ public class TrashService {
     private final TrashMapper mapper;
 
     public TrashResponseDTO saveReading(TrashRequestDTO dto) {
+        
+        String macAddress = dto.getMacAddress();
+        if (macAddress == null || macAddress.trim().isEmpty()) {
+            log.warn("Received trash data without MAC address, generating default");
+            macAddress = "UNKNOWN-" + System.currentTimeMillis();
+        }
+        
+        final String finalMacAddress = macAddress;
 
-        TrashMonitor monitor = trashMonitorRepository.findByMacAddress(dto.getMacAddress()).orElseThrow(() -> {
-            throw new RuntimeException("Mac address not found");
-        });
+        // Find or create TrashMonitor by MAC address
+        TrashMonitor monitor = trashMonitorRepository.findByMacAddress(finalMacAddress)
+                .orElseGet(() -> {
+                    log.info("Creating new TrashMonitor for MAC address: {}", finalMacAddress);
+                    TrashMonitor newMonitor = new TrashMonitor();
+                    newMonitor.setMacAddress(finalMacAddress);
+                    newMonitor.setLocation("Auto-registered");
+                    newMonitor.setSensorId("SENSOR-" + finalMacAddress.replace(":", ""));
+                    newMonitor.setStatus(Status.ONLINE);
+                    newMonitor.setTrashType(TrashType.ORGANIC);
+                    newMonitor.setTimestamp(LocalDateTime.now());
+                    newMonitor.setTrash(new ArrayList<>());
+                    return trashMonitorRepository.save(newMonitor);
+                });
+        
         Trash entity = mapper.toEntity(dto);
         entity.setCreatedAt(LocalDateTime.now());
         Trash savedEntity = repository.save(entity);
         monitor.getTrash().add(savedEntity);
         trashMonitorRepository.save(monitor);
         return mapper.toResponse(savedEntity);
-
-
     }
 
     public List<TrashResponseDTO> getAllReadings() {
