@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers("/webjars/**").permitAll()
                         .requestMatchers("/configuration/**").permitAll()
                         .requestMatchers("/api/transport/**").permitAll()
+                        .requestMatchers("api/departments/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
