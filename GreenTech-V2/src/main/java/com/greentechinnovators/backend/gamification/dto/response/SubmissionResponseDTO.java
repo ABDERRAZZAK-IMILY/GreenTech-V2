@@ -9,8 +9,11 @@ import java.time.LocalDateTime;
 @Builder
 public class SubmissionResponseDTO {
     private String id;
+    private String userId;
+    private String userName;
     private String challengeId;
     private String challengeTitle;
+    private String challengeCategory;
     private String proofImageUrl;
     private SubmissionStatus status;
     private LocalDateTime submissionDate;
