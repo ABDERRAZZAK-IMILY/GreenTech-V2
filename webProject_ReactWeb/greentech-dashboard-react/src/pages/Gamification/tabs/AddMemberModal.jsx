@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import userService from '../../../services/userService';
 
 const AddMemberModal = ({ isOpen, onClose, onSave, departments }) => {
     // Initialize React Hook Form
@@ -18,10 +19,16 @@ const AddMemberModal = ({ isOpen, onClose, onSave, departments }) => {
     }, [isOpen, reset]);
 
     const onSubmit = (data) => {
-        console.log(data);
-        
-        onSave(data);
-        onClose();
+        try {
+            data.role = 'USER';
+            data.password = 'Password123';
+            console.log(data);
+
+            userService.createUser(data);
+            onClose();
+        } catch (error) {
+            console.log(error);
+        }
     };
 
     if (!isOpen) return null;
