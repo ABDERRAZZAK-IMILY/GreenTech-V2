@@ -24,4 +24,18 @@ export const createDepartment = async (departmentData) => {
         console.log(error);
     }
 }
+export const getAllDepartments = async () => {
+    try {
+        const response = await axios.get(`${API_URL}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        )
+        return response
+    } catch (error) {
+        console.log(error);
+    }
+}
 

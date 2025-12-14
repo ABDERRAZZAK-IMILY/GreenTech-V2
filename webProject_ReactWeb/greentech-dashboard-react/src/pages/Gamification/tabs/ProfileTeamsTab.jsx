@@ -45,24 +45,24 @@ const ProfileTeamsTab = () => {
     try {
       setLoading(true);
       const data = await gamificationService.getLeaderboard();
-      
+
       // Map API response to Component State format
       const formattedMembers = data.map(stat => ({
-          id: stat.userId,
-          name: stat.userName,
-          email: stat.email || 'N/A',
-          department: stat.department || 'General',
-          role: stat.role || 'Member',
-          ecoCoins: stat.currentPoints,
-          pointsEarned: stat.totalPointsEarned,
-          pointsSpent: stat.totalPointsSpent || 0,
-          actionsCompleted: stat.totalActions || 0,
-          badges: stat.badgesCount || 0,
-          level: stat.level,
-          joinDate: stat.joinDate || new Date().toISOString().split('T')[0],
-          status: 'active'
+        id: stat.userId,
+        name: stat.userName,
+        email: stat.email || 'N/A',
+        department: stat.department || 'General',
+        role: stat.role || 'Member',
+        ecoCoins: stat.currentPoints,
+        pointsEarned: stat.totalPointsEarned,
+        pointsSpent: stat.totalPointsSpent || 0,
+        actionsCompleted: stat.totalActions || 0,
+        badges: stat.badgesCount || 0,
+        level: stat.level,
+        joinDate: stat.joinDate || new Date().toISOString().split('T')[0],
+        status: 'active'
       }));
-      
+
       setMembers(formattedMembers);
     } catch (error) {
       console.error("Error fetching leaderboard", error);
@@ -78,14 +78,14 @@ const ProfileTeamsTab = () => {
   const totalActionsCompleted = activeMembers.reduce((sum, m) => sum + m.actionsCompleted, 0);
   const totalBadgesEarned = activeMembers.reduce((sum, m) => sum + m.badges, 0);
   const pendingRequests = 0; // Moved to MarketplaceTab
-  const participationRate = totalEmployees > 0 
+  const participationRate = totalEmployees > 0
     ? ((activeMembers.filter(m => m.actionsCompleted > 0).length / totalEmployees) * 100).toFixed(1)
     : '0';
 
   // Handlers
   const handleAddMember = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email) {
       showNotification('Veuillez remplir tous les champs requis', 'warning');
       return;
@@ -103,10 +103,10 @@ const ProfileTeamsTab = () => {
 
       await userService.createUser(newUserData);
       showNotification(`Membre ${formData.name} ajouté avec succès !`, 'success');
-      
+
       // Refresh data
       await fetchLeaderboard();
-      
+
       // Reset and close
       setShowAddMemberModal(false);
       setFormData({ name: '', email: '', department: '', jobTitle: '' });
@@ -121,7 +121,7 @@ const ProfileTeamsTab = () => {
 
   const handleEditMember = async (e) => {
     e.preventDefault();
-    
+
     if (!selectedMember) {
       showNotification('Aucun membre sélectionné', 'error');
       return;
@@ -137,10 +137,10 @@ const ProfileTeamsTab = () => {
 
       await userService.updateUser(selectedMember.id, updateData);
       showNotification('Membre modifié avec succès !', 'success');
-      
+
       // Refresh data
       await fetchLeaderboard();
-      
+
       // Reset and close
       setShowEditMemberModal(false);
       setSelectedMember(null);
@@ -164,10 +164,10 @@ const ProfileTeamsTab = () => {
         try {
           await userService.deleteUser(memberId);
           showNotification(`${member.name} a été supprimé avec succès`, 'success');
-          
+
           // Refresh data
           await fetchLeaderboard();
-          
+
           setShowConfirmModal(false);
           setConfirmAction(null);
         } catch (error) {
@@ -185,7 +185,7 @@ const ProfileTeamsTab = () => {
   const handleAttributePoints = async (e) => {
     e.preventDefault();
     const member = members.find(m => m.id === pointsData.memberId);
-    
+
     if (!member) {
       showNotification('Membre introuvable', 'error');
       return;
@@ -199,23 +199,23 @@ const ProfileTeamsTab = () => {
     try {
       if (pointsData.type === 'add') {
         await gamificationService.awardPoints(
-          pointsData.memberId, 
-          pointsData.points, 
+          pointsData.memberId,
+          pointsData.points,
           pointsData.reason
         );
         showNotification(`${pointsData.points} points ajoutés à ${member.name}`, 'success');
       } else {
         await gamificationService.deductPoints(
-          pointsData.memberId, 
-          pointsData.points, 
+          pointsData.memberId,
+          pointsData.points,
           pointsData.reason
         );
         showNotification(`${pointsData.points} points retirés de ${member.name}`, 'success');
       }
-      
+
       // Refresh leaderboard
       await fetchLeaderboard();
-      
+
       // Reset form
       setShowPointsModal(false);
       setPointsData({ memberId: null, points: 0, reason: '', type: 'add' });
@@ -463,133 +463,133 @@ const ProfileTeamsTab = () => {
                       </tr>
                     ) : (
                       members.filter(m => m.status === 'active').map(member => (
-                      <tr key={member.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                        <td style={{ padding: '12px' }}>
-                          <div>
-                            <div style={{ fontWeight: '600' }}>{member.name}</div>
-                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{member.email}</div>
-                          </div>
-                        </td>
-                        <td style={{ padding: '12px' }}>{member.department}</td>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{ color: 'var(--accent-color)', fontWeight: '700' }}>{member.ecoCoins}</span>
-                        </td>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{ color: '#43e97b' }}>+{member.pointsEarned}</span>
-                        </td>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{ color: '#ff6b6b' }}>-{member.pointsSpent}</span>
-                        </td>
-                        <td style={{ padding: '12px' }}>{member.actionsCompleted}</td>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{
-                            background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
-                            padding: '6px 14px',
-                            borderRadius: '20px',
-                            fontSize: '12px',
-                            fontWeight: '700',
-                            color: 'white',
-                            boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
-                          }}>
-                            Niv. {member.level}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
-                            <button
-                              onClick={() => openPointsModal(member)}
-                              title="Attribuer/Retirer points"
-                              style={{
-                                background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
-                                border: 'none',
-                                color: 'white',
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '10px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 3px 10px rgba(102, 126, 234, 0.4)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
-                                e.currentTarget.style.boxShadow = '0 6px 15px rgba(102, 126, 234, 0.6)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                e.currentTarget.style.boxShadow = '0 3px 10px rgba(102, 126, 234, 0.4)';
-                              }}
-                            >
-                              <i className="fas fa-coins"></i>
-                            </button>
-                            <button
-                              onClick={() => openEditModal(member)}
-                              title="Modifier"
-                              style={{
-                                background: 'linear-gradient(135deg, #c9971f, #d47d1f)',
-                                border: 'none',
-                                color: 'white',
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '10px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 3px 10px rgba(201, 151, 31, 0.4)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
-                                e.currentTarget.style.boxShadow = '0 6px 15px rgba(201, 151, 31, 0.6)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                e.currentTarget.style.boxShadow = '0 3px 10px rgba(201, 151, 31, 0.4)';
-                              }}
-                            >
-                              <i className="fas fa-edit"></i>
-                            </button>
-                            <button
-                              onClick={() => handleDeleteMember(member.id)}
-                              title="Supprimer"
-                              style={{
-                                background: 'linear-gradient(135deg, #c94b4b, #b84855)',
-                                border: 'none',
-                                color: 'white',
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '10px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 3px 10px rgba(201, 75, 75, 0.4)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
-                                e.currentTarget.style.boxShadow = '0 6px 15px rgba(201, 75, 75, 0.6)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                e.currentTarget.style.boxShadow = '0 3px 10px rgba(201, 75, 75, 0.4)';
-                              }}
-                            >
-                              <i className="fas fa-trash"></i>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )))}
+                        <tr key={member.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                          <td style={{ padding: '12px' }}>
+                            <div>
+                              <div style={{ fontWeight: '600' }}>{member.name}</div>
+                              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{member.email}</div>
+                            </div>
+                          </td>
+                          <td style={{ padding: '12px' }}>{member.department}</td>
+                          <td style={{ padding: '12px' }}>
+                            <span style={{ color: 'var(--accent-color)', fontWeight: '700' }}>{member.ecoCoins}</span>
+                          </td>
+                          <td style={{ padding: '12px' }}>
+                            <span style={{ color: '#43e97b' }}>+{member.pointsEarned}</span>
+                          </td>
+                          <td style={{ padding: '12px' }}>
+                            <span style={{ color: '#ff6b6b' }}>-{member.pointsSpent}</span>
+                          </td>
+                          <td style={{ padding: '12px' }}>{member.actionsCompleted}</td>
+                          <td style={{ padding: '12px' }}>
+                            <span style={{
+                              background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
+                              padding: '6px 14px',
+                              borderRadius: '20px',
+                              fontSize: '12px',
+                              fontWeight: '700',
+                              color: 'white',
+                              boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
+                            }}>
+                              Niv. {member.level}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+                              <button
+                                onClick={() => openPointsModal(member)}
+                                title="Attribuer/Retirer points"
+                                style={{
+                                  background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
+                                  border: 'none',
+                                  color: 'white',
+                                  width: '36px',
+                                  height: '36px',
+                                  borderRadius: '10px',
+                                  cursor: 'pointer',
+                                  fontSize: '14px',
+                                  fontWeight: '600',
+                                  transition: 'all 0.3s ease',
+                                  boxShadow: '0 3px 10px rgba(102, 126, 234, 0.4)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
+                                  e.currentTarget.style.boxShadow = '0 6px 15px rgba(102, 126, 234, 0.6)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                  e.currentTarget.style.boxShadow = '0 3px 10px rgba(102, 126, 234, 0.4)';
+                                }}
+                              >
+                                <i className="fas fa-coins"></i>
+                              </button>
+                              <button
+                                onClick={() => openEditModal(member)}
+                                title="Modifier"
+                                style={{
+                                  background: 'linear-gradient(135deg, #c9971f, #d47d1f)',
+                                  border: 'none',
+                                  color: 'white',
+                                  width: '36px',
+                                  height: '36px',
+                                  borderRadius: '10px',
+                                  cursor: 'pointer',
+                                  fontSize: '14px',
+                                  fontWeight: '600',
+                                  transition: 'all 0.3s ease',
+                                  boxShadow: '0 3px 10px rgba(201, 151, 31, 0.4)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
+                                  e.currentTarget.style.boxShadow = '0 6px 15px rgba(201, 151, 31, 0.6)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                  e.currentTarget.style.boxShadow = '0 3px 10px rgba(201, 151, 31, 0.4)';
+                                }}
+                              >
+                                <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteMember(member.id)}
+                                title="Supprimer"
+                                style={{
+                                  background: 'linear-gradient(135deg, #c94b4b, #b84855)',
+                                  border: 'none',
+                                  color: 'white',
+                                  width: '36px',
+                                  height: '36px',
+                                  borderRadius: '10px',
+                                  cursor: 'pointer',
+                                  fontSize: '14px',
+                                  fontWeight: '600',
+                                  transition: 'all 0.3s ease',
+                                  boxShadow: '0 3px 10px rgba(201, 75, 75, 0.4)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
+                                  e.currentTarget.style.boxShadow = '0 6px 15px rgba(201, 75, 75, 0.6)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                  e.currentTarget.style.boxShadow = '0 3px 10px rgba(201, 75, 75, 0.4)';
+                                }}
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )))}
                   </tbody>
                 </table>
               </div>
@@ -602,7 +602,7 @@ const ProfileTeamsTab = () => {
       {/* add department model */}
       {DepModel && (
 
-        <AddDepartment closeModals={closeDepModel}  />
+        <AddDepartment closeModals={closeDepModel} />
       )}
 
       {/* Add Member Modal */}
@@ -707,27 +707,12 @@ const ProfileTeamsTab = () => {
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                     required
-                    style={{
-                      width: '100%',
-                      padding: '12px 15px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '2px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '10px',
-                      color: 'var(--text-primary)',
-                      fontSize: '14px',
-                      transition: 'all 0.3s ease',
-                      outline: 'none',
-                      cursor: 'pointer'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--primary-color)'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+                    className="w-full px-4 py-3 text-sm text-white bg-white/5 border-2 border-white/10 rounded-[10px] 
+             outline-none transition-all duration-300 cursor-pointer 
+             focus:border-blue-500"
                   >
-                    <option value="" style={{ background: '#1e272e', color: '#fff' }}>Sélectionner...</option>
-                    <option value="IT" style={{ background: '#1e272e', color: '#fff' }}>IT</option>
-                    <option value="RH" style={{ background: '#1e272e', color: '#fff' }}>RH</option>
-                    <option value="Commercial" style={{ background: '#1e272e', color: '#fff' }}>Commercial</option>
-                    <option value="Logistique" style={{ background: '#1e272e', color: '#fff' }}>Logistique</option>
-                    <option value="Production" style={{ background: '#1e272e', color: '#fff' }}>Production</option>
+                    {/* The 'bg-slate-900' ensures the dropdown menu is dark and readable */}
+                    <option value="" className="bg-slate-900 text-white">Sélectionner...</option>
                   </select>
                 </div>
                 <div>
@@ -738,7 +723,7 @@ const ProfileTeamsTab = () => {
                   <input
                     type="text"
                     value={formData.jobTitle}
-                    onChange={(e) => setFormData({...formData, jobTitle: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
                     placeholder="Développeur, Manager..."
                     style={{
                       width: '100%',
