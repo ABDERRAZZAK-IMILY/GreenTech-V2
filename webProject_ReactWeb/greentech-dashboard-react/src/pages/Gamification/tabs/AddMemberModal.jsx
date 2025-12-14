@@ -18,6 +18,8 @@ const AddMemberModal = ({ isOpen, onClose, onSave, departments }) => {
     }, [isOpen, reset]);
 
     const onSubmit = (data) => {
+        console.log(data);
+        
         onSave(data);
         onClose();
     };
