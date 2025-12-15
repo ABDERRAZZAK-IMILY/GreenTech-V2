@@ -1,6 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getBackendUrl } from '../helper/apiPath';
 
-const API_URL = 'http://172.25.0.1:8080/api/auth'; 
+
+
+const API_URL = `${getBackendUrl()}/api/auth`; 
 
 const login = async (email, password) => {
   try {
