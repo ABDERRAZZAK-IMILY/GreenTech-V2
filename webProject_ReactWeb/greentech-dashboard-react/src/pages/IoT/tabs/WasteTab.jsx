@@ -860,6 +860,22 @@ const WasteTab = () => {
                   </select>
                 </div>
 
+                   <div style={{
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  marginTop: '15px'
+                }}>
+                  <div style={{display: 'flex', alignItems: 'flex-start', gap: '10px'}}>
+                    <i className="fas fa-info-circle" style={{color: '#3b82f6', marginTop: '2px'}} />
+                    <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.8)'}}>
+                      <strong>Note:</strong> L'adresse MAC doit correspondre exactement à celle de votre ESP32.
+                      Vous la trouverez à l'écrande votre ESP32.
+                    </div>
+                  </div>
+                </div>
+
                 <div className="form-actions">
                   <button type="button" className="btn-cancel-modal" onClick={closeModals}>
                     <i className="fas fa-times" /> Annuler

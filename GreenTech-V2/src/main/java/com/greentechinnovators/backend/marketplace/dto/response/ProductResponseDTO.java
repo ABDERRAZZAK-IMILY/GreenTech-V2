@@ -11,6 +11,7 @@ public class ProductResponseDTO {
     private String description;
     private int costInPoints;
     private String imageUrl;
+    private String emoji;
     private int stockQuantity;
     private boolean isActive;
     private String category;

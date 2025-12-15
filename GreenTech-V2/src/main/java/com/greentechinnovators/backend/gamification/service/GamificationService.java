@@ -28,7 +28,6 @@ public class GamificationService {
         UserGamificationStats stats = statsRepository.findByUserId(userId)
                 .orElseGet(() -> createInitialStats(userId));
 
-        // Populate user info if not already set
         if (stats.getUserName() == null) {
             User user = userRepository.findById(userId).orElse(null);
             if (user != null) {
@@ -91,7 +90,7 @@ public class GamificationService {
 
     private UserGamificationStats createInitialStats(String userId) {
         User user = userRepository.findById(userId).orElse(null);
-        
+
         UserGamificationStats.UserGamificationStatsBuilder builder = UserGamificationStats.builder()
                 .userId(userId)
                 .totalPoints(0)
@@ -101,14 +100,14 @@ public class GamificationService {
                 .carbonSaved(0)
                 .actionsCompleted(0)
                 .status("active");
-        
+
         if (user != null) {
             builder.userName(user.getName())
                    .userEmail(user.getEmail())
                    .role(user.getRole() != null ? user.getRole().name() : "USER")
                    .joinDate(user.getCreatedAt());
         }
-        
+
         return statsRepository.save(builder.build());
     }
 
@@ -118,14 +117,14 @@ public class GamificationService {
 
         stats.setTotalPoints(stats.getTotalPoints() + points);
         stats.setPointsEarned(stats.getPointsEarned() + points);  // Track total earned
-        
+
         if (stats.getTotalPoints() > stats.getCurrentLevel() * 1000) {
             stats.setCurrentLevel(stats.getCurrentLevel() + 1);
         }
 
         statsRepository.save(stats);
     }
-    
+
     public void deductPoints(String userId, int points) {
         UserGamificationStats stats = statsRepository.findByUserId(userId)
                 .orElseGet(() -> createInitialStats(userId));
@@ -138,11 +137,11 @@ public class GamificationService {
             throw new IllegalArgumentException("Insufficient points");
         }
     }
-    
+
     public void incrementActionsCompleted(String userId) {
         UserGamificationStats stats = statsRepository.findByUserId(userId)
                 .orElseGet(() -> createInitialStats(userId));
-        
+
         stats.setActionsCompleted(stats.getActionsCompleted() + 1);
         statsRepository.save(stats);
     }

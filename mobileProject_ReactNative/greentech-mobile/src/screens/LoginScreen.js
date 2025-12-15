@@ -14,8 +14,9 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { FontAwesome } from '@expo/vector-icons'; 
 import { LinearGradient } from 'expo-linear-gradient'; 
-import AuthService from '../services/authService';
 
+import AuthService from '../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const { width, height } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
@@ -32,10 +33,12 @@ const LoginScreen = ({ navigation }) => {
     }
     setError('');
     setLoading(true);
+
     try {
       const response = await AuthService.login(formData.email, formData.password);
       console.log(response);
       navigation.replace('MainApp');
+
     } catch (err) {
       console.log(err);
       setError("Email ou mot de passe incorrect");
@@ -69,6 +72,7 @@ const LoginScreen = ({ navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           
           {/* Login Card (Glassmorphism) */}
+          
           <View style={[styles.loginCard, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
             
             {/* Header */}

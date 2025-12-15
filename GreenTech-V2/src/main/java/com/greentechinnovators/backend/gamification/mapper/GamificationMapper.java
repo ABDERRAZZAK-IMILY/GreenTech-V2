@@ -24,7 +24,7 @@ public class GamificationMapper {
                 .description(dto.getDescription())
                 .pointsReward(dto.getPointsReward())
                 .category(dto.getCategory())
-                .isActive(true) // Default to active
+                .isActive(true)
                 .build();
     }
 
