@@ -25,22 +25,18 @@ export default function ProfileScreen({ navigation }) {
   // Fonction pour charger les données
   const fetchUserData = async () => {
     try {
-      // 1. Récupérer l'ID stocké lors du login
       const userId = await AsyncStorage.getItem('userId');
-      
       if (!userId) {
         Alert.alert("Erreur", "Utilisateur non identifié");
         return;
       }
 
-      // 2. Appeler les services (Info de base + Stats Profil)
-      // On utilise Promise.all pour lancer les deux requêtes en parallèle
       const [userInfo, userProfile] = await Promise.all([
         UserService.getUserById(userId),
         UserService.getUserProfile(userId)
       ]);
+      console.log("User ID from AsyncStorage:", userProfile.totalPoints);
 
-      // 3. Fusionner les données pour l'affichage
       setUser({ ...userInfo, ...userProfile });
 
     } catch (error) {
@@ -52,13 +48,40 @@ export default function ProfileScreen({ navigation }) {
     }
   };
 
-  // Charger les données au démarrage
  useFocusEffect(
     useCallback(() => {
       fetchUserData();
     }, [])
   );
-
+const settingsOptions = [
+    {
+      id: 1,
+      section: 'Compte',
+      items: [
+        { id: 'edit-profile', title: 'Modifier le profil', icon: 'person-outline', action: () => Alert.alert('Info', 'Fonctionnalité à venir') ,action: () => navigation.navigate('EditProfile', { user: user })},
+        { id: 'change-password', title: 'Changer le mot de passe', icon: 'key-outline', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
+        { id: 'email', title: 'Adresse email', icon: 'mail-outline', subtitle: 'm.alami@greentech.ma', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
+      ]
+    },
+    {
+      id: 2,
+      section: 'Préférences',
+      items: [
+        { id: 'notifications', title: 'Notifications', icon: 'notifications-outline', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
+        { id: 'language', title: 'Langue', icon: 'language-outline', subtitle: 'Français', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
+        { id: 'theme', title: 'Thème', icon: 'moon-outline', subtitle: 'Sombre', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
+      ]
+    },
+    {
+      id: 3,
+      section: 'Assistance',
+      items: [
+        { id: 'help', title: 'Centre d\'aide', icon: 'help-circle-outline', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
+        { id: 'contact', title: 'Nous contacter', icon: 'chatbubble-outline', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
+        { id: 'about', title: 'À propos', icon: 'information-circle-outline', action: () => Alert.alert('GreenTech PME', 'Version 1.0.0') },
+      ]
+    },
+  ];
   // Recharger les données quand on "tire" l'écran vers le bas
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -143,38 +166,36 @@ export default function ProfileScreen({ navigation }) {
       </View>
 
       {/* Settings Sections */}
-      <View style={styles.settingsSection}>
-        <Text style={styles.sectionTitle}>Compte</Text>
-        <View style={styles.settingsCard}>
-          <TouchableOpacity 
-            style={[styles.settingItem, styles.settingItemBorder]} 
-            onPress={() => navigation.navigate('EditProfile', { user: user })} 
-          >
-             <View style={styles.settingLeft}>
-               <View style={styles.settingIconContainer}>
-                 <Ionicons name="person-outline" size={20} color={colors.accent} />
-               </View>
-               <View style={styles.settingContent}>
-                 <Text style={styles.settingTitle}>Modifier le profil</Text>
-               </View>
-             </View>
-             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem} onPress={() => {}}>
-             <View style={styles.settingLeft}>
-               <View style={styles.settingIconContainer}>
-                 <Ionicons name="mail-outline" size={20} color={colors.accent} />
-               </View>
-               <View style={styles.settingContent}>
-                 <Text style={styles.settingTitle}>Email</Text>
-                 <Text style={styles.settingSubtitle}>{user?.email}</Text>
-               </View>
-             </View>
-          </TouchableOpacity>
+      {settingsOptions.map(section => (
+        <View key={section.id} style={styles.settingsSection}>
+          <Text style={styles.sectionTitle}>{section.section}</Text>
+          <View style={styles.settingsCard}>
+            {section.items.map((item, index) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[
+                  styles.settingItem,
+                  index !== section.items.length - 1 && styles.settingItemBorder
+                ]}
+                onPress={item.action}
+              >
+                <View style={styles.settingLeft}>
+                  <View style={styles.settingIconContainer}>
+                    <Ionicons name={item.icon} size={20} color={colors.accent} />
+                  </View>
+                  <View style={styles.settingContent}>
+                    <Text style={styles.settingTitle}>{item.title}</Text>
+                    {item.subtitle && (
+                      <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+                    )}
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
-      </View>
-
+      ))}
       {/* Logout Button */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={20} color="#ef4444" />
@@ -190,6 +211,7 @@ export default function ProfileScreen({ navigation }) {
     </ScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

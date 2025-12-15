@@ -29,14 +29,15 @@ public class MarketplaceService {
     private final UserRepository userRepository;
 
     @Transactional
-    public OrderResponseDTO createOrder(String userId, CreateOrderRequestDTO request) {
+    public OrderResponseDTO createOrder(String email, CreateOrderRequestDTO request) {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        UserGamificationStats userStats = statsRepository.findByUserId(userId)
+        UserGamificationStats userStats = statsRepository.findByUserEmail(email)
                 .orElseThrow(() -> new RuntimeException("User stats not found"));
 
         if (userStats.getTotalPoints() < product.getCostInPoints()) {
+            System.out.println("❌ ECHEC: Solde insuffisant !");
             throw new RuntimeException("Insufficient points");
         }
 
@@ -44,7 +45,7 @@ public class MarketplaceService {
         statsRepository.save(userStats);
 
         MarketplaceOrder order = MarketplaceOrder.builder()
-                .userId(userId)
+                .userId(userStats.getUserId())
                 .productId(product.getId())
                 .productName(product.getName())
                 .costAtPurchase(product.getCostInPoints())

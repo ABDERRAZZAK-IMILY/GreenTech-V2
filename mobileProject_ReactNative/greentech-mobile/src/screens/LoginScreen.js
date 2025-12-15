@@ -16,7 +16,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient'; 
 
 import AuthService from '../services/authService';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const { width, height } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
@@ -33,10 +33,26 @@ const LoginScreen = ({ navigation }) => {
     }
     setError('');
     setLoading(true);
+
     try {
       const response = await AuthService.login(formData.email, formData.password);
+      
+      console.log("📡 Login Response:", response);
+
+    
+      const userId = response.id || response.userId || (response.user && response.user.id) || response._id;
+
+      if (userId) {
+          console.log("🔑 ID Sauvegardé:", userId);
+          await AsyncStorage.setItem('userId', userId.toString()); 
+      } else {
+          console.error("⚠️ Attention: Pas d'ID trouvé dans la réponse login !");
+      }
+
       navigation.replace('MainApp');
+
     } catch (err) {
+      console.error(err);
       setError("Email ou mot de passe incorrect");
     } finally {
       setLoading(false);

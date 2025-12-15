@@ -775,7 +775,7 @@ const EnergyTab = () => {
                     <i className="fas fa-info-circle" style={{color: '#3b82f6', marginTop: '2px'}} />
                     <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.8)'}}>
                       <strong>Note:</strong> L'adresse MAC doit correspondre exactement à celle de votre ESP32.
-                      Vous pouvez la récupérer via <code>WiFi.macAddress()</code> dans le code Arduino.
+                      Vous la trouverez à l'écrande votre ESP32.
                     </div>
                   </div>
                 </div>

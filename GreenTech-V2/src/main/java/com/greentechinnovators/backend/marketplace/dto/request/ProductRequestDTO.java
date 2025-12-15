@@ -17,7 +17,8 @@ public class ProductRequestDTO {
     @Min(value = 1, message = "Cost must be at least 1 point")
     private Integer costInPoints;
 
-    private String imageUrl;
+    //private String imageUrl;
+    private String emoji;
 
     @NotNull(message = "Stock quantity is required")
     @Min(value = 0, message = "Stock quantity cannot be negative")

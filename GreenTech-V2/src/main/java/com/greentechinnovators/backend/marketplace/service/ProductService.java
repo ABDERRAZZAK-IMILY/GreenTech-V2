@@ -45,7 +45,7 @@ public class ProductService {
                 .name(request.getName())
                 .description(request.getDescription())
                 .costInPoints(request.getCostInPoints())
-                .imageUrl(request.getImageUrl())
+                .emoji(request.getEmoji())
                 .stockQuantity(request.getStockQuantity())
                 .category(request.getCategory())
                 .rating(request.getRating() != null ? request.getRating() : 0.0)
@@ -64,7 +64,7 @@ public class ProductService {
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setCostInPoints(request.getCostInPoints());
-        product.setImageUrl(request.getImageUrl());
+        product.setEmoji(request.getEmoji());
         product.setStockQuantity(request.getStockQuantity());
         product.setCategory(request.getCategory());
         
@@ -92,7 +92,7 @@ public class ProductService {
                 .name(product.getName())
                 .description(product.getDescription())
                 .costInPoints(product.getCostInPoints())
-                .imageUrl(product.getImageUrl())
+                .emoji(product.getEmoji())
                 .stockQuantity(product.getStockQuantity())
                 .isActive(product.isActive())
                 .category(product.getCategory())

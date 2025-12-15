@@ -1,82 +1,177 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react'; 
 import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator, 
+  RefreshControl,
+Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { products, filters } from '../data/products';
-import { useEmployee } from '../contexts/EmployeeContext';
 import colors from '../styles/colors';
-
+import MarketplaceService from '../services/marketplaceService';
+import { useFocusEffect } from '@react-navigation/native';
+import GamificationService from '../services/GamificationService';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import UserService from '../services/userService';
 export default function MarketplaceScreen() {
-  const [activeFilter, setActiveFilter] = useState('all');
-  const { ecoCoins, deductEcoCoins, purchaseHistory, addPurchaseToHistory } = useEmployee();
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [availableProducts, setAvailableProducts] = useState([]); 
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [ecoCoins, setEcoCoins] = useState(0); 
+  const [purchaseHistory, setPurchaseHistory] = useState([]);
+  const [user, setUser] = useState(null);
+const [modalVisible, setModalVisible] = useState(false);
+const [selectedProduct, setSelectedProduct] = useState(null);
+const [successVisible, setSuccessVisible] = useState(false);
+  const filters = [
+    { id: 'all', label: 'Tout', icon: '✨' },
+    { id: 'ECO_PRODUCTS', label: 'Éco-Produits', icon: '♻️' },
+    { id: 'ENERGY_SAVING', label: 'Énergie', icon: '💡' },
+    { id: 'BENEFITS', label: 'Avantages', icon: '🎁' },
+  ];
 
-  const filteredProducts = activeFilter === 'all'
-    ? products
-    : products.filter(p => p.category === activeFilter);
+  const fetchData = async () => {
+    try {
+      if (!refreshing) setLoading(true);
+      
+      const userId = await AsyncStorage.getItem('userId');
+      
+      if (!userId) {
+         console.error("Aucun ID utilisateur trouvé");
+         return;
+      }
+
+      const [userProfile, productsData, ordersData] = await Promise.all([
+        UserService.getUserProfile(userId), 
+        MarketplaceService.getAllProducts(),
+        MarketplaceService.getMyOrders(),
+      ]);
+      console.log("✅ Données utilisateur chargées:", ordersData);
+
+      if (userProfile) {
+          console.log("💰 Solde chargé depuis UserService:", userProfile.totalPoints);
+          setEcoCoins(userProfile.totalPoints || 0); 
+          setUser({
+              name: userProfile.name,
+              email: userProfile.email
+          });
+      }
+
+      setAvailableProducts(productsData);
+      setPurchaseHistory(ordersData.map(order => ({ 
+          id: order.id,
+          productName: order.productName,
+          costInPoints: order.cost,
+          date: order.orderDate,
+          status: order.status.toLowerCase(), 
+          icon: productsData.find(p => p.id === order.productId)?.emoji || '📦',
+      })));
+
+    } catch (error) {
+      console.error("Erreur Marketplace:", error);
+      Alert.alert("Erreur", "Impossible de charger les données");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+
+  // --- 3. Gestion des cycles de vie ---
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+      return ; 
+    }, [])
+  );
+    
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchData();
+  }, []);
+
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'approved': return colors.success;
+      case 'pending': return '#f59e0b';
+      case 'rejected': return colors.error;
+      default: return colors.textSecondary;
+    }
+  };
+    
+ const filteredProducts = activeFilter === 'all'
+    ? availableProducts
+    : availableProducts.filter(p => p.category === activeFilter);
 
   const handlePurchase = (product) => {
-    if (ecoCoins < product.cost) {
-      Alert.alert(
-        'Solde insuffisant',
-        `Il vous manque ${product.cost - ecoCoins} Eco-Coins pour cet achat.`,
-        [{ text: 'OK' }]
-      );
-      return;
+    const cost = product.costInPoints;
+    
+    if (ecoCoins < cost) {
+       Alert.alert("Solde insuffisant", `Il vous manque ${cost - ecoCoins} points.`);
+       return;
     }
 
-    Alert.alert(
-      'Confirmer l\'achat',
-      `Voulez-vous échanger ${product.cost.toLocaleString()} Eco-Coins contre "${product.name}"?`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Confirmer',
-          onPress: () => {
-            deductEcoCoins(product.cost);
-            addPurchaseToHistory(product);
-            Alert.alert(
-              'Demande envoyée!',
-              'Votre demande d\'achat a été envoyée pour validation par un administrateur.',
-              [{ text: 'OK' }]
-            );
-          },
-        },
-      ]
-    );
+    setSelectedProduct(product);
+    setModalVisible(true);
   };
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'approved': return colors.success;
-      case 'pending': return '#f59e0b';
-      case 'rejected': return colors.error;
-      default: return colors.textSecondary;
-    }
-  };
+ const confirmPurchase = async () => {
+    if (!selectedProduct) return;
 
-  const getStatusIcon = (status) => {
-    switch(status) {
-      case 'approved': return 'checkmark-circle';
-      case 'pending': return 'time';
-      case 'rejected': return 'close-circle';
-      default: return 'help-circle';
-    }
-  };
+    setModalVisible(false);
+    setLoading(true);       
 
-  const getStatusText = (status) => {
-    switch(status) {
-      case 'approved': return 'Approuvé';
-      case 'pending': return 'En attente';
-      case 'rejected': return 'Refusé';
-      default: return status;
+    try {
+        const orderRequest = { productId: selectedProduct.id };
+        await MarketplaceService.createOrder(orderRequest);
+        await fetchData();
+        
+        setLoading(false);   
+        setSuccessVisible(true); 
+        
+    } catch (error) {
+        setLoading(false);
+        console.error("❌ Erreur API :", error);
+        Alert.alert("Oups !", "Une erreur est survenue lors de l'achat.");
+    } finally {
+        setSelectedProduct(null); 
     }
   };
+      
+  const getStatusIcon = (status) => {
+    switch(status) {
+      case 'approved': return 'checkmark-circle';
+      case 'pending': return 'time';
+      case 'rejected': return 'close-circle';
+      default: return 'help-circle';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch(status) {
+      case 'approved': return 'Approuvé';
+      case 'pending': return 'En attente';
+      case 'rejected': return 'Refusé';
+      default: return status;
+    }
+  };
+    
+   if (loading && !refreshing) {
+        return (
+          <View style={[styles.container, styles.center]}>
+            <ActivityIndicator size="large" color={colors.accent} />
+            <Text style={{ color: colors.textSecondary, marginTop: 10 }}>Chargement de la boutique...</Text>
+          </View>
+        );
+    }
+
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -120,7 +215,7 @@ export default function MarketplaceScreen() {
       {/* Products Grid */}
       <View style={styles.productsSection}>
         {filteredProducts.map((product, index) => {
-          const canAfford = ecoCoins >= product.cost;
+          const canAfford = ecoCoins >= product.costInPoints;
 
           return (
             <View
@@ -135,14 +230,14 @@ export default function MarketplaceScreen() {
                   <Text style={styles.badgeText}>{product.badge}</Text>
                 </View>
               )}
-              <Text style={styles.productIcon}>{product.icon}</Text>
+              <Text style={styles.productIcon}>{product.emoji}</Text>
               <View style={styles.productContent}>
                 <Text style={styles.productName}>{product.name}</Text>
                 <Text style={styles.productDescription} numberOfLines={2}>{product.description}</Text>
                 <View style={styles.productFooter}>
                   <View style={styles.productCost}>
                     <Ionicons name="wallet" size={14} color="#feca57" />
-                    <Text style={styles.costText}>{product.cost.toLocaleString()}</Text>
+                    <Text style={styles.costText}>{product.costInPoints.toLocaleString()}</Text>
                   </View>
                   <TouchableOpacity
                     style={[styles.purchaseBtn, !canAfford && styles.purchaseBtnDisabled]}
@@ -190,7 +285,7 @@ export default function MarketplaceScreen() {
                     <View style={styles.historyMeta}>
                       <View style={styles.historyCost}>
                         <Ionicons name="wallet" size={12} color="#feca57" />
-                        <Text style={styles.historyCostText}>{item.cost.toLocaleString()} Coins</Text>
+                        <Text style={styles.historyCostText}>{item.costInPoints.toLocaleString()} Coins</Text>
                       </View>
                       <Text style={styles.historyDate}>
                         {new Date(item.date).toLocaleDateString('fr-FR', {
@@ -215,7 +310,85 @@ export default function MarketplaceScreen() {
       </View>
 
       <View style={{ height: 20 }} />
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Confirmer l'achat</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Body */}
+            <View style={styles.modalBody}>
+              <Text style={styles.modalText}>
+                Êtes-vous sûr de vouloir échanger
+                <Text style={{ fontWeight: 'bold', color: colors.accent }}> {selectedProduct?.costInPoints} points </Text>
+                contre
+                <Text style={{ fontWeight: 'bold', color: '#fff' }}> "{selectedProduct?.name}" </Text> ?
+              </Text>
+              <Text style={styles.modalSubText}>Cette action débitera votre solde immédiatement.</Text>
+            </View>
+
+            {/* Buttons */}
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.btnCancel}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.btnCancelText}>Annuler</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.btnConfirm}
+                onPress={confirmPurchase}
+              >
+                <Ionicons name="checkmark-circle" size={18} color="#fff" style={{ marginRight: 6 }} />
+                <Text style={styles.btnConfirmText}>Confirmer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+   
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={successVisible}
+        onRequestClose={() => setSuccessVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.successModalContainer}>
+            
+            <View style={styles.successIconContainer}>
+              <Ionicons name="checkmark-done" size={48} color="#fff" />
+            </View>
+
+            <Text style={styles.successTitle}>Félicitations ! 🎉</Text>
+            
+            <Text style={styles.successMessage}>
+              Votre commande a été validée avec succès. Vous recevrez bientôt votre récompense.
+            </Text>
+
+            <TouchableOpacity 
+              style={styles.btnSuccess} 
+              onPress={() => setSuccessVisible(false)}
+            >
+              <Text style={styles.btnSuccessText}>Génial !</Text>
+            </TouchableOpacity>
+
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
+    
   );
 }
 
@@ -346,9 +519,10 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   productIcon: {
-    fontSize: 36,
+    fontSize: 40, 
     marginBottom: 10,
     textAlign: 'center',
+    color: colors.textPrimary, 
   },
   productContent: {
     gap: 6,
@@ -500,4 +674,147 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+ 
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)', 
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#1e293b',
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  modalHeader: {
+    backgroundColor: colors.accent, 
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  modalBody: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalText: {
+    color: '#e2e8f0',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 8,
+    lineHeight: 24,
+  },
+  modalSubText: {
+    color: '#94a3b8',
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    padding: 16,
+    paddingTop: 0,
+    gap: 12,
+  },
+  btnCancel: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  btnCancelText: {
+    color: '#cbd5e1',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  btnConfirm: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  btnConfirmText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+
+  successModalContainer: {
+    width: '100%',
+    maxWidth: 320,
+    backgroundColor: '#1e293b',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(74, 222, 128, 0.2)', 
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  successIconContainer: {
+    width: 80,
+    height: 80,
+    backgroundColor: colors.success, 
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    marginTop: -10,
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  successTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  successMessage: {
+    fontSize: 15,
+    color: '#94a3b8',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  btnSuccess: {
+    backgroundColor: colors.success,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    width: '100%',
+    alignItems: 'center',
+    shadowColor: colors.success,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  btnSuccessText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  }
 });
