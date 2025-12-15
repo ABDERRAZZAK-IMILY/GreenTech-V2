@@ -1881,12 +1881,67 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 58
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/marketplace/service/MarketplaceService.java",
+      "timestamp": 1765797895356,
+      "startOffset": 1516,
+      "endOffset": 2322,
+      "codeContent": "email, CreateOrderRequestDTO request) {\n        Product product \u003d productRepository.findById(request.getProductId())\n                .orElseThrow(() -\u003e new RuntimeException(\"Product not found\"));\n\n        UserGamificationStats userStats \u003d statsRepository.findByUserEmail(email)\n                .orElseThrow(() -\u003e new RuntimeException(\"User stats not found\"));\n\n        if (userStats.getTotalPoints() \u003c product.getCostInPoints()) {\n            System.out.println(\"❌ ECHEC: Solde insuffisant !\");\n            throw new RuntimeException(\"Insufficient points\");\n        }\n\n        userStats.setTotalPoints(userStats.getTotalPoints() - product.getCostInPoints());\n        statsRepository.save(userStats);\n\n        MarketplaceOrder order \u003d MarketplaceOrder.builder()\n                .userId(userStats.getUserId()",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 17
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/marketplace/web/MarketplaceController.java",
+      "timestamp": 1765797895467,
+      "startOffset": 97,
+      "endOffset": 2324,
+      "codeContent": "entity.User;\nimport com.greentechinnovators.backend.marketplace.domain.OrderStatus;\nimport com.greentechinnovators.backend.marketplace.dto.request.CreateOrderRequestDTO;\nimport com.greentechinnovators.backend.marketplace.dto.request.UpdateOrderStatusRequestDTO;\nimport com.greentechinnovators.backend.marketplace.dto.response.OrderResponseDTO;\nimport com.greentechinnovators.backend.marketplace.service.MarketplaceService;\nimport com.greentechinnovators.backend.repository.UserRepository;\nimport jakarta.validation.Valid;\nimport lombok.RequiredArgsConstructor;\nimport org.springframework.http.ResponseEntity;\nimport org.springframework.security.access.prepost.PreAuthorize;\nimport org.springframework.security.core.Authentication;\nimport org.springframework.web.bind.annotation.*;\n\nimport java.util.List;\n\n@RestController\n@RequestMapping(\"/api/v1\")\n@RequiredArgsConstructor\npublic class MarketplaceController {\n\n    private final MarketplaceService marketplaceService;\n    private final UserRepository userRepository;\n\n    @PostMapping(\"/marketplace/orders\")\n    public ResponseEntity\u003cOrderResponseDTO\u003e createOrder(\n            Authentication authentication,\n            @Valid @RequestBody CreateOrderRequestDTO request) {\n        String email \u003d authentication.getName();\n        return ResponseEntity.ok(marketplaceService.createOrder(email, request));\n    }\n\n    @GetMapping(\"/marketplace/orders\")\n    @PreAuthorize(\"hasRole(\u0027ADMIN\u0027)\")\n    public ResponseEntity\u003cList\u003cOrderResponseDTO\u003e\u003e getAllOrders() {\n\n        return ResponseEntity.ok(marketplaceService.getAllOrders());\n    }\n\n    @GetMapping(\"/marketplace/orders/{id}\")\n    public ResponseEntity\u003cOrderResponseDTO\u003e getOrderDetails(@PathVariable String id) {\n        return ResponseEntity.ok(marketplaceService.getOrderDetails(id));\n    }\n\n    @GetMapping(\"/marketplace/my-orders\")\n    public ResponseEntity\u003cList\u003cOrderResponseDTO\u003e\u003e getMyOrders(Authentication authentication) {\n        String email \u003d authentication.getName();\n\n        User user \u003d userRepository.findByEmail(email)\n                .orElseThrow(() -\u003e new RuntimeException(\"User not found\"));\n\n        String realUserId \u003d user.getId();\n\n        return ResponseEntity.ok(marketplaceService.getUserOrders(realU",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 54
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/gamification/repository/GamificationStatsRepository.java",
+      "timestamp": 1765797895501,
+      "startOffset": 435,
+      "endOffset": 501,
+      "codeContent": "    Optional\u003cUserGamificationStats\u003e findByUserEmail(String email);",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/marketplace/dto/response/ProductResponseDTO.java",
+      "timestamp": 1765797895514,
+      "startOffset": 311,
+      "endOffset": 337,
+      "codeContent": "String emoji;\n    private ",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/marketplace/dto/request/ProductRequestDTO.java",
+      "timestamp": 1765797895555,
+      "startOffset": 581,
+      "endOffset": 632,
+      "codeContent": "//private String imageUrl;\n    private String emoji",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 171,
-      "totalLines": 3135
+      "usageCount": 176,
+      "totalLines": 3211
     }
   }
 }
