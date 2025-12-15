@@ -14,7 +14,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { FontAwesome } from '@expo/vector-icons'; 
 import { LinearGradient } from 'expo-linear-gradient'; 
-import { BlurView } from 'expo-blur';
+
 import AuthService from '../services/authService';
 
 const { width, height } = Dimensions.get('window');
@@ -68,7 +68,7 @@ const LoginScreen = ({ navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           
           {/* Login Card (Glassmorphism) */}
-          <BlurView intensity={20} tint="dark" style={styles.loginCard}>
+          <View style={[styles.loginCard, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
             
             {/* Header */}
             <View style={styles.header}>
@@ -136,7 +136,7 @@ const LoginScreen = ({ navigation }) => {
                 </LinearGradient>
               </TouchableOpacity>
             </View>
-          </BlurView>
+          </View>
 
           {/* Features Footer */}
           <View style={styles.featuresContainer}>
