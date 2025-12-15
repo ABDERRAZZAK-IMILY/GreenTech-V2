@@ -47,6 +47,27 @@ function MainTabs() {
           fontSize: 11,
           fontWeight: '600',
         },
+        tabBarStyle: {
+      position: 'absolute',     // Takes it out of the normal layout flow
+      bottom: 25,               // Distance from the bottom of the screen
+      left: 20,                 // Distance from left
+      right: 20,                // Distance from right
+      elevation: 5,             // Shadow for Android
+      backgroundColor: '#1e272e',
+      borderRadius: 15,         // Rounded corners
+      height: 70,               // Slightly taller to accommodate the float look
+      borderTopWidth: 0,        // Remove standard top border
+      borderWidth: 1,           // Add border around the whole shape
+      borderColor: 'rgba(255, 255, 255, 0.1)',
+      
+      // Shadow for iOS
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.5,
+      paddingBottom: 10,       // Adjust inner padding
+      paddingTop: 10,
+    },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 

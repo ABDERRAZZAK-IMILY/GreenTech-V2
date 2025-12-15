@@ -50,7 +50,7 @@ public class Userseed implements CommandLineRunner {
             );
             userRepository.save(user);
 
-            System.out.println(" User created: imily@greentech.com / user123");
+                System.out.println(" User created: imily@greentech.com / user123");
         }
     }
 }
