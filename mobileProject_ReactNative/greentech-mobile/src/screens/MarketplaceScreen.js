@@ -17,6 +17,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import GamificationService from '../services/GamificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import UserService from '../services/userService';
+
 export default function MarketplaceScreen() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [availableProducts, setAvailableProducts] = useState([]);
