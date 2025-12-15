@@ -1,6 +1,21 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-const API_URL = 'http://172.25.0.1:8080/api/auth'; 
+const getBackendUrl = () => {
+  // En développement, utiliser l'IP du serveur Expo (même machine que le backend)
+  const expoHostUri = Constants.expoConfig?.hostUri || Constants.manifest?.hostUri;
+
+  if (expoHostUri) {
+    // Extraire l'IP du hostUri (format: "192.168.1.30:8081")
+    const ip = expoHostUri.split(':')[0];
+    return `http://${ip}:8080`;
+  }
+
+  // Fallback sur localhost
+  return 'http://localhost:8080';
+};
+
+const API_URL = `${getBackendUrl()}/api/auth`; 
 
 const login = async (email, password) => {
   try {
