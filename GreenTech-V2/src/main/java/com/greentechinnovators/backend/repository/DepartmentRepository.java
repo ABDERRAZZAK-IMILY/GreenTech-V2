@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface DepartmentRepository extends MongoRepository<Department, String> {
     // You can add custom queries here if needed, e.g., boolean existsByName(String name);
+
 }

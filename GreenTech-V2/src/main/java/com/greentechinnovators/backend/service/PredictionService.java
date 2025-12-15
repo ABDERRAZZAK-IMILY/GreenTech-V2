@@ -8,12 +8,10 @@ import com.greentechinnovators.backend.repository.GasRepository;
 import com.greentechinnovators.backend.repository.TrashRepository;
 import com.greentechinnovators.backend.repository.VehicleLogRepository;
 import com.greentechinnovators.backend.service.ai.AiContextManager;
+import com.greentechinnovators.backend.service.ai.DeepSeekClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -37,23 +35,14 @@ public class PredictionService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${spring.ai.deepseek.api-key}")
-    private String apiKey;
+    private final DeepSeekClient callDeepSeek;
 
-    @Value("${spring.ai.deepseek.base-url}")
-    private String apiUrl;
-
-    @Value("${spring.ai.deepseek.model}")
-    private String model;
-
-    // ✅ CONSTANTES DE PRIX (Modifier ici pour impacter le calcul)
     private static final double PRIX_ELEC = 1.20;       // MAD/kWh
     private static final double PRIX_GAZ = 12.50;       // MAD/kg
     private static final double PRIX_TRANSPORT = 14.00; // MAD/100km
     private static final double PRIX_DECHETS = 0.80;    // MAD/kg
 
     public PredictionResponse generatePredictions() {
-        // 1. Récupération du contexte
         String contextJson = aiContextManager.getGlobalContextJson();
 
         // 2. Prompt Dynamique (Incorpore les Prix et le Contexte)
@@ -85,8 +74,7 @@ public class PredictionService {
     }
 """.formatted(PRIX_ELEC, PRIX_GAZ, PRIX_TRANSPORT, PRIX_DECHETS, contextJson);
 
-        // 3. Appel AI
-        String rawJson = callDeepSeek(prompt);
+        String rawJson = callDeepSeek.generate(prompt);
         String cleanJson = rawJson.replace("```json", "").replace("```", "").trim();
 
         PredictionResponse response;
@@ -112,35 +100,6 @@ public class PredictionService {
         response.getDechets().setHistory(getHistoryData(trashRepository.getLast7DaysStats(sevenDaysAgo)));
 
         return response;
-    }
-
-    private String callDeepSeek(String prompt) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("model", model);
-        body.put("stream", false);
-
-        body.put("temperature", 0.1);
-
-        body.put("messages", List.of(Map.of("role", "user", "content", prompt)));
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-        try {
-            Map<String, Object> resp = restTemplate.postForObject(apiUrl, entity, Map.class);
-
-            if (resp != null && resp.containsKey("choices")) {
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) resp.get("choices");
-                Map<String, Object> msg = (Map<String, Object>) choices.get(0).get("message");
-                return (String) msg.get("content");
-            }
-            return "{}";
-        } catch (Exception e) {
-            log.error("AI Error", e);
-            return "{}";
-        }
     }
 
     private List<Double> getHistoryData(List<DailyStat> dbStats) {
