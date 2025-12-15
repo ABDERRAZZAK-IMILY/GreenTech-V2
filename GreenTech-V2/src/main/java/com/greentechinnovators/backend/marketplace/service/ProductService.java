@@ -24,6 +24,12 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    public List<ProductResponseDTO> getAllProductsAdmin() {
+        return productRepository.findAll().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
   
     public ProductResponseDTO getProductById(String id) {
         Product product = productRepository.findById(id)
@@ -70,6 +76,10 @@ public class ProductService {
         
         if (request.getRating() != null) {
             product.setRating(request.getRating());
+        }
+        
+        if (request.getIsActive() != null) {
+            product.setActive(request.getIsActive());
         }
 
         Product updatedProduct = productRepository.save(product);

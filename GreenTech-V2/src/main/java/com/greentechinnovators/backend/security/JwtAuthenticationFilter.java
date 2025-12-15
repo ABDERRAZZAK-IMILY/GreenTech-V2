@@ -32,7 +32,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        String path = request.getRequestURI();
+
+        if (path.startsWith("/iot/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+
         String jwt = parseJwt(request);
+
+
 
         try {
 

@@ -37,7 +37,6 @@ public class MarketplaceService {
                 .orElseThrow(() -> new RuntimeException("User stats not found"));
 
         if (userStats.getTotalPoints() < product.getCostInPoints()) {
-            System.out.println("❌ ECHEC: Solde insuffisant !");
             throw new RuntimeException("Insufficient points");
         }
 
@@ -92,10 +91,36 @@ public class MarketplaceService {
                 .orElseThrow(() -> new RuntimeException("Order not found"));
     }
 
-    // Helper Mapper
     private OrderResponseDTO mapToDTO(MarketplaceOrder order) {
-        User user = userRepository.findById(order.getUserId()).orElse(null);
-        String userName = (user != null) ? user.getName() : "Unknown";
+        String userName = null;
+        String oderId = order.getUserId();
+        
+        if (oderId != null && oderId.contains("@")) {
+            User user = userRepository.findByEmail(oderId).orElse(null);
+            if (user != null && user.getName() != null) {
+                userName = user.getName();
+            }
+        } else {
+            UserGamificationStats stats = statsRepository.findByUserId(oderId).orElse(null);
+            
+            if (stats != null && stats.getUserEmail() != null) {
+                User user = userRepository.findByEmail(stats.getUserEmail()).orElse(null);
+                if (user != null && user.getName() != null) {
+                    userName = user.getName();
+                }
+            }
+            
+            if (userName == null) {
+                User user = userRepository.findById(oderId).orElse(null);
+                if (user != null && user.getName() != null) {
+                    userName = user.getName();
+                }
+            }
+        }
+        
+        if (userName == null || userName.isEmpty()) {
+            userName = "Utilisateur";
+        }
 
         return OrderResponseDTO.builder()
                 .id(order.getId())

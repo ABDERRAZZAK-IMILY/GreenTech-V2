@@ -48,12 +48,15 @@ const MarketplaceTab = () => {
     try {
       setLoading(true);
       
-      const productsData = await marketplaceService.getAllProducts();
-      setProducts(productsData || []);
-
       const currentUserRole = localStorage.getItem('userRole'); 
       const isUserAdmin = currentUserRole === 'ADMIN' || currentUserRole === 'admin';
       setIsAdmin(isUserAdmin);
+
+      // Admin gets all products (including inactive), users get only active
+      const productsData = isUserAdmin 
+        ? await marketplaceService.getAllProductsAdmin()
+        : await marketplaceService.getAllProducts();
+      setProducts(productsData || []);
 
       if (isUserAdmin) {
         const ordersData = await marketplaceService.getAllOrders();
@@ -192,8 +195,18 @@ const MarketplaceTab = () => {
 
   const handleToggleActive = async (productId) => {
       const product = products.find(p => p.id === productId);
+      const currentStatus = product.isActive ?? product.active ?? true;
       try {
-          await marketplaceService.updateProduct(productId, { ...product, active: !product.active });
+          await marketplaceService.updateProduct(productId, {
+              name: product.name,
+              description: product.description,
+              costInPoints: product.costInPoints || product.cost,
+              emoji: product.emoji,
+              stockQuantity: product.stockQuantity ?? product.stock ?? 0,
+              category: product.category,
+              rating: product.rating,
+              isActive: !currentStatus
+          });
           fetchData();
       } catch (error) {
           console.error(error);
@@ -250,10 +263,10 @@ const MarketplaceTab = () => {
       name: product.name,
       emoji: product.emoji || '🎁',
       description: product.description,
-      cost: product.cost,
+      cost: product.costInPoints || product.cost || 0,
       category: product.category,
-      badge: product.badge,
-      stock: product.stock,
+      badge: product.badge || '',
+      stock: product.stockQuantity ?? product.stock ?? 100,
       imageUrl: product.imageUrl || ''
     });
     setShowEditProductModal(true);
@@ -947,10 +960,12 @@ const MarketplaceTab = () => {
                     </td>
                   </tr>
                 ) : (
-                products.map(product => (
+                products.map(product => {
+                  const isProductActive = product.isActive ?? product.active ?? true;
+                  return (
                   <tr key={product.id} style={{
                     borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                    opacity: product.active ? 1 : 0.5
+                    opacity: isProductActive ? 1 : 0.5
                   }}>
                     <td style={{ padding: '12px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -977,29 +992,41 @@ const MarketplaceTab = () => {
                     </td>
                     <td style={{ padding: '12px' }}>
                       <span style={{ color: 'var(--accent-color)', fontWeight: '700' }}>
-                        {product.cost} <i className="fas fa-coins" style={{ fontSize: '12px' }}></i>
+                        {product.costInPoints || product.cost || 0} <i className="fas fa-coins" style={{ fontSize: '12px' }}></i>
                       </span>
                     </td>
-                    <td style={{ padding: '12px' }}>{product.stock}</td>
+                    <td style={{ padding: '12px' }}>{product.stockQuantity ?? product.stock ?? 0}</td>
                     <td style={{ padding: '12px' }}>
-                      {product.badge && (
-                        <span style={{
-                          background: 'rgba(240, 147, 251, 0.2)',
-                          padding: '4px 10px',
-                          borderRadius: '12px',
-                          fontSize: '11px',
-                          fontWeight: '600',
-                          color: '#f093fb'
-                        }}>
-                          {product.badge}
-                        </span>
-                      )}
+                      {(() => {
+                        const badge = product.badge || (
+                          (product.stockQuantity ?? product.stock) <= 3 && (product.stockQuantity ?? product.stock) > 0 ? 'Stock limité' :
+                          product.rating >= 4.5 ? 'Populaire' :
+                          (product.costInPoints || product.cost) >= 5000 ? 'Premium' : null
+                        );
+                        return badge ? (
+                          <span style={{
+                            background: badge === 'Stock limité' ? 'rgba(245, 158, 11, 0.2)' :
+                                       badge === 'Populaire' ? 'rgba(59, 130, 246, 0.2)' :
+                                       badge === 'Premium' ? 'rgba(139, 92, 246, 0.2)' :
+                                       'rgba(240, 147, 251, 0.2)',
+                            padding: '4px 10px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            color: badge === 'Stock limité' ? '#f59e0b' :
+                                   badge === 'Populaire' ? '#3b82f6' :
+                                   badge === 'Premium' ? '#8b5cf6' : '#f093fb'
+                          }}>
+                            {badge}
+                          </span>
+                        ) : null;
+                      })()}
                     </td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>
                       <button
                         onClick={() => handleToggleActive(product.id)}
                         style={{
-                          background: product.active
+                          background: isProductActive
                             ? 'linear-gradient(135deg, #2d9561, #28a68a)'
                             : 'linear-gradient(135deg, #c94b4b, #b84855)',
                           border: 'none',
@@ -1009,7 +1036,7 @@ const MarketplaceTab = () => {
                           cursor: 'pointer',
                           fontSize: '13px',
                           fontWeight: '700',
-                          boxShadow: product.active
+                          boxShadow: isProductActive
                             ? '0 3px 10px rgba(45, 149, 97, 0.3)'
                             : '0 3px 10px rgba(201, 75, 75, 0.3)',
                           transition: 'all 0.3s ease',
@@ -1019,19 +1046,19 @@ const MarketplaceTab = () => {
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = product.active
+                          e.currentTarget.style.boxShadow = isProductActive
                             ? '0 5px 15px rgba(45, 149, 97, 0.5)'
                             : '0 5px 15px rgba(201, 75, 75, 0.5)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = product.active
+                          e.currentTarget.style.boxShadow = isProductActive
                             ? '0 3px 10px rgba(45, 149, 97, 0.3)'
                             : '0 3px 10px rgba(201, 75, 75, 0.3)';
                         }}
                       >
-                        <i className={product.active ? 'fas fa-check-circle' : 'fas fa-times-circle'}></i>
-                        {product.active ? 'Actif' : 'Inactif'}
+                        <i className={isProductActive ? 'fas fa-check-circle' : 'fas fa-times-circle'}></i>
+                        {isProductActive ? 'Actif' : 'Inactif'}
                       </button>
                     </td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>
@@ -1097,7 +1124,7 @@ const MarketplaceTab = () => {
                       </div>
                     </td>
                   </tr>
-                ))
+                )})
                 )}
               </tbody>
             </table>
