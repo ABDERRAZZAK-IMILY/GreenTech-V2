@@ -3,6 +3,7 @@ import axios from 'axios';
 import authService from './authService';
 
 const API_URL = 'http://localhost:8080/api/departments';
+const token = JSON.parse(localStorage.getItem('user')) ? JSON.parse(localStorage.getItem('user')).token : null;
 
 const getToken = () => {
     const user = localStorage.getItem('user');
