@@ -25,8 +25,9 @@ const getUserById = async () => {
   return await response.json();
 };
 
-const getUserProfile = async (id) => {
+const getUserProfile = async () => {
   const headers = await getAuthHeaders();
+  const id = await AsyncStorage.getItem('userId');
   const response = await fetch(`${API_URL}/${id}/profile`, {
     method: 'GET',
     headers: headers,
