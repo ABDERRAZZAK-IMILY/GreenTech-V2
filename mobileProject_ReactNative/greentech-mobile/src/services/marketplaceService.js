@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getBackendUrl } from '../helper/apiPath';
 
 
-const API_URL = `${getBackendUrl()}/api/v1/gamification`; 
+const API_URL = `${getBackendUrl()}/api/v1/marketplace`; 
 
 const getAuthHeaders = async () => {
   const token = await AsyncStorage.getItem('userToken');

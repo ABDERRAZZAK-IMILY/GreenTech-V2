@@ -2915,12 +2915,155 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/config/SecurityConfig.java",
+      "timestamp": 1765819571621,
+      "startOffset": 2197,
+      "endOffset": 2355,
+      "codeContent": "ai/recommendations/**\").permitAll()\n                        .requestMatchers(\"/api/reports/**\").permitAll()\n                        .requestMatchers(\"/api/ale",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 3
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/AiController.java",
+      "timestamp": 1765819571656,
+      "startOffset": 158,
+      "endOffset": 1909,
+      "codeContent": "dto.AI.RecommendationResponse;\nimport com.greentechinnovators.backend.service.ChatService;\nimport com.greentechinnovators.backend.service.PredictionService;\nimport com.greentechinnovators.backend.service.RecommendationService;\nimport lombok.RequiredArgsConstructor;\nimport org.springframework.http.MediaType;\nimport org.springframework.http.ResponseEntity;\nimport org.springframework.web.bind.annotation.*;\nimport reactor.core.publisher.Flux;\n\nimport java.util.List;\nimport java.util.Map;\n\n@RestController\n@RequestMapping(\"/api/ai\")\npublic class AiController {\n\n    private final ChatService aiService;\n    private final PredictionService generatePredictions;\n    private final RecommendationService recommendationService;\n    public AiController(ChatService aiService, PredictionService generatePredictions, RecommendationService recommendationService) {\n        this.aiService \u003d aiService;\n        this.generatePredictions \u003d generatePredictions;\n        this.recommendationService \u003d recommendationService;\n    }\n\n\n    @PostMapping(value \u003d \"/chat/stream\", produces \u003d MediaType.TEXT_EVENT_STREAM_VALUE)\n    public Flux\u003cString\u003e chatStream(@RequestBody Map\u003cString, Object\u003e payload) {\n        String userMessage \u003d (String) payload.get(\"message\");\n        List\u003cMap\u003cString, String\u003e\u003e history \u003d (List\u003cMap\u003cString, String\u003e\u003e) payload.get(\"history\");\n\n        return aiService.askAIStream(userMessage, history);\n    }\n\n    @GetMapping(\"/predictions\")\n    public PredictionResponse getPredictions() {\n        return generatePredictions.generatePredictions();\n    }\n\n    @GetMapping(\"/recommendations\")\n    public ResponseEntity\u003cRecommendationResponse\u003e getRecommendations() {\n        return ResponseEntity.ok(recommendationService.generateRecommendations());\n    }",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 44
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/ai/DeepSeekClient.java",
+      "timestamp": 1765819571677,
+      "startOffset": 876,
+      "endOffset": 2907,
+      "codeContent": "/**\n     * Méthode SYNCHRONE (Bloquante) pour générer du JSON complet.\n     * Utilise \"stream\": false\n     */\n    public String generate(String prompt) {\n        WebClient webClient \u003d webClientBuilder.baseUrl(apiUrl).build();\n\n        Map\u003cString, Object\u003e body \u003d Map.of(\n                \"model\", model,\n                \"stream\", false, // Important pour recevoir tout le JSON d\u0027un coup\n                \"temperature\", 0.1, // Faible température pour garantir un JSON valide\n                \"messages\", List.of(Map.of(\"role\", \"user\", \"content\", prompt))\n        );\n\n        try {\n            JsonNode response \u003d webClient.post()\n                    .header(\"Authorization\", \"Bearer \" + apiKey)\n                    .header(\"Content-Type\", \"application/json\")\n                    .bodyValue(body)\n                    .retrieve()\n                    .bodyToMono(JsonNode.class)\n                    .block(); // On bloque pour attendre la réponse complète\n\n            if (response !\u003d null \u0026\u0026 response.has(\"choices\")) {\n                return response.path(\"choices\").get(0).path(\"message\").path(\"content\").asText();\n            }\n        } catch (Exception e) {\n            log.error(\"Erreur appel DeepSeek Synchronous\", e);\n        }\n        return \"{}\";\n    }\n\n    /**\n     * Méthode ASYNCHRONE (Streaming) pour le Chat UI (effet machine à écrire).\n     */\n    public Flux\u003cString\u003e streamChat(List\u003cMap\u003cString, String\u003e\u003e messages) {\n        WebClient webClient \u003d webClientBuilder.baseUrl(apiUrl).build();\n\n        Map\u003cString, Object\u003e body \u003d Map.of(\n                \"model\", model,\n                \"stream\", true,\n                \"temperature\", 0.7,\n                \"messages\", messages\n        );\n\n        return webClient.post()\n                .header(\"Authorization\", \"Bearer \" + apiKey)\n                .bodyValue(body)\n                .retrieve()\n                .bodyToFlux(String.class)\n                .map(this::extractStreamContent)\n                .filter(content -\u003e !content.isEmpty());\n    }\n\n    private String extractStream",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 55
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/ai/AiContextManager.java",
+      "timestamp": 1765819571689,
+      "startOffset": 285,
+      "endOffset": 8745,
+      "codeContent": "department.DepartmentResponseDTO;\nimport com.greentechinnovators.backend.dto.gas.responce.GasResponseDTO;\nimport com.greentechinnovators.backend.dto.trash.response.DailyTrashDTO;\nimport com.greentechinnovators.backend.dto.vehicle.responce.DailyDistanceDTO;\nimport com.greentechinnovators.backend.entity.Department;\nimport com.greentechinnovators.backend.entity.User;\nimport com.greentechinnovators.backend.service.*;\nimport com.greentechinnovators.backend.utils.AiDataHelper;\nimport com.greentechinnovators.backend.utils.CarbonFootprintService;\nimport lombok.RequiredArgsConstructor;\nimport lombok.extern.slf4j.Slf4j;\nimport org.springframework.stereotype.Component;\n\nimport java.time.LocalDate;\nimport java.time.LocalDateTime;\nimport java.util.*;\n\n@Component\n@RequiredArgsConstructor\n@Slf4j\npublic class AiContextManager {\n\n    private final EnergyService energyService;\n    private final GasService gasService;\n    private final TrashService trashService;\n    private final VehicleService vehicleService;\n    private final ObjectMapper objectMapper;\n    private final AiDataHelper helper;\n    private final CarbonFootprintService carbonService;\n    private final DepartmentService departmentService;\n\n    /**\n     * Hada howa \"le cerveau\" li kayjma3 data mn ga3 les services.\n     * Kayraja3 JSON String clean bach DeepSeek yfhamha.\n     */\n    public String getGlobalContextJson() {\n        LocalDate today \u003d LocalDate.now();\n\n        LocalDateTime startOfMonth \u003d today.withDayOfMonth(1).atStartOfDay();\n        LocalDateTime now \u003d LocalDateTime.now();\n\n        LocalDateTime startOfLastMonth \u003d startOfMonth.minusMonths(1);\n        LocalDateTime endOfLastMonth \u003d startOfMonth.minusSeconds(1);\n\n        Map\u003cString, Object\u003e context \u003d new LinkedHashMap\u003c\u003e();\n\n        context.put(\"TRANSPORT\", getTransportData(startOfMonth, now, startOfLastMonth, endOfLastMonth));\n        context.put(\"TRASH\", getTrashData(startOfMonth, now, startOfLastMonth, endOfLastMonth));\n        context.put(\"ENERGY\", getEnergyData(startOfMonth, now, startOfLastMonth, endOfLastMonth));\n        context.put(\"GAS\", getGasData(startOfMonth, now, startOfLastMonth, endOfLastMonth));\n        context.put(\"DEPARTMENTS\", getDepartmentOverview());\n        try {\n            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(context);\n        } catch (JsonProcessingException e) {\n            log.error(\"Erreur f serialisation JSON context\", e);\n            return \"{}\";\n        }\n    }\n\n\n    private Map\u003cString, Object\u003e getTransportData(LocalDateTime start, LocalDateTime end, LocalDateTime lastStart, LocalDateTime lastEnd) {\n        try {\n            List\u003cDailyDistanceDTO\u003e currentLogs \u003d vehicleService.getDistanceHistory(start, end);\n            List\u003cDailyDistanceDTO\u003e lastLogs \u003d vehicleService.getDistanceHistory(lastStart, lastEnd);\n\n            double currentDist \u003d helper.calculateVehicleDistance(currentLogs);\n            double lastDist \u003d helper.calculateVehicleDistance(lastLogs);\n            double currentCo2 \u003d helper.calculateVehicleCarbon(currentLogs);\n            double lastCo2 \u003d helper.calculateVehicleCarbon(lastLogs);\n\n            return Map.of(\n                    \"Distance_Current\", String.format(Locale.US, \"%.2f km\", currentDist),\n                    \"Distance_LastMonth\", String.format(Locale.US, \"%.2f km\", lastDist),\n                    \"CO2_Current\", String.format(Locale.US, \"%.2f kg\", currentCo2),\n                    \"CO2_LastMonth\", String.format(Locale.US, \"%.2f kg\", lastCo2),\n                    \"Trend_CO2\", helper.getTrend(lastCo2, currentCo2)\n            );\n        } catch (Exception e) {\n            log.error(\"Erreur Transport Data\", e);\n            return Map.of(\"Status\", \"Données indisponibles\");\n        }\n    }\n    private Map\u003cString, Object\u003e getTrashData(LocalDateTime start, LocalDateTime end, LocalDateTime lastStart, LocalDateTime lastEnd) {\n        try {\n            List\u003cDailyTrashDTO\u003e currentWaste \u003d trashService.TrashCarbonFootprint(start, end);\n            List\u003cDailyTrashDTO\u003e lastWaste \u003d trashService.TrashCarbonFootprint(lastStart, lastEnd);\n\n            double currentWeight \u003d helper.calculateTrashWeight(currentWaste);\n            double currentCo2 \u003d helper.calculateTrashCarbon(currentWaste);\n            double lastCo2 \u003d helper.calculateTrashCarbon(lastWaste);\n\n            return Map.of(\n                    \"Total_Weight_Current\", String.format(Locale.US, \"%.2f kg\", currentWeight),\n                    \"CO2_Current\", String.format(Locale.US, \"%.2f kg\", currentCo2),\n                    \"CO2_LastMonth\", String.format(Locale.US, \"%.2f kg\", lastCo2),\n                    \"Trend_CO2\", helper.getTrend(lastCo2, currentCo2)\n            );\n        } catch (Exception e) {\n            log.error(\"Erreur Trash Data\", e);\n            return Map.of(\"Status\", \"Données indisponibles\");\n        }\n    }\n    private Map\u003cString, Object\u003e getEnergyData(LocalDateTime start, LocalDateTime end, LocalDateTime lastStart, LocalDateTime lastEnd) {\n        try {\n            List\u003cEnergyResponseDTO\u003e currentList \u003d energyService.getConsumedKwhBetweenDates(start, end);\n            List\u003cEnergyResponseDTO\u003e lastList \u003d energyService.getConsumedKwhBetweenDates(lastStart, lastEnd);\n\n            double currentKwh \u003d helper.calculateTotalEnergy(currentList);\n            double lastKwh \u003d helper.calculateTotalEnergy(lastList);\n\n            double currentCo2 \u003d carbonService.calculateEnergyFootprint(currentKwh);\n            double lastCo2 \u003d carbonService.calculateEnergyFootprint(lastKwh);\n\n            return Map.of(\n                    \"Consumption_Current\", String.format(Locale.US, \"%.2f kWh\", currentKwh),\n                    \"Consumption_LastMonth\", String.format(Locale.US, \"%.2f kWh\", lastKwh),\n                    \"Trend_Consumption\", helper.getTrend(lastKwh, currentKwh),\n                    \"CO2_Current\", String.format(Locale.US, \"%.2f kg\", currentCo2),\n                    \"CO2_LastMonth\", String.format(Locale.US, \"%.2f kg\", lastCo2),\n                    \"Trend_CO2\", helper.getTrend(lastCo2, currentCo2)\n            );\n        } catch (Exception e) {\n            log.warn(\"Erreur Energy Data: {}\", e.getMessage());\n            return Map.of(\"Status\", \"Données indisponibles\");\n        }\n    }\n    private Map\u003cString, Object\u003e getGasData(LocalDateTime start, LocalDateTime end, LocalDateTime lastStart, LocalDateTime lastEnd) {\n        try {\n            List\u003cGasResponseDTO\u003e currentList \u003d gasService.getConsumedGasBetweenDates(start, end);\n            List\u003cGasResponseDTO\u003e lastList \u003d gasService.getConsumedGasBetweenDates(lastStart, lastEnd);\n\n            double currentVal \u003d helper.calculateTotalGas(currentList);\n            double lastVal \u003d helper.calculateTotalGas(lastList);\n\n            double currentCo2 \u003d carbonService.calculateGasFootprint(currentVal);\n            double lastCo2 \u003d carbonService.calculateGasFootprint(lastVal);\n\n            return Map.of(\n                    \"Consumption_Current\", String.format(Locale.US, \"%.2f kg\", currentVal),\n                    \"Consumption_LastMonth\", String.format(Locale.US, \"%.2f kg\", lastVal),\n                    \"Trend_Gas\", helper.getTrend(lastVal, currentVal),\n                    \"CO2_Current\", String.format(Locale.US, \"%.2f kg\", currentCo2),\n                    \"CO2_LastMonth\", String.format(Locale.US, \"%.2f kg\", lastCo2),\n                    \"Trend_CO2\", helper.getTrend(lastCo2, currentCo2)\n            );\n        } catch (Exception e) {\n            log.error(\"Erreur Gas Data\", e);\n            return Map.of(\"Status\", \"Non configurer\");\n        }\n    }\n\n    private Map\u003cString, Object\u003e getDepartmentOverview() {\n        try {\n            List\u003cDepartmentResponseDTO\u003e departments \u003d departmentService.getAllDepartments();\n\n            List\u003cMap\u003cString, Object\u003e\u003e deptList \u003d new ArrayList\u003c\u003e();\n\n            for (DepartmentResponseDTO dept : departments) {\n                int userCount \u003d (dept.getUsers() !\u003d null) ? dept.getUsers().size() : 0;\n\n                Map\u003cString, Object\u003e info \u003d new HashMap\u003c\u003e();\n                info.put(\"Name\", dept.getName());\n                info.put(\"Employee_Count\", userCount);\n\n                deptList.add(info);\n            }\n\n\n            return Map.of(\n                    \"Total_Departments\", departments.size(),\n                    \"List\", deptList\n            );\n\n        } catch (Exception e) {\n            log.error(\"Erreur Department Data\", e);\n            return Map.of(\"Status\", \"Données indisponibles\");\n        }\n    }",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 178
+    },
+    {
+      "filePath": "/AlertService.java",
+      "timestamp": 1765819770313,
+      "startOffset": 167,
+      "endOffset": 187,
+      "codeContent": "IntellijIdeaRulezzz ",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AlertService.java",
+      "timestamp": 1765819792262,
+      "startOffset": 164,
+      "endOffset": 189,
+      "codeContent": "@RequiredArgsConstructor\n",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "/AlertService.java",
+      "timestamp": 1765819792317,
+      "startOffset": 107,
+      "endOffset": 145,
+      "codeContent": "import lombok.RequiredArgsConstructor;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AlertService.java",
+      "timestamp": 1765819792340,
+      "startOffset": 107,
+      "endOffset": 146,
+      "codeContent": "import lombok.RequiredArgsConstructor;\n",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/AlertController.java",
+      "timestamp": 1765819829333,
+      "startOffset": 209,
+      "endOffset": 234,
+      "codeContent": "@RequiredArgsConstructor\n",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "/AlertController.java",
+      "timestamp": 1765819829373,
+      "startOffset": 112,
+      "endOffset": 150,
+      "codeContent": "import lombok.RequiredArgsConstructor;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/AlertController.java",
+      "timestamp": 1765819829392,
+      "startOffset": 112,
+      "endOffset": 151,
+      "codeContent": "import lombok.RequiredArgsConstructor;\n",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "/SmsService.java",
+      "timestamp": 1765820121105,
+      "startOffset": 420,
+      "endOffset": 440,
+      "codeContent": "IntellijIdeaRulezzz ",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/SmsService.java",
+      "timestamp": 1765820286139,
+      "startOffset": 351,
+      "endOffset": 385,
+      "codeContent": "AC9226a83c6bd1e71b0f22c4671c95a1f4",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 265,
-      "totalLines": 3989
+      "usageCount": 278,
+      "totalLines": 4282
     }
   }
 }
