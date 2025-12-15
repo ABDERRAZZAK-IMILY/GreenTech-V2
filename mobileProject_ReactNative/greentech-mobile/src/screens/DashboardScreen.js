@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import  styles  from '../styles/DashboardStyle';
+import styles from '../styles/DashboardStyle';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { employeeData } from '../data/employeeData';
 import colors from '../styles/colors';
 import { startTracking, stopTracking } from '../services/LocationService';
+import Header from '../components/Dashboard/header';
 
 export default function DashboardScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
@@ -29,7 +30,7 @@ export default function DashboardScreen() {
       setStatusMsg('Suivi arrêté');
     } else {
       setIsTracking(true);
-      startTracking('USER-001', setStatusMsg); 
+      startTracking('USER-001', setStatusMsg);
     }
   };
 
@@ -39,23 +40,18 @@ export default function DashboardScreen() {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Header Section */}
-      <View style={styles.header}>
-        <View style={styles.welcome}>
-          <Text style={styles.welcomeTitle}>Bonjour, {employeeData.name} 👋</Text>
-          <Text style={styles.welcomeSubtitle}>Continuez vos actions écologiques !</Text>
-        </View>
-      </View>
+      <Header />
 
       <View style={styles.trackingCard}>
         <View style={styles.trackingHeader}>
           <Ionicons name="car-sport" size={24} color={colors.accent} />
           <Text style={styles.trackingTitle}>Mode Conducteur</Text>
         </View>
-        
+
         <Text style={styles.statusText}>{statusMsg}</Text>
 
-        <TouchableOpacity 
-          style={[styles.trackButton, isTracking ? styles.stopBtn : styles.startBtn]} 
+        <TouchableOpacity
+          style={[styles.trackButton, isTracking ? styles.stopBtn : styles.startBtn]}
           onPress={toggleTracking}
         >
           <Ionicons name={isTracking ? "stop-circle" : "play-circle"} size={24} color="white" />
