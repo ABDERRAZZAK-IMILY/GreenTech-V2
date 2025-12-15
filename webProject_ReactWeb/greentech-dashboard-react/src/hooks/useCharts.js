@@ -180,11 +180,9 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
         },
         options: {
           responsive: true,
-          maintainAspectRatio: true,
-          animation: {
-            duration: 750,
-            easing: 'easeInOutQuart'
-          },
+          maintainAspectRatio: false,
+          cutout: '75%',
+          animation: false,
           plugins: {
             legend: {
               display: false
