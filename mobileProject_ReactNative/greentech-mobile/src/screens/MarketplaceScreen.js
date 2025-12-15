@@ -82,7 +82,6 @@ const [successVisible, setSuccessVisible] = useState(false);
   };
 
 
-  // --- 3. Gestion des cycles de vie ---
 
   useFocusEffect(
     useCallback(() => {
