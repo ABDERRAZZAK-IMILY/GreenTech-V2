@@ -43,6 +43,13 @@ public class EnergerIotWebSokrtHandller extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         try {
+            // Check if session is still open before processing
+            if (!session.isOpen()) {
+                log.warn("Session {} is closed, skipping message processing", session.getId());
+                sessions.remove(session.getId());
+                return;
+            }
+
             String payload = message.getPayload();
             log.info("Received energy data from {}: {}", session.getId(), payload);
 
@@ -70,25 +77,38 @@ public class EnergerIotWebSokrtHandller extends TextWebSocketHandler {
             // Validate and save energy reading
             EnergyResponseDTO savedEnergy = energyService.createReading(energyDTO);
 
-            // Send acknowledgment back to ESP32
-            String ackMessage = objectMapper.writeValueAsString(Map.of(
-                "status", "ok",
-                "message", "Energy data saved successfully",
-                "id", savedEnergy.getId(),
-                "energyConsumed", savedEnergy.getEnergyConsumed()
-            ));
-            session.sendMessage(new TextMessage(ackMessage));
+            // Send acknowledgment back to ESP32 only if session is still open
+            if (session.isOpen()) {
+                String ackMessage = objectMapper.writeValueAsString(Map.of(
+                    "status", "ok",
+                    "message", "Energy data saved successfully",
+                    "id", savedEnergy.getId(),
+                    "energyConsumed", savedEnergy.getEnergyConsumed()
+                ));
+                session.sendMessage(new TextMessage(ackMessage));
+            }
 
             // Broadcast to all connected clients (dashboard, mobile app, etc.)
             broadcastEnergyUpdate(savedEnergy);
 
+        } catch (IOException e) {
+            log.error("IO Error processing energy data: {}", e.getMessage());
+            sessions.remove(session.getId());
         } catch (Exception e) {
             log.error("Error processing energy data: {}", e.getMessage(), e);
-            String errorMessage = objectMapper.writeValueAsString(Map.of(
-                "status", "error",
-                "message", "Failed to process energy data: " + e.getMessage()
-            ));
-            session.sendMessage(new TextMessage(errorMessage));
+            // Only try to send error message if session is still open
+            if (session.isOpen()) {
+                try {
+                    String errorMessage = objectMapper.writeValueAsString(Map.of(
+                        "status", "error",
+                        "message", "Failed to process energy data: " + e.getMessage()
+                    ));
+                    session.sendMessage(new TextMessage(errorMessage));
+                } catch (IOException ioException) {
+                    log.warn("Failed to send error message to session {}: {}", session.getId(), ioException.getMessage());
+                    sessions.remove(session.getId());
+                }
+            }
         }
     }
 
@@ -119,13 +139,19 @@ public class EnergerIotWebSokrtHandller extends TextWebSocketHandler {
             return;
         }
 
-        sessions.values().forEach(session -> {
+        // Create a copy of sessions to iterate safely
+        sessions.forEach((id, session) -> {
             try {
                 if (session.isOpen()) {
                     session.sendMessage(new TextMessage(message));
+                } else {
+                    // Remove closed sessions
+                    sessions.remove(id);
+                    log.debug("Removed closed session: {}", id);
                 }
             } catch (IOException e) {
-                log.error("Error broadcasting to session {}: {}", session.getId(), e.getMessage());
+                log.warn("Error broadcasting to session {}, removing it: {}", id, e.getMessage());
+                sessions.remove(id);
             }
         });
     }

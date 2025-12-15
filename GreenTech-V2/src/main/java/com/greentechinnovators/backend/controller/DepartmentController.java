@@ -13,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/departments")
+@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class DepartmentController {
 
@@ -20,9 +21,9 @@ public class DepartmentController {
 
     // --- 1. CREATE ---
     @PostMapping
-    public ResponseEntity<DepartmentResponseDTO> createDepartment(@RequestBody @Valid DepartmentRequestDTO requestDTO) {
+    public ResponseEntity<DepartmentResponseDTO> createDepartment(@Valid@RequestBody  DepartmentRequestDTO requestDTO) {
         DepartmentResponseDTO newDepartment = departmentService.createDepartment(requestDTO);
-        return new ResponseEntity<>(newDepartment, HttpStatus.CREATED);
+        return ResponseEntity.ok(newDepartment);
     }
 
     // --- 2. GET ALL ---

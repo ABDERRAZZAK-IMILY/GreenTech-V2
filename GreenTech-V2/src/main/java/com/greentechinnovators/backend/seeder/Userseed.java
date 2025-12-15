@@ -29,7 +29,10 @@ public class Userseed implements CommandLineRunner {
                     "Super Admin",
                     "admin@greentech.com",
                     passwordEncoder.encode("admin123"),
-                    Role.ADMIN
+                    Role.ADMIN,
+                    "lead",
+                    "admin",
+                    "https://static.vecteezy.com/system/resources/previews/019/879/186/large_2x/user-icon-on-transparent-background-free-png.png"
             );
             userRepository.save(admin);
             System.out.println(" Admin created: admin@greentech.com / admin123");
@@ -40,7 +43,10 @@ public class Userseed implements CommandLineRunner {
                     "imily",
                     "imily@greentech.com",
                     passwordEncoder.encode("user123"),
-                    Role.USER
+                    Role.USER,
+                    "IT",
+                    "developer",
+                    "https://static.vecteezy.com/system/resources/previews/019/879/186/large_2x/user-icon-on-transparent-background-free-png.png"
             );
             userRepository.save(user);
 
