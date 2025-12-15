@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getBackendUrl } from '../helper/apiPath';
 
-
-const API_URL = 'http://localhost:8080/api/v1/gamification'; 
+const API_URL = `${getBackendUrl()}/api/v1/gamification`; 
 
 // Helper pour récupérer les headers d'authentification (Token)
 const getAuthHeaders = async () => {
