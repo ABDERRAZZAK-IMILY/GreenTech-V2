@@ -13,7 +13,7 @@ class MarketplaceService {
 
   // ============ PRODUCTS ============
   
-  // Get all products
+  // Get all products (active only - for regular users)
   async getAllProducts() {
     try {
       const response = await axios.get(`${API_URL}/products`, {
@@ -22,6 +22,19 @@ class MarketplaceService {
       return response.data;
     } catch (error) {
       console.error('Error fetching products:', error);
+      throw error;
+    }
+  }
+
+  // Get all products including inactive (for Admin)
+  async getAllProductsAdmin() {
+    try {
+      const response = await axios.get(`${API_URL}/products/admin/all`, {
+        headers: this.getAuthHeader()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching all products for admin:', error);
       throw error;
     }
   }
