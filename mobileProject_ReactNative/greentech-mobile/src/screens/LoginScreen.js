@@ -35,12 +35,9 @@ const LoginScreen = ({ navigation }) => {
     try {
       const response = await AuthService.login(formData.email, formData.password);
       console.log(response);
-      
       navigation.replace('MainApp');
     } catch (err) {
       console.log(err);
-      
-      
       setError("Email ou mot de passe incorrect");
     } finally {
       setLoading(false);
