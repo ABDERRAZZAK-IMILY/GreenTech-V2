@@ -1,33 +1,33 @@
-import React, { useState, useCallback, useEffect } from 'react'; 
+import React, { useState, useCallback, useEffect } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator, 
-  RefreshControl,
-Modal,
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  RefreshControl,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../styles/colors';
 import MarketplaceService from '../services/marketplaceService';
 import { useFocusEffect } from '@react-navigation/native';
 import GamificationService from '../services/GamificationService';
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import UserService from '../services/userService';
 export default function MarketplaceScreen() {
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [availableProducts, setAvailableProducts] = useState([]); 
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [availableProducts, setAvailableProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [ecoCoins, setEcoCoins] = useState(0); 
+  const [ecoCoins, setEcoCoins] = useState(0);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
   const [user, setUser] = useState(null);
-const [modalVisible, setModalVisible] = useState(false);
-const [selectedProduct, setSelectedProduct] = useState(null);
-const [successVisible, setSuccessVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [successVisible, setSuccessVisible] = useState(false);
   const filters = [
     { id: 'all', label: 'Tout', icon: '✨' },
     { id: 'ECO_PRODUCTS', label: 'Éco-Produits', icon: '♻️' },
@@ -38,38 +38,38 @@ const [successVisible, setSuccessVisible] = useState(false);
   const fetchData = async () => {
     try {
       if (!refreshing) setLoading(true);
-      
+
       const userId = await AsyncStorage.getItem('userId');
-      
+
       if (!userId) {
-         console.error("Aucun ID utilisateur trouvé");
-         return;
+        console.error("Aucun ID utilisateur trouvé");
+        return;
       }
 
       const [userProfile, productsData, ordersData] = await Promise.all([
-        UserService.getUserProfile(userId), 
+        UserService.getUserProfile(userId),
         MarketplaceService.getAllProducts(),
         MarketplaceService.getMyOrders(),
       ]);
       console.log("✅ Données utilisateur chargées:", ordersData);
 
       if (userProfile) {
-          console.log("💰 Solde chargé depuis UserService:", userProfile.totalPoints);
-          setEcoCoins(userProfile.totalPoints || 0); 
-          setUser({
-              name: userProfile.name,
-              email: userProfile.email
-          });
+        console.log("💰 Solde chargé depuis UserService:", userProfile.totalPoints);
+        setEcoCoins(userProfile.totalPoints || 0);
+        setUser({
+          name: userProfile.name,
+          email: userProfile.email
+        });
       }
 
       setAvailableProducts(productsData);
-      setPurchaseHistory(ordersData.map(order => ({ 
-          id: order.id,
-          productName: order.productName,
-          costInPoints: order.cost,
-          date: order.orderDate,
-          status: order.status.toLowerCase(), 
-          icon: productsData.find(p => p.id === order.productId)?.emoji || '📦',
+      setPurchaseHistory(ordersData.map(order => ({
+        id: order.id,
+        productName: order.productName,
+        costInPoints: order.cost,
+        date: order.orderDate,
+        status: order.status.toLowerCase(),
+        icon: productsData.find(p => p.id === order.productId)?.emoji || '📦',
       })));
 
     } catch (error) {
@@ -82,95 +82,95 @@ const [successVisible, setSuccessVisible] = useState(false);
   };
 
 
-  // --- 3. Gestion des cycles de vie ---
+  // --- 3. Gestion des cycles de vie ---
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchData();
-      return ; 
-    }, [])
-  );
-    
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+      return;
+    }, [])
+  );
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchData();
+  }, []);
 
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'approved': return colors.success;
-      case 'pending': return '#f59e0b';
-      case 'rejected': return colors.error;
-      default: return colors.textSecondary;
-    }
-  };
-    
- const filteredProducts = activeFilter === 'all'
-    ? availableProducts
-    : availableProducts.filter(p => p.category === activeFilter);
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved': return colors.success;
+      case 'pending': return '#f59e0b';
+      case 'rejected': return colors.error;
+      default: return colors.textSecondary;
+    }
+  };
+
+  const filteredProducts = activeFilter === 'all'
+    ? availableProducts
+    : availableProducts.filter(p => p.category === activeFilter);
 
   const handlePurchase = (product) => {
     const cost = product.costInPoints;
-    
+
     if (ecoCoins < cost) {
-       Alert.alert("Solde insuffisant", `Il vous manque ${cost - ecoCoins} points.`);
-       return;
+      Alert.alert("Solde insuffisant", `Il vous manque ${cost - ecoCoins} points.`);
+      return;
     }
 
     setSelectedProduct(product);
     setModalVisible(true);
   };
 
- const confirmPurchase = async () => {
+  const confirmPurchase = async () => {
     if (!selectedProduct) return;
 
     setModalVisible(false);
-    setLoading(true);       
+    setLoading(true);
 
     try {
-        const orderRequest = { productId: selectedProduct.id };
-        await MarketplaceService.createOrder(orderRequest);
-        await fetchData();
-        
-        setLoading(false);   
-        setSuccessVisible(true); 
-        
+      const orderRequest = { productId: selectedProduct.id };
+      await MarketplaceService.createOrder(orderRequest);
+      await fetchData();
+
+      setLoading(false);
+      setSuccessVisible(true);
+
     } catch (error) {
-        setLoading(false);
-        console.error("❌ Erreur API :", error);
-        Alert.alert("Oups !", "Une erreur est survenue lors de l'achat.");
+      setLoading(false);
+      console.error("❌ Erreur API :", error);
+      Alert.alert("Oups !", "Une erreur est survenue lors de l'achat.");
     } finally {
-        setSelectedProduct(null); 
+      setSelectedProduct(null);
     }
   };
-      
-  const getStatusIcon = (status) => {
-    switch(status) {
-      case 'approved': return 'checkmark-circle';
-      case 'pending': return 'time';
-      case 'rejected': return 'close-circle';
-      default: return 'help-circle';
-    }
-  };
 
-  const getStatusText = (status) => {
-    switch(status) {
-      case 'approved': return 'Approuvé';
-      case 'pending': return 'En attente';
-      case 'rejected': return 'Refusé';
-      default: return status;
-    }
-  };
-    
-   if (loading && !refreshing) {
-        return (
-          <View style={[styles.container, styles.center]}>
-            <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={{ color: colors.textSecondary, marginTop: 10 }}>Chargement de la boutique...</Text>
-          </View>
-        );
-    }
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'approved': return 'checkmark-circle';
+      case 'pending': return 'time';
+      case 'rejected': return 'close-circle';
+      default: return 'help-circle';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'approved': return 'Approuvé';
+      case 'pending': return 'En attente';
+      case 'rejected': return 'Refusé';
+      default: return status;
+    }
+  };
+
+  if (loading && !refreshing) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={{ color: colors.textSecondary, marginTop: 10 }}>Chargement de la boutique...</Text>
+      </View>
+    );
+  }
 
 
   return (
@@ -357,7 +357,7 @@ const [successVisible, setSuccessVisible] = useState(false);
           </View>
         </View>
       </Modal>
-   
+
       <Modal
         animationType="slide"
         transparent={true}
@@ -366,19 +366,19 @@ const [successVisible, setSuccessVisible] = useState(false);
       >
         <View style={styles.modalOverlay}>
           <View style={styles.successModalContainer}>
-            
+
             <View style={styles.successIconContainer}>
               <Ionicons name="checkmark-done" size={48} color="#fff" />
             </View>
 
             <Text style={styles.successTitle}>Félicitations ! 🎉</Text>
-            
+
             <Text style={styles.successMessage}>
               Votre commande a été validée avec succès. Vous recevrez bientôt votre récompense.
             </Text>
 
-            <TouchableOpacity 
-              style={styles.btnSuccess} 
+            <TouchableOpacity
+              style={styles.btnSuccess}
               onPress={() => setSuccessVisible(false)}
             >
               <Text style={styles.btnSuccessText}>Génial !</Text>
@@ -388,7 +388,7 @@ const [successVisible, setSuccessVisible] = useState(false);
         </View>
       </Modal>
     </ScrollView>
-    
+
   );
 }
 
@@ -519,10 +519,10 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   productIcon: {
-    fontSize: 40, 
+    fontSize: 40,
     marginBottom: 10,
     textAlign: 'center',
-    color: colors.textPrimary, 
+    color: colors.textPrimary,
   },
   productContent: {
     gap: 6,
@@ -674,10 +674,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
- 
+
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)', 
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   modalHeader: {
-    backgroundColor: colors.accent, 
+    backgroundColor: colors.accent,
     padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -767,7 +767,7 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(74, 222, 128, 0.2)', 
+    borderColor: 'rgba(74, 222, 128, 0.2)',
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
   successIconContainer: {
     width: 80,
     height: 80,
-    backgroundColor: colors.success, 
+    backgroundColor: colors.success,
     borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
