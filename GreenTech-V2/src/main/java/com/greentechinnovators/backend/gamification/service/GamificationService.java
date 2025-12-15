@@ -25,23 +25,24 @@ public class GamificationService {
     private final GamificationMapper mapper;
 
     public UserGamificationStatsResponseDTO getUserStats(String userId) {
+
         UserGamificationStats stats = statsRepository.findByUserId(userId)
                 .orElseGet(() -> createInitialStats(userId));
 
-        if (stats.getUserName() == null) {
+        String userName = resolveUserName(userId);
+
+        if (stats.getUserName() == null || stats.getUserName().isEmpty()) {
+            stats.setUserName(userName);
+
             User user = userRepository.findById(userId).orElse(null);
             if (user != null) {
-                stats.setUserName(user.getName());
                 stats.setUserEmail(user.getEmail());
                 stats.setRole(user.getRole() != null ? user.getRole().name() : "USER");
-                if (stats.getJoinDate() == null) {
-                    stats.setJoinDate(user.getCreatedAt());
-                }
-                if (stats.getStatus() == null) {
-                    stats.setStatus("active");
-                }
-                statsRepository.save(stats);
+                stats.setJoinDate(stats.getJoinDate() != null ? stats.getJoinDate() : user.getCreatedAt());
+                stats.setStatus(stats.getStatus() != null ? stats.getStatus() : "active");
             }
+
+            statsRepository.save(stats);
         }
 
         User user = userRepository.findById(userId).orElse(null);
@@ -145,4 +146,35 @@ public class GamificationService {
         stats.setActionsCompleted(stats.getActionsCompleted() + 1);
         statsRepository.save(stats);
     }
+
+    private String resolveUserName(String userId) {
+        String userName = null;
+
+        if (userId != null && userId.contains("@")) {
+            User user = userRepository.findByEmail(userId).orElse(null);
+            if (user != null && user.getName() != null) {
+                userName = user.getName();
+            }
+        } else {
+            UserGamificationStats stats = statsRepository.findByUserId(userId).orElse(null);
+
+            if (stats != null && stats.getUserEmail() != null) {
+                User user = userRepository.findByEmail(stats.getUserEmail()).orElse(null);
+                if (user != null && user.getName() != null) {
+                    userName = user.getName();
+                }
+            }
+
+            if (userName == null) {
+                User user = userRepository.findById(userId).orElse(null);
+                if (user != null && user.getName() != null) {
+                    userName = user.getName();
+                }
+            }
+        }
+
+        return (userName == null || userName.isEmpty()) ? "Utilisateur" : userName;
+    }
+
+
 }
