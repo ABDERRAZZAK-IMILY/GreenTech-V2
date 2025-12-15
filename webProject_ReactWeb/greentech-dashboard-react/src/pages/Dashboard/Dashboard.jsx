@@ -24,8 +24,6 @@ const Dashboard = () => {
 
   const energyWsRef = useRef(null);
   const trashWsRef = useRef(null);
-  const gasWsRef = useRef(null);
-  const vehicleWsRef = useRef(null);
 
 
 useEffect(() => {
@@ -38,10 +36,10 @@ useEffect(() => {
         const vehicleRes = await vehicleDataService.getTodayMetrics();
 
         // Store real-time data in localStorage for charts
-        localStorage.setItem('realtime_energy', JSON.stringify(energyRes.data));
-        localStorage.setItem('realtime_trash', JSON.stringify(wasteRes.data));
-        localStorage.setItem('realtime_gas', JSON.stringify(gasRes.data));
-        localStorage.setItem('realtime_vehicle', JSON.stringify(vehicleRes.data));
+        localStorage.setItem('realtime_energy', JSON.stringify(energyRes.data || []));
+        localStorage.setItem('realtime_trash', JSON.stringify(wasteRes.data || []));
+        localStorage.setItem('realtime_gas', JSON.stringify(gasRes.data || []));
+        localStorage.setItem('realtime_vehicle', JSON.stringify(vehicleRes.data || []));
 
         const totalEnergy = energyDataService.calculateTotal(energyRes.data);
         const totalWaste = trashDataService.calculateTotal(wasteRes.data);
@@ -65,6 +63,11 @@ useEffect(() => {
 
     fetchData();
 
+    // Retry fetching data every 10 seconds to get updates from manual gas input and mobile vehicle data
+    const retryInterval = setInterval(() => {
+      fetchData();
+    }, 10000);
+
     // Setup WebSocket for real-time energy updates
     const connectEnergyWs = () => {
       const energyWs = new WebSocket('ws://localhost:8080/iot/energy');
@@ -72,6 +75,7 @@ useEffect(() => {
 
       energyWs.onopen = () => {
         console.log(' Energy WebSocket Connected');
+        fetchData();
       };
 
       energyWs.onmessage = (event) => {
@@ -90,15 +94,15 @@ useEffect(() => {
       };
 
       energyWs.onerror = (error) => {
-        console.error(' Energy WebSocket Error:', error);
+        console.error('❌ Energy WebSocket Error:', error);
       };
 
       energyWs.onclose = (event) => {
-        console.log(' Energy WebSocket Disconnected', event.code, event.reason);
+        console.log('🔌 Energy WebSocket Disconnected', event.code, event.reason);
         // Attempt reconnection after 5 seconds
         if (event.code !== 1000) { // 1000 = normal closure
           setTimeout(() => {
-            console.log(' Attempting to reconnect Energy WebSocket...');
+            console.log('🔄 Attempting to reconnect Energy WebSocket...');
             connectEnergyWs();
           }, 5000);
         }
@@ -111,7 +115,8 @@ useEffect(() => {
       trashWsRef.current = trashWs;
 
       trashWs.onopen = () => {
-        console.log('Trash WebSocket Connected');
+        console.log('✅ Trash WebSocket Connected');
+        fetchData();
       };
 
       trashWs.onmessage = (event) => {
@@ -119,7 +124,7 @@ useEffect(() => {
           const message = JSON.parse(event.data);
           
           if (message.type === 'TRASH_UPDATE' && message.data) {
-            console.log(' Real-time Trash Update:', message.data);
+            console.log('🗑️ Real-time Trash Update:', message.data);
             // Refresh data and trigger charts update
             fetchData();
             setRefreshTrigger(prev => prev + 1);
@@ -130,129 +135,40 @@ useEffect(() => {
       };
 
       trashWs.onerror = (error) => {
-        console.error(' Trash WebSocket Error:', error);
+        console.error('❌ Trash WebSocket Error:', error);
       };
 
       trashWs.onclose = (event) => {
-        console.log(' Trash WebSocket Disconnected', event.code, event.reason);
+        console.log('🔌 Trash WebSocket Disconnected', event.code, event.reason);
         // Attempt reconnection after 5 seconds
         if (event.code !== 1000) { // 1000 = normal closure
           setTimeout(() => {
-            console.log(' Attempting to reconnect Trash WebSocket...');
+            console.log('🔄 Attempting to reconnect Trash WebSocket...');
             connectTrashWs();
           }, 5000);
         }
       };
     };
 
-    // WebSocket for Gas IoT
-    const connectGasWs = () => {
-      const gasWs = new WebSocket('ws://localhost:8080/iot/gas');
-      gasWsRef.current = gasWs;
-
-      gasWs.onopen = () => {
-        console.log(' Gas IoT WebSocket connected');
-      };
-
-      gasWs.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          if (message.type === 'GAS_UPDATE' && message.data) {
-            // Update localStorage with new gas data
-            const existingData = JSON.parse(localStorage.getItem('realtime_gas') || '[]');
-            const updatedData = [...existingData, message.data];
-            localStorage.setItem('realtime_gas', JSON.stringify(updatedData));
-
-            // Trigger chart refresh
-            setRefreshTrigger(prev => prev + 1);
-          }
-        } catch (error) {
-          console.error(' Error processing gas message:', error);
-        }
-      };
-
-      gasWs.onerror = (error) => {
-        console.error(' Gas WebSocket error:', error);
-      };
-
-      gasWs.onclose = (event) => {
-        console.log(' Gas WebSocket disconnected:', event.reason);
-        if (event.code !== 1000) {
-          setTimeout(() => {
-            console.log(' Attempting to reconnect Gas WebSocket...');
-            connectGasWs();
-          }, 5000);
-        }
-      };
-    };
-
-    // WebSocket for Vehicle IoT
-    const connectVehicleWs = () => {
-      const vehicleWs = new WebSocket('ws://localhost:8080/iot/vehicle');
-      vehicleWsRef.current = vehicleWs;
-
-      vehicleWs.onopen = () => {
-        console.log(' Vehicle IoT WebSocket connected');
-      };
-
-      vehicleWs.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          if (message.type === 'VEHICLE_UPDATE' && message.data) {
-            // Update localStorage with new vehicle data
-            const existingData = JSON.parse(localStorage.getItem('realtime_vehicle') || '[]');
-            const updatedData = [...existingData, message.data];
-            localStorage.setItem('realtime_vehicle', JSON.stringify(updatedData));
-
-            // Trigger chart refresh
-            setRefreshTrigger(prev => prev + 1);
-          }
-        } catch (error) {
-          console.error(' Error processing vehicle message:', error);
-        }
-      };
-
-      vehicleWs.onerror = (error) => {
-        console.error(' Vehicle WebSocket error:', error);
-      };
-
-      vehicleWs.onclose = (event) => {
-        console.log(' Vehicle WebSocket disconnected:', event.reason);
-        if (event.code !== 1000) {
-          setTimeout(() => {
-            console.log(' Attempting to reconnect Vehicle WebSocket...');
-            connectVehicleWs();
-          }, 5000);
-        }
-      };
-    };
-
-    // Initialize all WebSocket connections
+    // Initialize WebSocket connections (only energy and trash - gas is manual, vehicle is from mobile)
     connectEnergyWs();
     connectTrashWs();
-    connectGasWs();
-    connectVehicleWs();
 
     // Cleanup on unmount
     return () => {
+      clearInterval(retryInterval);
       if (energyWsRef.current) {
         energyWsRef.current.close();
       }
       if (trashWsRef.current) {
         trashWsRef.current.close();
       }
-      if (gasWsRef.current) {
-        gasWsRef.current.close();
-      }
-      if (vehicleWsRef.current) {
-        vehicleWsRef.current.close();
-      }
     };
   }, []);
 
 
 
-  useCharts(selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod, refreshTrigger);
+  useCharts(selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod, refreshTrigger, metrics);
 
   // Titres des métriques
   const metricTitles = {

@@ -217,16 +217,71 @@ export const getComparisonData = (metric) => {
 };
 
 // Données pour le doughnut chart des émissions
-export const getEmissionsData = (period) => {
-  if (period === 'today') {
+export const getEmissionsData = (period, metrics = null) => {
+  // Use real metrics if available
+  if (metrics && period === 'today') {
+    const energyCO2 = parseFloat(metrics.energy || 0) * 0.5;  // kWh * 0.5 = kg CO2
+    const gasCO2 = parseFloat(metrics.gas || 0) * 0.2;        // m³ * 0.2 = kg CO2
+    const transportCO2 = parseFloat(metrics.vehicle || 0) * 0.19; // km * 0.19 = kg CO2
+    const wasteCO2 = parseFloat(metrics.waste || 0) * 2.0;    // kg * 2.0 = kg CO2
+    
+    const totalCO2 = energyCO2 + gasCO2 + transportCO2 + wasteCO2;
+    
+    // If no data, return empty state
+    if (totalCO2 === 0) {
+      return {
+        labels: ['Aucune donnée'],
+        data: [1],
+        isEmpty: true
+      };
+    }
+    
     return {
       labels: ['Électricité', 'Gaz', 'Transport', 'Déchets'],
-      data: [250, 89, 50, 28]
-    };
-  } else {
-    return {
-      labels: ['Électricité', 'Gaz', 'Transport', 'Déchets'],
-      data: [7500, 2670, 1500, 840]
+      data: [
+        Math.round(energyCO2 * 10) / 10,
+        Math.round(gasCO2 * 10) / 10,
+        Math.round(transportCO2 * 10) / 10,
+        Math.round(wasteCO2 * 10) / 10
+      ],
+      isEmpty: false
     };
   }
+  
+  // For monthly data, multiply daily by 30 (approximate)
+  if (metrics && period === 'month') {
+    const energyCO2 = parseFloat(metrics.energy || 0) * 0.5 * 30;
+    const gasCO2 = parseFloat(metrics.gas || 0) * 0.2 * 30;
+    const transportCO2 = parseFloat(metrics.vehicle || 0) * 0.19 * 30;
+    const wasteCO2 = parseFloat(metrics.waste || 0) * 2.0 * 30;
+    
+    const totalCO2 = energyCO2 + gasCO2 + transportCO2 + wasteCO2;
+    
+    // If no data, return empty state
+    if (totalCO2 === 0) {
+      return {
+        labels: ['Aucune donnée'],
+        data: [1],
+        isEmpty: true
+      };
+    }
+    
+    return {
+      labels: ['Électricité', 'Gaz', 'Transport', 'Déchets'],
+      data: [
+        Math.round(energyCO2),
+        Math.round(gasCO2),
+        Math.round(transportCO2),
+        Math.round(wasteCO2)
+      ],
+      isEmpty: false
+    };
+  }
+  
+  // Fallback - empty state when no metrics available
+  return {
+    labels: ['Aucune donnée'],
+    data: [1],
+    isEmpty: true
+  };
 };
