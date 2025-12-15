@@ -1439,6 +1439,12 @@ canvas {
     flex-direction: column;
     align-items: center;
     width: 100%;
+    height: 200px;
+}
+
+.gauge-chart-wrapper canvas {
+    max-height: 200px !important;
+    height: 200px !important;
 }
 
 .gauge-percentage-overlay {
