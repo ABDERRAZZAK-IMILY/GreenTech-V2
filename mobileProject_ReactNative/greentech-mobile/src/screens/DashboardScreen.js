@@ -4,15 +4,15 @@ import {
   View,
   Text,
   ScrollView,
-  StyleSheet,
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { employeeData } from '../data/employeeData';
 import colors from '../styles/colors';
 import { startTracking, stopTracking } from '../services/LocationService';
 import Header from '../components/Dashboard/header';
+import Level from '../components/Dashboard/Level';
+import StatsGrid from '../components/Dashboard/StatsGrid';
 
 export default function DashboardScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
@@ -62,81 +62,10 @@ export default function DashboardScreen() {
       </View>
 
       {/* Level Card */}
-      <View style={styles.levelCard}>
-        <View style={styles.levelInfo}>
-          <View style={styles.levelBadge}>
-            <Ionicons name="star" size={20} color={colors.accent} />
-            <Text style={styles.levelText}>Niveau {employeeData.level}</Text>
-          </View>
-          <Text style={styles.levelPoints}>
-            {employeeData.currentPoints} / {employeeData.nextLevelPoints} points
-          </Text>
-        </View>
-        <View style={styles.progressBarContainer}>
-          <View style={[styles.progressBarFill, { width: `${progressPercentage}%` }]} />
-        </View>
-      </View>
+      <Level />
 
       {/* Stats Grid */}
-      <View style={styles.statsGrid}>
-        {/* First Row: Points & Rank */}
-        <View style={styles.statsRow}>
-          {/* Points Card */}
-          <View style={styles.statCard}>
-            <LinearGradient
-              colors={colors.gradients.gold}
-              style={styles.statIcon}
-            >
-              <Ionicons name="wallet" size={24} color="#fff" />
-            </LinearGradient>
-            <View style={styles.statContent}>
-              <Text style={styles.statLabel}>Mes Points</Text>
-              <Text style={styles.statValue}>{employeeData.currentPoints.toLocaleString()}</Text>
-              <Text style={styles.statSubtitle}>Points disponibles</Text>
-            </View>
-          </View>
-
-          {/* Rank Card */}
-          <View style={styles.statCard}>
-            <LinearGradient
-              colors={colors.gradients.purple}
-              style={styles.statIcon}
-            >
-              <Ionicons name="trophy" size={24} color="#fff" />
-            </LinearGradient>
-            <View style={styles.statContent}>
-              <Text style={styles.statLabel}>Classement</Text>
-              <Text style={styles.statValue}>#{employeeData.rank}</Text>
-              <Text style={styles.statSubtitle}>Top {Math.round(rankPercentage)}%</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Second Row: CO2 Impact (full width) */}
-        <View style={[styles.statCard, styles.largeCard]}>
-          <LinearGradient
-            colors={colors.gradients.green}
-            style={styles.statIcon}
-          >
-            <Ionicons name="leaf" size={24} color="#fff" />
-          </LinearGradient>
-          <View style={styles.statContent}>
-            <Text style={styles.statLabel}>Mon Impact CO2</Text>
-            <Text style={styles.statValue}>{employeeData.co2Saved} kg</Text>
-            <Text style={styles.statSubtitle}>CO2 économisé</Text>
-            <View style={styles.equivalents}>
-              <View style={styles.equivalentItem}>
-                <Ionicons name="leaf-outline" size={14} color={colors.accent} />
-                <Text style={styles.equivalentText}>{Math.round(employeeData.co2Saved / 22)} arbres plantés</Text>
-              </View>
-              <View style={styles.equivalentItem}>
-                <Ionicons name="car-outline" size={14} color={colors.accent} />
-                <Text style={styles.equivalentText}>{Math.round(employeeData.co2Saved / 0.12)} km évités</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      </View>
+      <StatsGrid />
 
       {/* Badges Section */}
       <View style={styles.section}>
