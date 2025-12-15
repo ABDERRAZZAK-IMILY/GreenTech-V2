@@ -3058,12 +3058,23 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/SmsService.java",
+      "timestamp": 1765822140287,
+      "startOffset": 321,
+      "endOffset": 611,
+      "codeContent": "spring.app.twilio.account-sid:AC9226a83c6bd1e71b0f22c4671c95a1f4}\")\n    private String accountSid;\n\n    @Value(\"${spring.app.twilio.auth-token:3fd4ddae8ef3789af683b3c8e6b53db2}\")\n    private String authToken;\n\n    @Value(\"${spring.app.twilio.messaging-sid:MGcecdbbb0226389355f738a06a10c6c40",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 7
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 278,
-      "totalLines": 4282
+      "usageCount": 279,
+      "totalLines": 4289
     }
   }
 }
