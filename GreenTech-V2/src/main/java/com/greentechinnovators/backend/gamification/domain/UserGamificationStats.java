@@ -14,6 +14,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 @Document(collection = "gamification_stats")
 public class UserGamificationStats {
     @Id

@@ -33,38 +33,52 @@ const MarketplaceTab = () => {
     imageUrl: ''
   });
 
-  // --- Fetch Data ---
   useEffect(() => {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+ const fetchData = async () => {
     try {
       setLoading(true);
+      
       const productsData = await marketplaceService.getAllProducts();
-      setProducts(productsData);
+      setProducts(productsData || []);
 
-      if (isAdmin) {
+      const currentUserRole = localStorage.getItem('userRole'); 
+      const isUserAdmin = currentUserRole === 'ADMIN' || currentUserRole === 'admin';
+      setIsAdmin(isUserAdmin);
+
+      if (isUserAdmin) {
         const ordersData = await marketplaceService.getAllOrders();
+        
         const formattedOrders = ordersData.map(order => ({
             id: order.id,
             memberId: order.userId,
-            memberName: order.userName || 'Employé',
+            memberName: order.userName || 'Utilisateur', 
             product: order.productName,
-            cost: order.cost,
+            
+            cost: order.costAtPurchase || order.cost || 0, 
+            
             date: new Date(order.orderDate).toLocaleString('fr-FR'),
             status: order.status,
-            category: order.category
+            category: order.category || 'Autre' 
         }));
         
         setPurchaseRequests(formattedOrders.filter(o => o.status === 'PENDING'));
         
         const completed = formattedOrders.filter(o => o.status === 'APPROVED');
         processExchangesStats(completed);
+
       } else {
         const user = authService.getCurrentUser();
-        const myOrders = await marketplaceService.getUserOrders(user.id);
-        setPurchaseRequests(myOrders);
+        if (user && user.id) {
+            const myOrders = await marketplaceService.getMyOrders(); 
+            setPurchaseRequests(myOrders.map(order => ({
+                ...order,
+                cost: order.costAtPurchase || order.cost || 0, 
+                date: new Date(order.orderDate).toLocaleString('fr-FR')
+            })));
+        }
       }
     } catch (error) {
       console.error("Error fetching marketplace data", error);

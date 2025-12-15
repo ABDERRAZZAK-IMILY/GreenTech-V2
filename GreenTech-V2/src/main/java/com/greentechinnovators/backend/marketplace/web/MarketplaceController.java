@@ -1,10 +1,12 @@
 package com.greentechinnovators.backend.marketplace.web;
 
+import com.greentechinnovators.backend.entity.User;
 import com.greentechinnovators.backend.marketplace.domain.OrderStatus;
 import com.greentechinnovators.backend.marketplace.dto.request.CreateOrderRequestDTO;
 import com.greentechinnovators.backend.marketplace.dto.request.UpdateOrderStatusRequestDTO;
 import com.greentechinnovators.backend.marketplace.dto.response.OrderResponseDTO;
 import com.greentechinnovators.backend.marketplace.service.MarketplaceService;
+import com.greentechinnovators.backend.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,18 +22,20 @@ import java.util.List;
 public class MarketplaceController {
 
     private final MarketplaceService marketplaceService;
+    private final UserRepository userRepository;
 
     @PostMapping("/marketplace/orders")
     public ResponseEntity<OrderResponseDTO> createOrder(
             Authentication authentication,
             @Valid @RequestBody CreateOrderRequestDTO request) {
-        String userId = authentication.getName();
-        return ResponseEntity.ok(marketplaceService.createOrder(userId, request));
+        String email = authentication.getName();
+        return ResponseEntity.ok(marketplaceService.createOrder(email, request));
     }
 
     @GetMapping("/marketplace/orders")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<OrderResponseDTO>> getAllOrders() {
+
         return ResponseEntity.ok(marketplaceService.getAllOrders());
     }
 
@@ -42,8 +46,14 @@ public class MarketplaceController {
 
     @GetMapping("/marketplace/my-orders")
     public ResponseEntity<List<OrderResponseDTO>> getMyOrders(Authentication authentication) {
-        String userId = authentication.getName();
-        return ResponseEntity.ok(marketplaceService.getUserOrders(userId));
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String realUserId = user.getId();
+
+        return ResponseEntity.ok(marketplaceService.getUserOrders(realUserId));
     }
 
     @GetMapping("/users/{id}/orders")
