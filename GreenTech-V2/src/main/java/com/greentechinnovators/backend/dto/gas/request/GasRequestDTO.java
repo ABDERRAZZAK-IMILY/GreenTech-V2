@@ -10,4 +10,11 @@ public class GasRequestDTO {
     @NotNull(message = "Consumed gas value is required")
     @Positive(message = "Consumed gas must be a positive value")
     private Double consumedGas;
+
+    private String usage;
+    private String gasType;
+    private Double quantity;
+    private String unit;
+    private String capacity;
+    private String status;
 }
