@@ -7,14 +7,19 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../styles/colors';
 import { useEffect, useState } from 'react';
-import { checkGPSEnabled, getCurrentPosition, requestLocationPermissions } from '../../services/LocaltionService';
+import { checkGPSEnabled, getCurrentPosition, requestLocationPermissions, sendPositionToBackend, startBackgroundTracking } from '../../services/LocaltionService';
+import { API_CONFIG } from './../../config/api';
 
 const GpsTraker = () => {
     const [isTracking, setIsTracking] = useState(false);
     const [statusMsg, setStatusMsg] = useState('Prêt à démarrer');
     const [isLoading, setIsLoading] = useState(false);
     const [permissionGranted, setPermissionGranted] = useState(false);
+    const [lastUpdate, setLastUpdate] = useState(null);
+    const [sendCount, setSendCount] = useState(0);
+    const [totalDistance, setTotalDistance] = useState(0);
     const [currentPosition, setCurrentPosition] = useState(null);
+    const [sendStatus, setSendStatus] = useState('idle');
     const [error, setError] = useState(null);
 
 
@@ -73,6 +78,66 @@ const GpsTraker = () => {
         }
 
         setIsLoading(false);
+    };
+
+    const startTracking = async () => {
+        if (!permissionGranted) {
+            const permResult = await requestLocationPermissions();
+            if (!permResult.success) {
+                setError(permResult.error);
+                return;
+            }
+            setPermissionGranted(true);
+        }
+
+        setIsTracking(true);
+        setError(null);
+        setSendCount(0);
+        setTotalDistance(0);
+
+        // Démarrer le tracking en background si possible
+        await startBackgroundTracking();
+
+        // Tracking en foreground avec intervalle
+        trackingIntervalRef.current = setInterval(async () => {
+            await updateAndSendPosition();
+        }, API_CONFIG.SEND_INTERVAL);
+
+        // Première mise à jour immédiate
+        await updateAndSendPosition();
+    };
+
+    const updateAndSendPosition = async () => {
+        try {
+            setSendStatus('sending');
+
+            // Obtenir la position actuelle
+            const position = await getCurrentPosition();
+            setCurrentPosition(position);
+            setLastUpdate(new Date());
+
+            // Envoyer au backend et récupérer les stats
+            const response = await sendPositionToBackend(position.latitude, position.longitude);
+
+            // Mettre à jour la distance totale depuis la réponse du backend
+            if (response && response.totalDistance !== undefined) {
+                setTotalDistance(response.totalDistance);
+            }
+
+            setSendStatus('success');
+            setSendCount(prev => prev + 1);
+            setError(null);
+
+            // Remettre le statut à idle après 2 secondes
+            setTimeout(() => {
+                setSendStatus('idle');
+            }, 2000);
+
+        } catch (err) {
+            console.error('Erreur tracking:', err);
+            setSendStatus('error');
+            setError('Erreur de connexion au serveur');
+        }
     };
 
     if (isLoading) {
