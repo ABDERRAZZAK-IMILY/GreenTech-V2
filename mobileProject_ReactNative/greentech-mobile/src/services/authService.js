@@ -17,7 +17,7 @@ const login = async (email, password) => {
 
     const data = await response.json();
 
-    console.log(" ============> data received: ", data);
+    // console.log(" ============> data received: ", data);
 
     if (response.ok) {
       // ⚠️ HNA FIN KAN LMOUCHKIL: Beddelna "accessToken" b "token"
@@ -33,7 +33,7 @@ const login = async (email, password) => {
         if (data.id) {
            // Bima anna l'ID f log ban string "6938...", n9dro nkhznowh direct
            await AsyncStorage.setItem('userId', String(data.id)); 
-           console.log("✅ User ID saved:", data.id);
+          //  console.log("✅ User ID saved:", data.id);
         }
       } else {
           console.warn("⚠️ Token makaynch f data!");
