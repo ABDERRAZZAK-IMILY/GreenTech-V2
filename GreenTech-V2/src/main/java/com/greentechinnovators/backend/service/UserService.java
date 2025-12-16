@@ -23,7 +23,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final GamificationStatsRepository gamificationStatsRepository;
     private final PasswordEncoder passwordEncoder;
-
+    private final EmailService emailService;
 
     public List<UserProfileDTO> getAllUsers() {
         return userRepository.findAll().stream()
@@ -33,16 +33,17 @@ public class UserService {
 
     @Transactional
     public UserProfileDTO createUser(CreateUserRequestDTO request) {
-        // Check if email already exists
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email is already in use");
         }
+        int randompassword = 100 + (int)(Math.random() * 1000);
+        String password = "GreenTech"+ randompassword ;
+        String generatedPassword = passwordEncoder.encode(password);
 
-        // Create new user
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .passwordHash(generatedPassword)
                 .role(request.getRole())
                 .department(request.getDepartment())
                 .jobTitle(request.getJobTitle())
@@ -50,6 +51,11 @@ public class UserService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
+        emailService.sendAccountCreatedEmail(
+                request.getEmail(),
+                request.getName(),
+                password
+        );
         User savedUser = userRepository.save(user);
 
         // Create initial gamification stats
