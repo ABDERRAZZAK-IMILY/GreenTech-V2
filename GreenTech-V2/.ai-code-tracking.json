@@ -407,12 +407,232 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 23
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765914312033,
+      "startOffset": 1424,
+      "endOffset": 1471,
+      "codeContent": "    private final DeepSeekClient callDeepSeek;\n",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765914333855,
+      "startOffset": 102,
+      "endOffset": 172,
+      "codeContent": "import com.greentechinnovators.backend.controller.DashboardController;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/PredictionService.java",
+      "timestamp": 1765914335076,
+      "startOffset": 101,
+      "endOffset": 172,
+      "codeContent": "\nimport com.greentechinnovators.backend.controller.DashboardController;",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "/PredictionService.java",
+      "timestamp": 1765914386240,
+      "startOffset": 4049,
+      "endOffset": 4132,
+      "codeContent": "(java.util.List\u003c? extends com.greentechinnovators.backend.dto.DailyStatProjection\u003e)",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765914423796,
+      "startOffset": 238,
+      "endOffset": 312,
+      "codeContent": "import com.greentechinnovators.backend.dto.Energy.Responce.DailyEnergyDTO;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/PredictionService.java",
+      "timestamp": 1765914425590,
+      "startOffset": 4848,
+      "endOffset": 4914,
+      "codeContent": "com.greentechinnovators.backend.dto.Energy.Responce.DailyEnergyDTO",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/PredictionService.java",
+      "timestamp": 1765914425590,
+      "startOffset": 238,
+      "endOffset": 313,
+      "codeContent": "import com.greentechinnovators.backend.dto.Energy.Responce.DailyEnergyDTO;\n",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "/_Dummy_.java",
+      "timestamp": 1765914453892,
+      "startOffset": 161,
+      "endOffset": 189,
+      "codeContent": "java.time.LocalDateTime days",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/DashboardController.java",
+      "timestamp": 1765914453918,
+      "startOffset": 3559,
+      "endOffset": 3582,
+      "codeContent": "java.time.LocalDateTime",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/DashboardController.java",
+      "timestamp": 1765914453943,
+      "startOffset": 1034,
+      "endOffset": 1065,
+      "codeContent": "import java.time.LocalDateTime;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/PredictionService.java",
+      "timestamp": 1765914692387,
+      "startOffset": 4839,
+      "endOffset": 4950,
+      "codeContent": "\n        response.getDechets().setHistory(getHistoryData(dashboardController.getLast7DaysStats(sevenDaysAgo)));",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "/PredictionService.java",
+      "timestamp": 1765914869246,
+      "startOffset": 4865,
+      "endOffset": 4931,
+      "codeContent": "com.greentechinnovators.backend.dto.Energy.Responce.DailyEnergyDTO",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/PredictionService.java",
+      "timestamp": 1765914869775,
+      "startOffset": 4865,
+      "endOffset": 4931,
+      "codeContent": "com.greentechinnovators.backend.dto.Energy.Responce.DailyEnergyDTO",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765915125064,
+      "startOffset": 5246,
+      "endOffset": 8036,
+      "codeContent": "// يجب إضافة الاستيرادات التالية في بداية ملف PredictionService.java\nimport com.greentechinnovators.backend.dto.gas.responce.DailyGasDTO;\nimport com.greentechinnovators.backend.dto.trash.response.DailyTrashDTO;\n\n// ... (بقية ملف PredictionService.java)\n\n// الدالة المساعدة للطاقة (Energy) - تم تعديل الاسم وتوضيح منطق التاريخ\nprivate List\u003cDouble\u003e getEnergyHistoryData(List\u003ccom.greentechinnovators.backend.dto.Energy.Responce.DailyEnergyDTO\u003e dbStats) {\n    Map\u003cString, Double\u003e statsMap \u003d new HashMap\u003c\u003e();\n\n    if (dbStats !\u003d null) {\n        for (DailyEnergyDTO stat : dbStats) {\n            // استخدام getTotalEnergyKwh واستخراج تاريخ اليوم فقط\n            statsMap.put(stat.getDate().toLocalDate().toString(), stat.getTotalEnergyKwh());\n        }\n    }\n\n    List\u003cDouble\u003e history \u003d new ArrayList\u003c\u003e();\n    // تحديد نقطة البداية (منذ 6 أيام مضت، عند منتصف الليل)\n    LocalDateTime dateIter \u003d LocalDateTime.now().minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);\n\n    for (int i \u003d 0; i \u003c 7; i++) {\n        String key \u003d dateIter.toLocalDate().toString();\n        history.add(statsMap.getOrDefault(key, 0.0));\n        dateIter \u003d dateIter.plusDays(1);\n    }\n    return history;\n}\n\n// الدالة المساعدة للمخلفات (Trash)\nprivate List\u003cDouble\u003e getTrashHistoryData(List\u003cDailyTrashDTO\u003e dbStats) {\n    Map\u003cString, Double\u003e statsMap \u003d new HashMap\u003c\u003e();\n\n    if (dbStats !\u003d null) {\n        for (DailyTrashDTO stat : dbStats) {\n            // *يفترض أن الدالة هي stat.getTotalWeight()*\n            statsMap.put(stat.getDate().toLocalDate().toString(), stat.getTotalWeight());\n        }\n    }\n\n    List\u003cDouble\u003e history \u003d new ArrayList\u003c\u003e();\n    LocalDateTime dateIter \u003d LocalDateTime.now().minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);\n\n    for (int i \u003d 0; i \u003c 7; i++) {\n        String key \u003d dateIter.toLocalDate().toString();\n        history.add(statsMap.getOrDefault(key, 0.0));\n        dateIter \u003d dateIter.plusDays(1);\n    }\n    return history;\n}\n\n// الدالة المساعدة للغاز (Gas)\nprivate List\u003cDouble\u003e getGasHistoryData(List\u003cDailyGasDTO\u003e dbStats) {\n    Map\u003cString, Double\u003e statsMap \u003d new HashMap\u003c\u003e();\n\n    if (dbStats !\u003d null) {\n        for (DailyGasDTO stat : dbStats) {\n            // *يفترض أن الدالة هي stat.getTotalConsumed()*\n            statsMap.put(stat.getDate().toLocalDate().toString(), stat.getTotalConsumed());\n        }\n    }\n\n    List\u003cDouble\u003e history \u003d new ArrayList\u003c\u003e();\n    LocalDateTime dateIter \u003d LocalDateTime.now().minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);\n\n    for (int i \u003d 0; i \u003c 7; i++) {\n        String key \u003d dateIter.toLocalDate().toString();\n        history.add(statsMap.getOrDefault(key, 0.0));\n        dateIter \u003d dateIter.plusDays(1);\n    }\n    return history;\n}\n\n\n// ... (يجب تحديث generatePredictions لاستدعاء هذه الدوال)",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 75
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765915131134,
+      "startOffset": 379,
+      "endOffset": 451,
+      "codeContent": "import com.greentechinnovators.backend.dto.trash.response.DailyTrashDTO;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/PredictionService.java",
+      "timestamp": 1765915133473,
+      "startOffset": 378,
+      "endOffset": 451,
+      "codeContent": "\nimport com.greentechinnovators.backend.dto.trash.response.DailyTrashDTO;",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/PredictionService.java",
+      "timestamp": 1765915138051,
+      "startOffset": 379,
+      "endOffset": 447,
+      "codeContent": "import com.greentechinnovators.backend.dto.gas.responce.DailyGasDTO;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/PredictionService.java",
+      "timestamp": 1765915139907,
+      "startOffset": 378,
+      "endOffset": 447,
+      "codeContent": "\nimport com.greentechinnovators.backend.dto.gas.responce.DailyGasDTO;",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "/PredictionService.java",
+      "timestamp": 1765915158663,
+      "startOffset": 4929,
+      "endOffset": 4969,
+      "codeContent": "(dashboardController.getGasHistory(7)));",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/PredictionService.java",
+      "timestamp": 1765915163441,
+      "startOffset": 5358,
+      "endOffset": 5400,
+      "codeContent": "(dashboardController.getTrashHistory(7)));",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 37,
-      "totalLines": 229
+      "usageCount": 57,
+      "totalLines": 329
     }
   }
 }
