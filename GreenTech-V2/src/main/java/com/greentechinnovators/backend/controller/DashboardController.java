@@ -11,7 +11,7 @@ import com.greentechinnovators.backend.dto.vehicle.responce.VehicleLogResponseDT
 import com.greentechinnovators.backend.service.EnergyService;
 import com.greentechinnovators.backend.service.GasService;
 import com.greentechinnovators.backend.service.TrashService;
-import com.greentechinnovators.backend.service.VehicleLogservice;
+import com.greentechinnovators.backend.service.VehicleLogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +27,7 @@ public class DashboardController {
     private final EnergyService energyService;
     private final TrashService trashService;
     private final GasService gasService;
-    private final VehicleLogservice vehicleLogservice;
+    private final VehicleLogService vehicleLogservice;
 
     // Energy endpoints
     @PostMapping("/energy/ingest")
@@ -92,4 +92,34 @@ public class DashboardController {
     public List<VehicleLogResponseDTO> getTodayVehicleMetrics() {
         return vehicleLogservice.getTodayReadings();
     }
+
+    // --- History Endpoints (7 days, 30 days, etc.) ---
+
+    @GetMapping("/energy/history/{days}")
+    public List<com.greentechinnovators.backend.dto.Energy.Responce.DailyEnergyDTO> getEnergyHistory(
+            @PathVariable int days) {
+        java.time.LocalDateTime end = java.time.LocalDateTime.now();
+        java.time.LocalDateTime start = end.minusDays(days);
+        return energyService.getDailyEnergy(start, end);
+    }
+
+    @GetMapping("/trash/history/{days}")
+    public List<com.greentechinnovators.backend.dto.trash.response.DailyTrashDTO> getTrashHistory(
+            @PathVariable int days) {
+        java.time.LocalDateTime end = java.time.LocalDateTime.now();
+        java.time.LocalDateTime start = end.minusDays(days);
+        return trashService.TrashCarbonFootprint(start, end);
+    }
+
+    @GetMapping("/gas/history/{days}")
+    public List<com.greentechinnovators.backend.dto.gas.responce.DailyGasDTO> getGasHistory(@PathVariable int days) {
+        java.time.LocalDateTime end = java.time.LocalDateTime.now();
+        java.time.LocalDateTime start = end.minusDays(days);
+        return gasService.getDailyGas(start, end);
+    }
+
+    // Vehicle history might need similar implementation in VehicleLogService if not
+    // exists
+    // For now, let's skip vehicle history if method not ready, or check
+    // VehicleLogService
 }
