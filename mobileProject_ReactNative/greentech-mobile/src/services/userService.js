@@ -20,7 +20,7 @@ const getUserById = async () => {
     headers: headers,
   });
   if (!response.ok) throw new Error('Erreur récupération utilisateur');
-  console.log(response);
+  // console.log(response);
   
   return await response.json();
 };

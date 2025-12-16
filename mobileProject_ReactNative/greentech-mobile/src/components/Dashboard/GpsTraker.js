@@ -6,15 +6,19 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../styles/colors';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { checkGPSEnabled, getCurrentPosition, requestLocationPermissions, sendPositionToBackend, startBackgroundTracking, stopBackgroundTracking } from '../../services/LocaltionService';
 import { API_CONFIG } from './../../config/api';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { ActivityIndicator } from 'react-native-paper';
 
 const GpsTraker = () => {
     const [isTracking, setIsTracking] = useState(false);
     const [statusMsg, setStatusMsg] = useState('Prêt à démarrer');
     const [isLoading, setIsLoading] = useState(false);
     const [permissionGranted, setPermissionGranted] = useState(false);
+    const [gpsEnabled, setGpsEnabled] = useState(true);
     const [lastUpdate, setLastUpdate] = useState(null);
     const [sendCount, setSendCount] = useState(0);
     const [totalDistance, setTotalDistance] = useState(0);
@@ -51,23 +55,26 @@ const GpsTraker = () => {
 
         // Vérifier le GPS
         const gpsStatus = await checkGPSEnabled();
+        
+        
         setGpsEnabled(gpsStatus);
         if (!gpsStatus) {
             setError('Le GPS est désactivé. Veuillez l\'activer dans les paramètres.');
             setIsLoading(false);
             return;
         }
-
+        
         // Demander les permissions
         const permResult = await requestLocationPermissions();
+        
         if (!permResult.success) {
             setError(permResult.error);
             setIsLoading(false);
             return;
         }
-
+        
         setPermissionGranted(true);
-
+        
         // Obtenir la position initiale
         try {
             const position = await getCurrentPosition();
@@ -76,7 +83,7 @@ const GpsTraker = () => {
         } catch (err) {
             console.log('Position initiale non disponible:', err.message);
         }
-
+        
         setIsLoading(false);
     };
 
@@ -121,7 +128,7 @@ const GpsTraker = () => {
 
         setSendStatus('idle');
     };
-    
+
 
     const updateAndSendPosition = async () => {
         try {
@@ -155,6 +162,39 @@ const GpsTraker = () => {
             setError('Erreur de connexion au serveur');
         }
     };
+    const renderSendStatus = () => {
+        let statusColor, statusText, statusIcon;
+
+        switch (sendStatus) {
+            case 'sending':
+                statusColor = colors.warning;
+                statusText = 'Envoi en cours...';
+                statusIcon = '📡';
+                break;
+            case 'success':
+                statusColor = colors.success;
+                statusText = 'Position envoyée';
+                statusIcon = '✓';
+                break;
+            case 'error':
+                statusColor = colors.error;
+                statusText = 'Erreur d\'envoi';
+                statusIcon = '✗';
+                break;
+            default:
+                statusColor = colors.textSecondary;
+                statusText = 'En attente';
+                statusIcon = '○';
+        }
+
+        return (
+            <View style={[styles.statusIndicator, { borderColor: statusColor }]}>
+                <Text style={[styles.statusIcon, { color: statusColor }]}>{statusIcon}</Text>
+                <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
+            </View>
+        );
+    };
+
 
 
     if (isLoading) {
@@ -182,7 +222,7 @@ const GpsTraker = () => {
 
             <TouchableOpacity
                 style={[styles.trackButton, isTracking ? styles.stopBtn : styles.startBtn]}
-                onPress={toggleTracking}
+                onPress={isTracking ? stopTracking : startTracking}
             >
                 <Ionicons name={isTracking ? "stop-circle" : "play-circle"} size={24} color="white" />
                 <Text style={styles.btnText}>
