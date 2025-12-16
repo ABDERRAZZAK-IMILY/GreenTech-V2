@@ -17,6 +17,37 @@ import java.util.stream.Collectors;
 public class GasService {
     private final GasRepository gasRepository;
     private final GasMapper gasMapper;
+    private final com.greentechinnovators.backend.utils.CarbonFootprintService carbonFootprintService;
+
+    public List<com.greentechinnovators.backend.dto.gas.responce.DailyGasDTO> getDailyGas(LocalDateTime start,
+            LocalDateTime end) {
+        List<Gas> allGas = gasRepository.findAll();
+        java.util.List<com.greentechinnovators.backend.dto.gas.responce.DailyGasDTO> report = new java.util.ArrayList<>();
+        LocalDateTime current = start;
+
+        while (!current.isAfter(end)) {
+            LocalDateTime startOfDay = current.toLocalDate().atStartOfDay();
+            LocalDateTime endOfDay = startOfDay.plusDays(1);
+
+            double totalGas = allGas.stream()
+                    .filter(g -> g.getCreatedAt() != null &&
+                            !g.getCreatedAt().isBefore(startOfDay) &&
+                            g.getCreatedAt().isBefore(endOfDay))
+                    .mapToDouble(Gas::getConsumedGas)
+                    .sum();
+
+            double carbonFootprint = carbonFootprintService.calculateGasFootprint(totalGas);
+
+            report.add(com.greentechinnovators.backend.dto.gas.responce.DailyGasDTO.builder()
+                    .date(current)
+                    .totalGasConsumed(totalGas)
+                    .carbonFootprintKg(carbonFootprint)
+                    .build());
+
+            current = current.plusDays(1);
+        }
+        return report;
+    }
 
     public GasResponseDTO create(GasRequestDTO dto) {
         Gas gas = gasMapper.toEntity(dto);
@@ -32,13 +63,13 @@ public class GasService {
     public List<GasResponseDTO> getTodayReadings() {
         LocalDateTime startOfToday = LocalDateTime.now().toLocalDate().atStartOfDay();
         LocalDateTime endOfToday = startOfToday.plusDays(1);
-        
+
         List<Gas> gasList = gasRepository.findAll().stream()
-                .filter(g -> g.getCreatedAt() != null && 
-                           !g.getCreatedAt().isBefore(startOfToday) && 
-                           g.getCreatedAt().isBefore(endOfToday))
+                .filter(g -> g.getCreatedAt() != null &&
+                        !g.getCreatedAt().isBefore(startOfToday) &&
+                        g.getCreatedAt().isBefore(endOfToday))
                 .toList();
-        
+
         return gasList.stream().map(gasMapper::toResponse).toList();
     }
 
@@ -48,10 +79,11 @@ public class GasService {
 
         return allGas.stream()
                 .filter(g -> {
-                    if (g.getCreatedAt() == null) return false;
+                    if (g.getCreatedAt() == null)
+                        return false;
 
                     boolean isAfterStart = !g.getCreatedAt().isBefore(start); // >= start
-                    boolean isBeforeEnd = !g.getCreatedAt().isAfter(end);     // <= end
+                    boolean isBeforeEnd = !g.getCreatedAt().isAfter(end); // <= end
 
                     return isAfterStart && isBeforeEnd;
                 })

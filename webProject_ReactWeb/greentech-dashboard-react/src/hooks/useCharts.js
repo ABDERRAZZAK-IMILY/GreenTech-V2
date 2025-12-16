@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { getLineChartData, getComparisonData, getEmissionsData } from '../utils/dataGenerator';
 
-export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod, refreshTrigger = 0, metrics = null) => {
+export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod, refreshTrigger = 0, metrics = null, historyData = null) => {
   const chartsRef = useRef({});
   const isInitialized = useRef(false);
 
@@ -32,7 +32,18 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
 
       // Get initial data
       const emissionsData = getEmissionsData(emissionsPeriod, metrics);
-      const lineData = getLineChartData(selectedMetric, selectedPeriod);
+
+      // Use historyData if available (for initial load though unlikely), else getLineChartData
+      let lineData = getLineChartData(selectedMetric, selectedPeriod);
+      if (historyData && historyData.metric === selectedMetric) {
+        lineData = {
+          labels: historyData.labels,
+          data: historyData.data,
+          label: lineData.label, // keep original label
+          color: lineData.color // keep original color
+        };
+      }
+
       const comparisonData = getComparisonData(selectedComparison);
 
       // Emissions Doughnut Chart
@@ -60,7 +71,7 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
             tooltip: {
               enabled: !emissionsData.isEmpty,
               callbacks: {
-                label: function(context) {
+                label: function (context) {
                   const label = context.label || '';
                   const value = context.parsed || 0;
                   const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -76,13 +87,13 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
           afterDatasetDraw(chart) {
             const { ctx, data } = chart;
             const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
-            
+
             // Check if this is empty state
             if (data.labels[0] === 'Aucune donnée') {
               // Draw "No Data" text in center
               const centerX = chart.getDatasetMeta(0).data[0]?.x || chart.width / 2;
               const centerY = chart.getDatasetMeta(0).data[0]?.y || chart.height / 2;
-              
+
               ctx.save();
               ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
               ctx.font = 'bold 16px Arial';
@@ -260,11 +271,23 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
     };
   }, []); // Only run once on mount
 
-  // Update line chart when metric or period changes
+  // Update line chart when metric or period changes OR historyData changes
   useEffect(() => {
     if (!isInitialized.current || !chartsRef.current.electricity) return;
 
-    const lineData = getLineChartData(selectedMetric, selectedPeriod);
+    let lineData = getLineChartData(selectedMetric, selectedPeriod);
+
+    // Override with history data if available
+    if (historyData && historyData.metric === selectedMetric && selectedPeriod !== '24h') {
+      const baseColor = lineData.color;
+      lineData = {
+        labels: historyData.labels,
+        data: historyData.data,
+        label: lineData.label,
+        color: baseColor
+      };
+    }
+
     const chart = chartsRef.current.electricity;
 
     // Update only the data, labels, and colors
@@ -275,7 +298,7 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
     chart.data.datasets[0].backgroundColor = `${lineData.color}1a`;
 
     chart.update();
-  }, [selectedMetric, selectedPeriod]);
+  }, [selectedMetric, selectedPeriod, historyData]);
 
   // Update comparison chart when comparison metric changes
   useEffect(() => {
@@ -302,8 +325,8 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
     // Update data, labels, and colors based on empty state
     chart.data.datasets[0].data = emissionsData.data;
     chart.data.labels = emissionsData.labels;
-    chart.data.datasets[0].backgroundColor = emissionsData.isEmpty 
-      ? ['rgba(255, 255, 255, 0.1)'] 
+    chart.data.datasets[0].backgroundColor = emissionsData.isEmpty
+      ? ['rgba(255, 255, 255, 0.1)']
       : ['#f093fb', '#f59e0b', '#3b82f6', '#10b981'];
     chart.options.plugins.tooltip.enabled = !emissionsData.isEmpty;
 
@@ -328,8 +351,8 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
       const emissionsData = getEmissionsData(emissionsPeriod, metrics);
       chartsRef.current.emissions.data.datasets[0].data = emissionsData.data;
       chartsRef.current.emissions.data.labels = emissionsData.labels;
-      chartsRef.current.emissions.data.datasets[0].backgroundColor = emissionsData.isEmpty 
-        ? ['rgba(255, 255, 255, 0.1)'] 
+      chartsRef.current.emissions.data.datasets[0].backgroundColor = emissionsData.isEmpty
+        ? ['rgba(255, 255, 255, 0.1)']
         : ['#f093fb', '#f59e0b', '#3b82f6', '#10b981'];
       chartsRef.current.emissions.options.plugins.tooltip.enabled = !emissionsData.isEmpty;
       chartsRef.current.emissions.update('active');
