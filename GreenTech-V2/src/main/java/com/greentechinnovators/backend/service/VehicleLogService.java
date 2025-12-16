@@ -22,15 +22,18 @@ public class VehicleLogService {
     private final VehicleLogRepository vehicleLogRepository;
     private final CarbonFootprintService carbonFootprintService;
 
-    public VehicleLogResponseDTO create(VehicleLogRequestDTO dto){
-        Vehicle vehicle = vehicleRepository.findById(dto.getVehicleId()).orElseThrow(()->{throw  new RuntimeException("vehicle not found");});
-        VehicleLog vehicleLog= vehicleLogRepository.save(mapper.toVehicleLog(dto));
+    public VehicleLogResponseDTO create(VehicleLogRequestDTO dto) {
+        Vehicle vehicle = vehicleRepository.findById(dto.getVehicleId()).orElseThrow(() -> {
+            throw new RuntimeException("vehicle not found");
+        });
+        VehicleLog vehicleLog = vehicleLogRepository.save(mapper.toVehicleLog(dto));
         vehicleLog = vehicleLogRepository.save(vehicleLog);
         vehicle.getVehicleLogs().add(vehicleLog);
         vehicleRepository.save(vehicle);
         return mapper.toVehicleLogResponse(vehicleLog);
     }
-    public List<VehicleLogResponseDTO> findAll(){
+
+    public List<VehicleLogResponseDTO> findAll() {
         List<VehicleLog> vehicleLogs = vehicleLogRepository.findAll();
         return vehicleLogs.stream().map(mapper::toVehicleLogResponse).toList();
     }
@@ -38,17 +41,17 @@ public class VehicleLogService {
     public List<VehicleLogResponseDTO> getTodayReadings() {
         LocalDateTime startOfToday = LocalDateTime.now().toLocalDate().atStartOfDay();
         LocalDateTime endOfToday = startOfToday.plusDays(1);
-        
+
         List<VehicleLog> vehicleLogs = vehicleLogRepository.findAll().stream()
-                .filter(v -> v.getCreatedAt() != null && 
-                           !v.getCreatedAt().isBefore(startOfToday) && 
-                           v.getCreatedAt().isBefore(endOfToday))
+                .filter(v -> v.getCreatedAt() != null &&
+                        !v.getCreatedAt().isBefore(startOfToday) &&
+                        v.getCreatedAt().isBefore(endOfToday))
                 .toList();
-        
+
         return vehicleLogs.stream().map(mapper::toVehicleLogResponse).toList();
     }
 
-    public void deleteById(String id){
+    public void deleteById(String id) {
         vehicleLogRepository.deleteById(id);
     }
 
