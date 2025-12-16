@@ -3861,12 +3861,111 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/DepartmentService.java",
+      "timestamp": 1765897177147,
+      "startOffset": 93,
+      "endOffset": 2058,
+      "codeContent": "UserResponseDTO;\nimport com.greentechinnovators.backend.dto.department.DepartmentRequestDTO;\nimport com.greentechinnovators.backend.dto.department.DepartmentResponseDTO;\nimport com.greentechinnovators.backend.entity.Department;\nimport com.greentechinnovators.backend.entity.User;\nimport com.greentechinnovators.backend.mapper.DepartmentMapper;\nimport com.greentechinnovators.backend.mapper.UserMapper;\nimport com.greentechinnovators.backend.repository.DepartmentRepository;\nimport com.greentechinnovators.backend.repository.UserRepository;\nimport lombok.RequiredArgsConstructor;\nimport org.springframework.stereotype.Service;\nimport org.springframework.web.client.ResourceAccessException;\n\nimport java.util.List;\nimport java.util.stream.Collectors;\n\n@Service\n@RequiredArgsConstructor\npublic class DepartmentService {\n\n    private final DepartmentRepository departmentRepository;\n    private final DepartmentMapper departmentMapper;\n    private final UserRepository userRepository;\n    // --- CREATE ---\n    public DepartmentResponseDTO createDepartment(DepartmentRequestDTO requestDTO) {\n        Department department \u003d departmentMapper.toEntity(requestDTO);\n        Department savedDepartment \u003d departmentRepository.save(department);\n        return departmentMapper.toDTO(savedDepartment);\n    }\n\n    // --- READ (All) ---\n    public List\u003cDepartmentResponseDTO\u003e getAllDepartments() {\n        List\u003cDepartment\u003e departments \u003d departmentRepository.findAll();\n\n        return departments.stream().map(dept -\u003e {\n            List\u003cUser\u003e realUsers \u003d userRepository.findByDepartment(dept.getName());\n\n            List\u003cUserResponseDTO\u003e userDTOs \u003d realUsers.stream()\n                    .map(UserMapper::toUserDTO)\n                    .collect(Collectors.toList());\n\n            return DepartmentResponseDTO.builder()\n                    .id(dept.getId())\n                    .name(dept.getName())\n                    .users(userDTOs)\n                    .build();\n\n        })",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 48
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/AiController.java",
+      "timestamp": 1765897177250,
+      "startOffset": 96,
+      "endOffset": 2328,
+      "codeContent": "ai.AiAlertDTO;\nimport com.greentechinnovators.backend.dto.ai.PredictionResponse;\nimport com.greentechinnovators.backend.dto.ai.RecommendationResponse;\nimport com.greentechinnovators.backend.service.AiAlertService;\nimport com.greentechinnovators.backend.service.ChatService;\nimport com.greentechinnovators.backend.service.PredictionService;\nimport com.greentechinnovators.backend.service.RecommendationService;\nimport org.springframework.http.MediaType;\nimport org.springframework.http.ResponseEntity;\nimport org.springframework.web.bind.annotation.*;\nimport reactor.core.publisher.Flux;\n\nimport java.util.List;\nimport java.util.Map;\n\n@RestController\n@RequestMapping(\"/api/ai\")\npublic class AiController {\n\n    private final ChatService aiService;\n    private final PredictionService generatePredictions;\n    private final RecommendationService recommendationService;\n    private final AiAlertService aiAlertService;\n\n    public AiController(ChatService aiService, PredictionService generatePredictions, RecommendationService recommendationService, AiAlertService aiAlertService) {\n        this.aiService \u003d aiService;\n        this.generatePredictions \u003d generatePredictions;\n        this.recommendationService \u003d recommendationService;\n        this.aiAlertService \u003d aiAlertService;\n    }\n\n\n    @PostMapping(value \u003d \"/chat/stream\", produces \u003d MediaType.TEXT_EVENT_STREAM_VALUE)\n    public Flux\u003cString\u003e chatStream(@RequestBody Map\u003cString, Object\u003e payload) {\n        String userMessage \u003d (String) payload.get(\"message\");\n        List\u003cMap\u003cString, String\u003e\u003e history \u003d (List\u003cMap\u003cString, String\u003e\u003e) payload.get(\"history\");\n\n        return aiService.askAIStream(userMessage, history);\n    }\n\n    @GetMapping(\"/predictions\")\n    public PredictionResponse getPredictions() {\n        return generatePredictions.generatePredictions();\n    }\n\n    @GetMapping(\"/recommendations\")\n    public ResponseEntity\u003cRecommendationResponse\u003e getRecommendations() {\n        return ResponseEntity.ok(recommendationService.generateRecommendations());\n    }\n\n\n    @GetMapping(\"/alerts\")\n    public ResponseEntity\u003cList\u003cAiAlertDTO\u003e\u003e getAiGeneratedAlerts() {\n        List\u003cAiAlertDTO\u003e alerts \u003d aiAlertService.generateSmartAlerts();\n        return ResponseEntity.ok(alerts",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 55
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/mapper/UserMapper.java",
+      "timestamp": 1765897177271,
+      "startOffset": 92,
+      "endOffset": 871,
+      "codeContent": "UserResponseDTO;\nimport com.greentechinnovators.backend.dto.auth.RegisterRequest;\nimport com.greentechinnovators.backend.entity.User;\nimport org.springframework.stereotype.Component;\n\n@Component\npublic class UserMapper {\n    public User toEntity(RegisterRequest dto){\n        return User.builder()\n                .name(dto.getName())\n                .email(dto.getEmail())\n                .role(dto.getRole())\n                .department(dto.getDepartment())\n                .build();\n    }\n\n    public static UserResponseDTO toUserDTO(User user) {\n        if (user \u003d\u003d null) return null;\n\n        return UserResponseDTO.builder()\n                .id(user.getId())\n                .username(user.getName())\n                .email(user.getEmail())\n                .build();\n    }\n",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 26
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/UserService.java",
+      "timestamp": 1765897177279,
+      "startOffset": 303,
+      "endOffset": 3368,
+      "codeContent": "Department;\nimport com.greentechinnovators.backend.entity.User;\nimport com.greentechinnovators.backend.gamification.domain.UserGamificationStats;\nimport com.greentechinnovators.backend.gamification.repository.GamificationStatsRepository;\nimport com.greentechinnovators.backend.repository.DepartmentRepository;\nimport com.greentechinnovators.backend.repository.UserRepository;\nimport lombok.RequiredArgsConstructor;\nimport org.springframework.security.crypto.password.PasswordEncoder;\nimport org.springframework.stereotype.Service;\nimport org.springframework.transaction.annotation.Transactional;\n\nimport java.time.LocalDateTime;\nimport java.util.ArrayList;\nimport java.util.List;\nimport java.util.stream.Collectors;\n\n@Service\n@RequiredArgsConstructor\npublic class UserService {\n\n    private final UserRepository userRepository;\n    private final GamificationStatsRepository gamificationStatsRepository;\n    private final PasswordEncoder passwordEncoder;\n    private final EmailService emailService;\n    private final DepartmentRepository departmentRepository;\n    public List\u003cUserProfileDTO\u003e getAllUsers() {\n        return userRepository.findAll().stream()\n                .map(this::mapToProfileDTO)\n                .collect(Collectors.toList());\n    }\n\n    @Transactional\n    public UserProfileDTO createUser(CreateUserRequestDTO request) {\n        if (userRepository.findByEmail(request.getEmail()).isPresent()) {\n            throw new RuntimeException(\"Email is already in use\");\n        }\n\n        int randompassword \u003d 100 + (int)(Math.random() * 1000);\n        String password \u003d \"GreenTech\"+ randompassword ;\n        String generatedPassword \u003d passwordEncoder.encode(password);\n\n        User user \u003d User.builder()\n                .name(request.getName())\n                .email(request.getEmail())\n                .passwordHash(generatedPassword)\n                .role(request.getRole())\n                .department(request.getDepartment())\n                .jobTitle(request.getJobTitle())\n                .createdAt(LocalDateTime.now())\n                .updatedAt(LocalDateTime.now())\n                .build();\n\n\n        User savedUser \u003d userRepository.save(user);\n\n        if (request.getDepartment() !\u003d null \u0026\u0026 !request.getDepartment().isEmpty()) {\n\n            Department dept \u003d departmentRepository.findByName(request.getDepartment())\n                    .orElseGet(() -\u003e {\n                        Department newDept \u003d Department.builder()\n                                .name(request.getDepartment())\n                                .users(new ArrayList\u003c\u003e())\n                                .build();\n                        return departmentRepository.save(newDept);\n                    });\n\n            if (dept.getUsers() \u003d\u003d null) {\n                dept.setUsers(new ArrayList\u003c\u003e());\n            }\n            dept.getUsers().add(savedUser);\n\n            departmentRepository.save(dept);\n        }\n        emailService.sendAccountCreatedEmail(\n                request.getEmail(),\n                request.getName(),\n                password\n        );",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 78
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/repository/UserRepository.java",
+      "timestamp": 1765897177302,
+      "startOffset": 241,
+      "endOffset": 500,
+      "codeContent": "List;\nimport java.util.Optional;\n\n@Repository\npublic interface UserRepository extends MongoRepository\u003cUser , String\u003e {\n\n    Optional\u003cUser\u003e findByEmail(String email);\n\n    boolean existsByEmail(String login);\n    List\u003cUser\u003e findByDepartment(String department);",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 10
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/repository/DepartmentRepository.java",
+      "timestamp": 1765897177315,
+      "startOffset": 230,
+      "endOffset": 494,
+      "codeContent": "import java.util.Optional;\n\n@Repository\npublic interface DepartmentRepository extends MongoRepository\u003cDepartment, String\u003e {\n    // You can add custom queries here if needed, e.g., boolean existsByName(String name);\n    Optional\u003cDepartment\u003e findByName(String name);",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 6
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/GasService.java",
+      "timestamp": 1765897191596,
+      "startOffset": 690,
+      "endOffset": 3502,
+      "codeContent": "    private final com.greentechinnovators.backend.utils.CarbonFootprintService carbonFootprintService;\n\n    public List\u003ccom.greentechinnovators.backend.dto.gas.responce.DailyGasDTO\u003e getDailyGas(LocalDateTime start,\n            LocalDateTime end) {\n        List\u003cGas\u003e allGas \u003d gasRepository.findAll();\n        java.util.List\u003ccom.greentechinnovators.backend.dto.gas.responce.DailyGasDTO\u003e report \u003d new java.util.ArrayList\u003c\u003e();\n        LocalDateTime current \u003d start;\n\n        while (!current.isAfter(end)) {\n            LocalDateTime startOfDay \u003d current.toLocalDate().atStartOfDay();\n            LocalDateTime endOfDay \u003d startOfDay.plusDays(1);\n\n            double totalGas \u003d allGas.stream()\n                    .filter(g -\u003e g.getCreatedAt() !\u003d null \u0026\u0026\n                            !g.getCreatedAt().isBefore(startOfDay) \u0026\u0026\n                            g.getCreatedAt().isBefore(endOfDay))\n                    .mapToDouble(Gas::getConsumedGas)\n                    .sum();\n\n            double carbonFootprint \u003d carbonFootprintService.calculateGasFootprint(totalGas);\n\n            report.add(com.greentechinnovators.backend.dto.gas.responce.DailyGasDTO.builder()\n                    .date(current)\n                    .totalGasConsumed(totalGas)\n                    .carbonFootprintKg(carbonFootprint)\n                    .build());\n\n            current \u003d current.plusDays(1);\n        }\n        return report;\n    }\n\n    public GasResponseDTO create(GasRequestDTO dto) {\n        Gas gas \u003d gasMapper.toEntity(dto);\n        Gas savedGas \u003d gasRepository.save(gas);\n        return gasMapper.toResponse(savedGas);\n    }\n\n    public List\u003cGasResponseDTO\u003e getAllReadings() {\n        List\u003cGas\u003e gasList \u003d gasRepository.findAll();\n        return gasList.stream().map(gasMapper::toResponse).toList();\n    }\n\n    public List\u003cGasResponseDTO\u003e getTodayReadings() {\n        LocalDateTime startOfToday \u003d LocalDateTime.now().toLocalDate().atStartOfDay();\n        LocalDateTime endOfToday \u003d startOfToday.plusDays(1);\n\n        List\u003cGas\u003e gasList \u003d gasRepository.findAll().stream()\n                .filter(g -\u003e g.getCreatedAt() !\u003d null \u0026\u0026\n                        !g.getCreatedAt().isBefore(startOfToday) \u0026\u0026\n                        g.getCreatedAt().isBefore(endOfToday))\n                .toList();\n\n        return gasList.stream().map(gasMapper::toResponse).toList();\n    }\n\n    public List\u003cGasResponseDTO\u003e getConsumedGasBetweenDates(LocalDateTime start, LocalDateTime end) {\n\n        List\u003cGas\u003e allGas \u003d gasRepository.findAll();\n\n        return allGas.stream()\n                .filter(g -\u003e {\n                    if (g.getCreatedAt() \u003d\u003d null)\n                        return false;\n\n                    boolean isAfterStart \u003d !g.getCreatedAt().isBefore(start); // \u003e\u003d start\n                    boolean isBeforeEnd \u003d !g.getCreatedAt().isAfter(end);",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 67
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/EnergyService.java",
+      "timestamp": 1765897191600,
+      "startOffset": 5304,
+      "endOffset": 6632,
+      "codeContent": "\n    public List\u003ccom.greentechinnovators.backend.dto.Energy.Responce.DailyEnergyDTO\u003e getDailyEnergy(LocalDateTime start,\n            LocalDateTime end) {\n        List\u003cEnergy\u003e allEnergy \u003d repository.findAll();\n        List\u003ccom.greentechinnovators.backend.dto.Energy.Responce.DailyEnergyDTO\u003e report \u003d new ArrayList\u003c\u003e();\n        LocalDateTime current \u003d start;\n\n        while (!current.isAfter(end)) {\n            LocalDateTime startOfDay \u003d current.toLocalDate().atStartOfDay();\n            LocalDateTime endOfDay \u003d startOfDay.plusDays(1);\n\n            double totalEnergy \u003d allEnergy.stream()\n                    .filter(e -\u003e e.getCreatedAt() !\u003d null \u0026\u0026\n                            !e.getCreatedAt().isBefore(startOfDay) \u0026\u0026\n                            e.getCreatedAt().isBefore(endOfDay))\n                    .mapToDouble(Energy::getEnergyConsumed)\n                    .sum();\n\n            double carbonFootprint \u003d carbonFootprintService.calculateEnergyFootprint(totalEnergy);\n\n            report.add(com.greentechinnovators.backend.dto.Energy.Responce.DailyEnergyDTO.builder()\n                    .date(current)\n                    .totalEnergyKwh(totalEnergy)\n                    .carbonFootprintKg(carbonFootprint)\n                    .build());\n\n            current \u003d current.plusDays(1);\n        }\n        return report;\n    }\n",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 31
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/dto/gas/responce/GasResponseDTO.java",
+      "timestamp": 1765897191612,
+      "startOffset": 236,
+      "endOffset": 402,
+      "codeContent": "\n    private String usage;\n    private String gasType;\n    private Double quantity;\n    private String unit;\n    private String capacity;\n    private String status;\n\n",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 9
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 351,
-      "totalLines": 6284
+      "usageCount": 360,
+      "totalLines": 6614
     }
   }
 }
