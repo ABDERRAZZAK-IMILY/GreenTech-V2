@@ -18,5 +18,13 @@ public class Gas {
     @Id
     private String id;
     private Double consumedGas;
+
+    private String usage;
+    private String gasType;
+    private Double quantity;
+    private String unit;
+    private String capacity;
+    private String status; // "pleine", "vide", "encours"
+
     private LocalDateTime createdAt = LocalDateTime.now();
 }
