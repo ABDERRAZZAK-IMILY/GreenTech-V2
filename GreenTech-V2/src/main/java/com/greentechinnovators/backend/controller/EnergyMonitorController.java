@@ -3,7 +3,6 @@ package com.greentechinnovators.backend.controller;
 import com.greentechinnovators.backend.dto.Energy.Request.EnergyMonitorRequestDTO;
 import com.greentechinnovators.backend.dto.Energy.Responce.EnergyMonitorResponseDTO;
 import com.greentechinnovators.backend.dto.StatusChangeDTO;
-import com.greentechinnovators.backend.entity.EnergyMonitor;
 import com.greentechinnovators.backend.service.EnergyMonitorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,12 +25,19 @@ public class EnergyMonitorController {
     }
 
     @PatchMapping("/update/{id}")
-    public ResponseEntity<EnergyMonitorResponseDTO> update(@Valid @RequestBody StatusChangeDTO dto, @PathVariable String id) {
+    public ResponseEntity<EnergyMonitorResponseDTO> update(@Valid @RequestBody StatusChangeDTO dto,
+            @PathVariable String id) {
         return ResponseEntity.ok(service.Update(dto, id));
     }
 
     @GetMapping("all")
     private ResponseEntity<List<EnergyMonitorResponseDTO>> all() {
         return ResponseEntity.ok(service.findAll());
+    }
+
+    @DeleteMapping("/{id}")
+    private ResponseEntity<Void> deleteMonitor(@PathVariable String id) {
+        service.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }
