@@ -1,11 +1,12 @@
 package com.greentechinnovators.backend.controller;
 
-import com.greentechinnovators.backend.dto.AI.PredictionResponse;
-import com.greentechinnovators.backend.dto.AI.RecommendationResponse;
+import com.greentechinnovators.backend.dto.ai.AiAlertDTO;
+import com.greentechinnovators.backend.dto.ai.PredictionResponse;
+import com.greentechinnovators.backend.dto.ai.RecommendationResponse;
+import com.greentechinnovators.backend.service.AiAlertService;
 import com.greentechinnovators.backend.service.ChatService;
 import com.greentechinnovators.backend.service.PredictionService;
 import com.greentechinnovators.backend.service.RecommendationService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,10 +22,13 @@ public class AiController {
     private final ChatService aiService;
     private final PredictionService generatePredictions;
     private final RecommendationService recommendationService;
-    public AiController(ChatService aiService, PredictionService generatePredictions, RecommendationService recommendationService) {
+    private final AiAlertService aiAlertService;
+
+    public AiController(ChatService aiService, PredictionService generatePredictions, RecommendationService recommendationService, AiAlertService aiAlertService) {
         this.aiService = aiService;
         this.generatePredictions = generatePredictions;
         this.recommendationService = recommendationService;
+        this.aiAlertService = aiAlertService;
     }
 
 
@@ -44,5 +48,12 @@ public class AiController {
     @GetMapping("/recommendations")
     public ResponseEntity<RecommendationResponse> getRecommendations() {
         return ResponseEntity.ok(recommendationService.generateRecommendations());
+    }
+
+
+    @GetMapping("/alerts")
+    public ResponseEntity<List<AiAlertDTO>> getAiGeneratedAlerts() {
+        List<AiAlertDTO> alerts = aiAlertService.generateSmartAlerts();
+        return ResponseEntity.ok(alerts);
     }
 }
