@@ -19,7 +19,6 @@ const Header = () => {
             try {
                 // Wait for the promise to resolve here
                 const userData = await userService.getUserById();
-                console.log("Resolved user:", userData);
 
                 // Update the state
                 setUser(userData);

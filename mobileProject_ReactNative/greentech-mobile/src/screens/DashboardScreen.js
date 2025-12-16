@@ -9,57 +9,24 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { employeeData } from '../data/employeeData';
 import colors from '../styles/colors';
-import { startTracking, stopTracking } from '../services/LocationService';
 import Header from '../components/Dashboard/header';
 import Level from '../components/Dashboard/Level';
 import StatsGrid from '../components/Dashboard/StatsGrid';
+import GpsTraker from '../components/Dashboard/GpsTraker';
 
 export default function DashboardScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
-  const [isTracking, setIsTracking] = useState(false);
-  const [statusMsg, setStatusMsg] = useState('Prêt à démarrer');
 
-  useEffect(() => {
-    return () => stopTracking();
-  }, []);
 
-  const toggleTracking = () => {
-    if (isTracking) {
-      stopTracking();
-      setIsTracking(false);
-      setStatusMsg('Suivi arrêté');
-    } else {
-      setIsTracking(true);
-      startTracking('USER-001', setStatusMsg);
-    }
-  };
 
-  const progressPercentage = (employeeData.currentPoints / employeeData.nextLevelPoints) * 100;
-  const rankPercentage = ((employeeData.totalEmployees - employeeData.rank) / employeeData.totalEmployees) * 100;
+  
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Header Section */}
       <Header />
 
-      <View style={styles.trackingCard}>
-        <View style={styles.trackingHeader}>
-          <Ionicons name="car-sport" size={24} color={colors.accent} />
-          <Text style={styles.trackingTitle}>Mode Conducteur</Text>
-        </View>
-
-        <Text style={styles.statusText}>{statusMsg}</Text>
-
-        <TouchableOpacity
-          style={[styles.trackButton, isTracking ? styles.stopBtn : styles.startBtn]}
-          onPress={toggleTracking}
-        >
-          <Ionicons name={isTracking ? "stop-circle" : "play-circle"} size={24} color="white" />
-          <Text style={styles.btnText}>
-            {isTracking ? "Arrêter le trajet" : "Commencer le trajet"}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <GpsTraker />
 
       {/* Level Card */}
       <Level />

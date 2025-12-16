@@ -28,7 +28,4 @@ export const API_CONFIG = {
   SEND_INTERVAL: 2000, // 2 secondes - mise à jour rapide
 };
 
-// Log pour debug
-console.log('📡 Backend URL:', API_CONFIG.BASE_URL);
-
 export default API_CONFIG;
