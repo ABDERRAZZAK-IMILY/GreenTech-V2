@@ -1,16 +1,11 @@
 spring:
   application:
     name: backend
-
-
   server:
     port: 8080
-
-
   data:
     mongodb:
       uri: mongodb://localhost:27017/greentech_db
-
 
   ai:
     deepseek:
@@ -18,11 +13,22 @@ spring:
       base-url: https://api.deepseek.com/chat/completions
       model: deepseek-chat
 
+    openai:
+      api-key: sk-435906190b884e668ac1e16c72634c17
+      base-url: https://api.deepseek.com
+      chat:
+        options:
+          model: deepseek-chat
+      embedding:
+        enabled: false
+
+    transformers:
+      embedding:
+        enabled: true
 
   docker:
     compose:
       enabled: false
-
 
   mail:
     host: smtp.gmail.com
@@ -39,7 +45,6 @@ spring:
           ssl:
             trust: "*"
 
-
 springdoc:
   swagger-ui:
     enabled: true
@@ -47,8 +52,6 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
-
 app:
   jwtSecret: sqbddsjvqfhjskhlfdskjlhfdlskqgfsldbfhkdskflhsdhklfsqdhkfgqhsdklfhk
   jwtExpirationMs: 36000
-

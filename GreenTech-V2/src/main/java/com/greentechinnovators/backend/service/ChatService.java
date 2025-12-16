@@ -5,19 +5,29 @@ import com.greentechinnovators.backend.service.ai.DeepSeekClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-
+import org.springframework.ai.document.Document;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ChatService {
 
-    private final AiContextManager contextManager;
     private final DeepSeekClient deepSeekClient;
+    private final RagService ragService;
 
-    private static final String SYSTEM_PROMPT_TEMPLATE = """
+    public Flux<String> askAIStream(String userMessage, List<Map<String, String>> history) {
+
+        List<Document> similarDocs = ragService.searchSimilarData(userMessage);
+
+        String contextData = similarDocs.stream()
+                .map(Document::getContent)
+                .collect(Collectors.joining("\n"));
+
+        // 2. Prompt (Khyfif w Nqi)
+        String systemPrompt = """
     Tu es l'assistant IA de 'GreenTech Innovators'.
     
     🚨 RÔLE & LANGUE :
@@ -40,16 +50,11 @@ public class ChatService {
     ⛔ INTERDICTIONS :
     1. Pas de code informatique.
     2. Pas d'hallucination sur les chiffres (utilise le JSON fourni).
-    """;
+    """.formatted(contextData, userMessage);
 
-    public Flux<String> askAIStream(String userMessage, List<Map<String, String>> history) {
-        String jsonContext = contextManager.getGlobalContextJson();
-
-        String systemPrompt = String.format(SYSTEM_PROMPT_TEMPLATE, jsonContext);
-
+        // 3. Envoie l DeepSeek
         List<Map<String, String>> messages = new ArrayList<>();
         messages.add(Map.of("role", "system", "content", systemPrompt));
-        if (history != null) messages.addAll(history);
         messages.add(Map.of("role", "user", "content", userMessage));
 
         return deepSeekClient.streamChat(messages);

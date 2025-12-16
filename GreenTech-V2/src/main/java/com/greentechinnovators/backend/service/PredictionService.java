@@ -1,7 +1,8 @@
 package com.greentechinnovators.backend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.greentechinnovators.backend.dto.ai.DailyStat;
+import com.greentechinnovators.backend.dto.DailyStatProjection;
+
 import com.greentechinnovators.backend.dto.ai.PredictionResponse;
 import com.greentechinnovators.backend.repository.EnergyRepository;
 import com.greentechinnovators.backend.repository.GasRepository;
@@ -87,25 +88,26 @@ public class PredictionService {
 
         LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);
 
-        if (response.getElectricite() == null) response.setElectricite(new PredictionResponse.CategoryPrediction());
-        response.getElectricite().setHistory(getHistoryData(energyRepository.getLast7DaysStats(sevenDaysAgo)));
+//        if (response.getElectricite() == null) response.setElectricite(new PredictionResponse.CategoryPrediction());
+//        response.getElectricite().setHistory(getHistoryData(energyRepository.getLast7DaysStats(sevenDaysAgo)));
+//
+//        if (response.getGaz() == null) response.setGaz(new PredictionResponse.CategoryPrediction());
+//        response.getGaz().setHistory(getHistoryData(gasRepository.getLast7DaysStats(sevenDaysAgo)));
+//
+//        if (response.getTransport() == null) response.setTransport(new PredictionResponse.CategoryPrediction());
+//        response.getTransport().setHistory(getHistoryData(vehicleLogRepository.getLast7DaysStats(sevenDaysAgo)));
 
-        if (response.getGaz() == null) response.setGaz(new PredictionResponse.CategoryPrediction());
-        response.getGaz().setHistory(getHistoryData(gasRepository.getLast7DaysStats(sevenDaysAgo)));
-
-        if (response.getTransport() == null) response.setTransport(new PredictionResponse.CategoryPrediction());
-        response.getTransport().setHistory(getHistoryData(vehicleLogRepository.getLast7DaysStats(sevenDaysAgo)));
-
-        if (response.getDechets() == null) response.setDechets(new PredictionResponse.CategoryPrediction());
-        response.getDechets().setHistory(getHistoryData(trashRepository.getLast7DaysStats(sevenDaysAgo)));
+//        if (response.getDechets() == null) response.setDechets(new PredictionResponse.CategoryPrediction());
+//        response.getDechets().setHistory(getHistoryData(trashRepository.getLast7DaysStats(sevenDaysAgo)));
 
         return response;
     }
 
-    private List<Double> getHistoryData(List<DailyStat> dbStats) {
+    private List<Double> getHistoryData(List<? extends DailyStatProjection> dbStats) {
         Map<String, Double> statsMap = new HashMap<>();
+
         if (dbStats != null) {
-            for (DailyStat stat : dbStats) {
+            for (DailyStatProjection stat : dbStats) {
                 statsMap.put(stat.getDate(), stat.getTotal());
             }
         }
