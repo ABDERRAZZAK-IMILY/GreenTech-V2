@@ -3355,12 +3355,199 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/UserService.java",
+      "timestamp": 1765884933400,
+      "startOffset": 1099,
+      "endOffset": 2355,
+      "codeContent": "    private final EmailService emailService;\n\n    public List\u003cUserProfileDTO\u003e getAllUsers() {\n        return userRepository.findAll().stream()\n                .map(this::mapToProfileDTO)\n                .collect(Collectors.toList());\n    }\n\n    @Transactional\n    public UserProfileDTO createUser(CreateUserRequestDTO request) {\n        if (userRepository.findByEmail(request.getEmail()).isPresent()) {\n            throw new RuntimeException(\"Email is already in use\");\n        }\n        int randompassword \u003d 100 + (int)(Math.random() * 1000);\n        String password \u003d \"GreenTech\"+ randompassword ;\n        String generatedPassword \u003d passwordEncoder.encode(password);\n\n        User user \u003d User.builder()\n                .name(request.getName())\n                .email(request.getEmail())\n                .passwordHash(generatedPassword)\n                .role(request.getRole())\n                .department(request.getDepartment())\n                .jobTitle(request.getJobTitle())\n                .createdAt(LocalDateTime.now())\n                .updatedAt(LocalDateTime.now())\n                .build();\n\n        emailService.sendAccountCreatedEmail(\n                request.getEmail(),\n                request.getName(),\n                password\n        );",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 33
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/config/GlobalExceptionHandler.java",
+      "timestamp": 1765884965460,
+      "startOffset": 954,
+      "endOffset": 5558,
+      "codeContent": "    private static final Logger logger \u003d LoggerFactory.getLogger(GlobalExceptionHandler.class);\n\n        @ExceptionHandler(MethodArgumentNotValidException.class)\n        public ResponseEntity\u003cErrorResponseDTO\u003e handleValidationExceptions(MethodArgumentNotValidException ex,\n                        HttpServletRequest request) {\n                String message \u003d ex.getBindingResult().getFieldErrors().stream()\n                                .map(error -\u003e error.getField() + \": \" + error.getDefaultMessage())\n                                .collect(Collectors.joining(\"; \"));\n\n                return new ResponseEntity\u003c\u003e(\n                                buildErrorResponse(\n                                                HttpStatus.BAD_REQUEST,\n                                                \"Validation Error\",\n                                                message,\n                                                request.getRequestURI()),\n                                HttpStatus.BAD_REQUEST);\n        }\n\n        @ExceptionHandler(BusinessRuleViolationException.class)\n        public ResponseEntity\u003cErrorResponseDTO\u003e handleBusinessRuleViolation(BusinessRuleViolationException ex,\n                        HttpServletRequest request) {\n                return new ResponseEntity\u003c\u003e(\n                                buildErrorResponse(\n                                                HttpStatus.UNPROCESSABLE_ENTITY, // 422 Status\n                                                \"Business Rule Violation\",\n                                                ex.getMessage(),\n                                                request.getRequestURI()),\n                                HttpStatus.UNPROCESSABLE_ENTITY // 422\n                );\n        }\n\n        @ExceptionHandler(ResourceAccessException.class)\n        public ResponseEntity\u003cErrorResponseDTO\u003e handleResourceAccessException(ResourceNotFoundException ex,\n                        HttpServletRequest request) {\n                return new ResponseEntity\u003c\u003e(\n                                buildErrorResponse(\n                                                HttpStatus.UNPROCESSABLE_ENTITY, // 422 Status\n                                                \"Business Rule Violation\",\n                                                ex.getMessage(),\n                                                request.getRequestURI()),\n                                HttpStatus.UNPROCESSABLE_ENTITY // 422\n                );\n        }\n\n        @ExceptionHandler(IllegalArgumentException.class)\n        public ResponseEntity\u003cMap\u003cString, String\u003e\u003e handleIllegalArgumentException(IllegalArgumentException ex) {\n                logger.warn(\" Validation failed: {}\", ex.getMessage());\n                Map\u003cString, String\u003e response \u003d new HashMap\u003c\u003e();\n                response.put(\"error\", ex.getMessage());\n                response.put(\"message\", ex.getMessage());\n                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);\n        }\n\n        @ExceptionHandler(RuntimeException.class)\n        public ResponseEntity\u003cMap\u003cString, String\u003e\u003e handleRuntimeException(RuntimeException ex) {\n                logger.error(\" Unexpected error occurred: {}\", ex.getMessage(), ex);\n                Map\u003cString, String\u003e response \u003d new HashMap\u003c\u003e();\n                response.put(\"error\", ex.getMessage());\n                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);\n        }\n\n        @ExceptionHandler(Exception.class)\n        public ResponseEntity\u003cErrorResponseDTO\u003e handleInternalServerError(Exception ex, HttpServletRequest request) {\n                return new ResponseEntity\u003c\u003e(\n                                buildErrorResponse(\n                                                HttpStatus.INTERNAL_SERVER_ERROR,\n                                                \"Internal Server Error\",\n                                                \"An unexpected error occurred: \" + ex.getMessage(),\n                                                request.getRequestURI()),\n                                HttpStatus.INTERNAL_SERVER_ERROR // 500\n                );\n        }\n\n        private ErrorResponseDTO buildErrorResponse(HttpStatus status, String type, String message, String path) {\n                return ErrorResponseDTO.builder()\n                                .timestamp(LocalDateTime.now())\n                                .httpCode(status.value())\n                                .errorType(type)\n                                .message(message)\n                                .path(path)\n                                .build();\n    ",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 82
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/dto/AI/AiAlertDTO.java",
+      "timestamp": 1765888023571,
+      "startOffset": 0,
+      "endOffset": 77,
+      "codeContent": "package com.greentechinnovators.backend.dto.AI;\n\npublic class AiAlertDTO {\n}\n",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 5
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/dto/AI/AiAlertDTO.java",
+      "timestamp": 1765888027834,
+      "startOffset": 44,
+      "endOffset": 489,
+      "codeContent": "ai;\n\nimport lombok.AllArgsConstructor;\nimport lombok.Data;\nimport lombok.NoArgsConstructor;\n\n@Data\n@AllArgsConstructor\n@NoArgsConstructor\npublic class AiAlertDTO {\n    private int id;\n    private String type;     // critical, offline, warning, info\n    private String icon;     // fa-fire, fa-truck...\n    private String title;\n    private String location; // Le message de détail\n    private String time;     // \"À l\u0027instant\", \"Il y a 10 min\"\n}",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 17
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AiAlertService.java",
+      "timestamp": 1765888046307,
+      "startOffset": 0,
+      "endOffset": 82,
+      "codeContent": "package com.greentechinnovators.backend.service;\n\npublic class AiAlertService {\n}\n",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 5
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AiAlertService.java",
+      "timestamp": 1765888052397,
+      "startOffset": 47,
+      "endOffset": 3303,
+      "codeContent": ".ai;\n\nimport com.fasterxml.jackson.core.type.TypeReference;\nimport com.fasterxml.jackson.databind.ObjectMapper;\nimport com.greentechinnovators.backend.dto.ai.AiAlertDTO;\nimport lombok.RequiredArgsConstructor;\nimport lombok.extern.slf4j.Slf4j;\nimport org.springframework.stereotype.Service;\n\nimport java.util.Collections;\nimport java.util.List;\n\n@Service\n@RequiredArgsConstructor\n@Slf4j\npublic class AiAlertService {\n\n    private final AiContextManager contextManager; // Ton code précédent\n    private final DeepSeekClient deepSeekClient;   // Ton code précédent\n    private final ObjectMapper objectMapper;\n\n    public List\u003cAiAlertDTO\u003e generateSmartAlerts() {\n        // 1. Récupérer toute la data (Energy, Trash, Transport...)\n        String globalContext \u003d contextManager.getGlobalContextJson();\n\n        // 2. Construire le Prompt pour DeepSeek\n        String prompt \u003d buildAlertPrompt(globalContext);\n\n        // 3. Appeler l\u0027IA\n        String jsonResponse \u003d deepSeekClient.generate(prompt);\n\n        // 4. Convertir la réponse (String) en Liste Java (List\u003cAiAlertDTO\u003e)\n        return parseAiResponse(jsonResponse);\n    }\n\n    private String buildAlertPrompt(String contextData) {\n        return \"\"\"\n            Tu es un système de surveillance IoT intelligent pour GreenTech.\n            \n            CONTEXTE (Données actuelles) :\n            %s\n            \n            TA MISSION :\n            Analyse ces données pour détecter des anomalies, des gaspillages ou des problèmes techniques.\n            Génère une liste d\u0027alertes au format JSON strict.\n            \n            RÈGLES D\u0027ALERTES :\n            - Si Consommation Energy \u003e Moyenne mois dernier -\u003e Type: \u0027warning\u0027, Icon: \u0027fa-bolt\u0027\n            - Si CO2 Transport augmente -\u003e Type: \u0027critical\u0027, Icon: \u0027fa-smog\u0027\n            - Si Déchets \u003e Seuil -\u003e Type: \u0027warning\u0027, Icon: \u0027fa-trash\u0027\n            - Si tout est normal -\u003e Génère une alerte \u0027info\u0027 : \"Systèmes nominaux\".\n            \n            FORMAT DE SORTIE ATTENDU (JSON Array uniquement) :\n            [\n              {\n                \"id\": 1,\n                \"type\": \"critical\", // ou warning, offline, info\n                \"icon\": \"fa-fire\",  // Choisir une icône FontAwesome adaptée\n                \"title\": \"Titre court\",\n                \"location\": \"Description précise du problème et de la valeur\",\n                \"time\": \"À l\u0027instant\"\n              }\n            ]\n            \"\"\".formatted(contextData);\n    }\n\n    private List\u003cAiAlertDTO\u003e parseAiResponse(String jsonResponse) {\n        try {\n            // Nettoyage basique au cas où DeepSeek ajoute du texte (markdown ```json ... ```)\n            String cleanJson \u003d jsonResponse.replace(\"```json\", \"\").replace(\"```\", \"\").trim();\n            \n            // Si l\u0027IA renvoie un objet vide ou du texte, on renvoie une liste vide\n            if (!cleanJson.startsWith(\"[\")) {\n                log.warn(\"L\u0027IA n\u0027a pas renvoyé un tableau JSON valide : {}\", cleanJson);\n                return Collections.emptyList();\n            }\n\n            return objectMapper.readValue(cleanJson, new TypeReference\u003cList\u003cAiAlertDTO\u003e\u003e() {});\n        } catch (Exception e) {\n            log.error(\"Erreur parsing JSON des alertes AI\", e);\n            return Collections.emptyList();\n        }\n    }\n}",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 84
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AiAlertService.java",
+      "timestamp": 1765888058858,
+      "startOffset": 214,
+      "endOffset": 281,
+      "codeContent": "import com.greentechinnovators.backend.service.ai.AiContextManager;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AiAlertService.java",
+      "timestamp": 1765888060453,
+      "startOffset": 620,
+      "endOffset": 663,
+      "codeContent": "com.greentechinnovators.backend.service.ai.",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AiAlertService.java",
+      "timestamp": 1765888060470,
+      "startOffset": 282,
+      "endOffset": 347,
+      "codeContent": "import com.greentechinnovators.backend.service.ai.DeepSeekClient;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/AiAlertService.java",
+      "timestamp": 1765888063515,
+      "startOffset": 156,
+      "endOffset": 213,
+      "codeContent": "import com.greentechinnovators.backend.dto.AI.AiAlertDTO;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/AiController.java",
+      "timestamp": 1765888140053,
+      "startOffset": 1880,
+      "endOffset": 2209,
+      "codeContent": "private final AiAlertService aiAlertService;\n\n    @GetMapping\n    public ResponseEntity\u003cList\u003cAiAlertDTO\u003e\u003e getAiGeneratedAlerts() {\n        // Cette méthode va prendre 2-3 secondes le temps que l\u0027IA réfléchisse\n        List\u003cAiAlertDTO\u003e alerts \u003d aiAlertService.generateSmartAlerts();\n        return ResponseEntity.ok(alerts);\n    }",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 8
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/AiController.java",
+      "timestamp": 1765888142107,
+      "startOffset": 53,
+      "endOffset": 110,
+      "codeContent": "import com.greentechinnovators.backend.dto.ai.AiAlertDTO;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/AiController.java",
+      "timestamp": 1765888152272,
+      "startOffset": 918,
+      "endOffset": 958,
+      "codeContent": "com.greentechinnovators.backend.service.",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/AiController.java",
+      "timestamp": 1765888152296,
+      "startOffset": 247,
+      "endOffset": 309,
+      "codeContent": "import com.greentechinnovators.backend.service.AiAlertService;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/AiController.java",
+      "timestamp": 1765888155592,
+      "startOffset": 1142,
+      "endOffset": 1211,
+      "codeContent": "com.greentechinnovators.backend.service.AiAlertService aiAlertService",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/AiController.java",
+      "timestamp": 1765888155606,
+      "startOffset": 1333,
+      "endOffset": 1370,
+      "codeContent": "this.aiAlertService \u003d aiAlertService;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/controller/AiController.java",
+      "timestamp": 1765888155624,
+      "startOffset": 1333,
+      "endOffset": 1379,
+      "codeContent": "    this.aiAlertService \u003d aiAlertService;\n    ",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 305,
-      "totalLines": 5940
+      "usageCount": 322,
+      "totalLines": 6185
     }
   }
 }
