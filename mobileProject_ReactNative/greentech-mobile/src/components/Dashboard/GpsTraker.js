@@ -7,7 +7,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../styles/colors';
 import { useEffect, useState } from 'react';
-import { checkGPSEnabled, getCurrentPosition, requestLocationPermissions, sendPositionToBackend, startBackgroundTracking } from '../../services/LocaltionService';
+import { checkGPSEnabled, getCurrentPosition, requestLocationPermissions, sendPositionToBackend, startBackgroundTracking, stopBackgroundTracking } from '../../services/LocaltionService';
 import { API_CONFIG } from './../../config/api';
 
 const GpsTraker = () => {
@@ -106,6 +106,22 @@ const GpsTraker = () => {
         // Première mise à jour immédiate
         await updateAndSendPosition();
     };
+    // Arrêter le tracking
+    const stopTracking = async () => {
+        setIsTracking(false);
+
+        // Arrêter l'intervalle foreground
+        if (trackingIntervalRef.current) {
+            clearInterval(trackingIntervalRef.current);
+            trackingIntervalRef.current = null;
+        }
+
+        // Arrêter le tracking background
+        await stopBackgroundTracking();
+
+        setSendStatus('idle');
+    };
+    
 
     const updateAndSendPosition = async () => {
         try {
@@ -139,6 +155,7 @@ const GpsTraker = () => {
             setError('Erreur de connexion au serveur');
         }
     };
+
 
     if (isLoading) {
         return (
