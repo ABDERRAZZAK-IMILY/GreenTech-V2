@@ -36,13 +36,18 @@ public class TrashService {
     private final TrashMapper mapper;
 
     public TrashResponseDTO saveReading(TrashRequestDTO dto) {
-        
+
         String macAddress = dto.getMacAddress();
         if (macAddress == null || macAddress.trim().isEmpty()) {
             log.warn("Received trash data without MAC address, generating default");
             macAddress = "UNKNOWN-" + System.currentTimeMillis();
         }
-        
+
+        // Check if this is a manual entry - save directly without creating a monitor
+        if ("MANUAL_ENTRY".equals(macAddress)) {
+            return saveManualEntry(dto);
+        }
+
         final String finalMacAddress = macAddress;
 
         // Find or create TrashMonitor by MAC address
@@ -59,12 +64,27 @@ public class TrashService {
                     newMonitor.setTrash(new ArrayList<>());
                     return trashMonitorRepository.save(newMonitor);
                 });
-        
+
         Trash entity = mapper.toEntity(dto);
         entity.setCreatedAt(LocalDateTime.now());
         Trash savedEntity = repository.save(entity);
         monitor.getTrash().add(savedEntity);
         trashMonitorRepository.save(monitor);
+        return mapper.toResponse(savedEntity);
+    }
+
+    /**
+     * Save manual entry directly to Trash collection without linking to a monitor.
+     * This keeps manual entries separate from IoT sensor data.
+     */
+    public TrashResponseDTO saveManualEntry(TrashRequestDTO dto) {
+        log.info("Saving manual trash entry: {} kg", dto.getWeight());
+
+        Trash entity = mapper.toEntity(dto);
+        entity.setCreatedAt(LocalDateTime.now());
+        Trash savedEntity = repository.save(entity);
+
+        log.info("Manual entry saved with ID: {}", savedEntity.getId());
         return mapper.toResponse(savedEntity);
     }
 
@@ -77,13 +97,13 @@ public class TrashService {
     public List<TrashResponseDTO> getTodayReadings() {
         LocalDateTime startOfToday = LocalDateTime.now().toLocalDate().atStartOfDay();
         LocalDateTime endOfToday = startOfToday.plusDays(1);
-        
+
         List<Trash> trashList = repository.findAll().stream()
-                .filter(t -> t.getCreatedAt() != null && 
-                           !t.getCreatedAt().isBefore(startOfToday) && 
-                           t.getCreatedAt().isBefore(endOfToday))
+                .filter(t -> t.getCreatedAt() != null &&
+                        !t.getCreatedAt().isBefore(startOfToday) &&
+                        t.getCreatedAt().isBefore(endOfToday))
                 .toList();
-        
+
         return trashList.stream().map(mapper::toResponse).toList();
     }
 
@@ -92,7 +112,8 @@ public class TrashService {
 
         return allTrash.stream()
                 .filter(t -> {
-                    if (t.getCreatedAt() == null || t.getWight() == null) return false;
+                    if (t.getCreatedAt() == null || t.getWight() == null)
+                        return false;
                     boolean isAfterStart = !t.getCreatedAt().isBefore(start);
                     boolean isBeforeEnd = !t.getCreatedAt().isAfter(end);
                     return isAfterStart && isBeforeEnd;
@@ -117,7 +138,8 @@ public class TrashService {
             // 2. N-filtriw mn la liste li déjà 3ndna (Bla ma nmchiw l DB)
             Double totalWeight = allTrash.stream()
                     .filter(t -> {
-                        if (t.getCreatedAt() == null || t.getWight() == null) return false;
+                        if (t.getCreatedAt() == null || t.getWight() == null)
+                            return false;
 
                         // Wach Trash dial had nhar b ddbet?
                         return !t.getCreatedAt().isBefore(startOfDay) &&
@@ -144,6 +166,5 @@ public class TrashService {
     public Double calculateDailyFootPrint(Double weight) {
         return carbonFootprintService.calculateTrashFootprint(weight);
     }
-
 
 }
