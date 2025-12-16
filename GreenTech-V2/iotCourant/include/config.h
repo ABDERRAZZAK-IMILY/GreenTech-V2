@@ -12,12 +12,12 @@
 
 // ==================== CONFIGURATION WIFI ====================
 // Modifiez ces valeurs selon votre réseau
-#define WIFI_SSID "Boybouch"
-#define WIFI_PASSWORD "22222222"
+#define WIFI_SSID "Cafe ryad gzoula_2.4G"
+#define WIFI_PASSWORD "90807060"
 
 // ==================== CONFIGURATION WEBSOCKET ====================
 // Adresse IP du serveur Spring Boot
-#define WS_SERVER "192.168.11.237"
+#define WS_SERVER "192.168.1.251"
 #define WS_PORT 8080
 #define WS_PATH "/iot/energy"
 
