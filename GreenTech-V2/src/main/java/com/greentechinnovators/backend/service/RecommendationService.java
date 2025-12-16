@@ -1,7 +1,7 @@
 package com.greentechinnovators.backend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.greentechinnovators.backend.dto.AI.RecommendationResponse;
+import com.greentechinnovators.backend.dto.ai.RecommendationResponse;
 import com.greentechinnovators.backend.service.ai.AiContextManager;
 import com.greentechinnovators.backend.service.ai.DeepSeekClient;
 import lombok.RequiredArgsConstructor;

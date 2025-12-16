@@ -1,6 +1,6 @@
 package com.greentechinnovators.backend.repository;
 
-import com.greentechinnovators.backend.dto.AI.TopConsumerStats;
+import com.greentechinnovators.backend.dto.ai.TopConsumerStats;
 import com.greentechinnovators.backend.entity.SmartData;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;

@@ -3,9 +3,11 @@ package com.greentechinnovators.backend.service;
 import com.greentechinnovators.backend.dto.user.CreateUserRequestDTO;
 import com.greentechinnovators.backend.dto.user.UpdateProfileRequestDTO;
 import com.greentechinnovators.backend.dto.user.UserProfileDTO;
+import com.greentechinnovators.backend.entity.Department;
 import com.greentechinnovators.backend.entity.User;
 import com.greentechinnovators.backend.gamification.domain.UserGamificationStats;
 import com.greentechinnovators.backend.gamification.repository.GamificationStatsRepository;
+import com.greentechinnovators.backend.repository.DepartmentRepository;
 import com.greentechinnovators.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,8 +26,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final GamificationStatsRepository gamificationStatsRepository;
     private final PasswordEncoder passwordEncoder;
-
-
+    private final EmailService emailService;
+    private final DepartmentRepository departmentRepository;
     public List<UserProfileDTO> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(this::mapToProfileDTO)
@@ -33,16 +36,18 @@ public class UserService {
 
     @Transactional
     public UserProfileDTO createUser(CreateUserRequestDTO request) {
-        // Check if email already exists
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email is already in use");
         }
 
-        // Create new user
+        int randompassword = 100 + (int)(Math.random() * 1000);
+        String password = "GreenTech"+ randompassword ;
+        String generatedPassword = passwordEncoder.encode(password);
+
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .passwordHash(generatedPassword)
                 .role(request.getRole())
                 .department(request.getDepartment())
                 .jobTitle(request.getJobTitle())
@@ -50,8 +55,32 @@ public class UserService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
+
         User savedUser = userRepository.save(user);
 
+        if (request.getDepartment() != null && !request.getDepartment().isEmpty()) {
+
+            Department dept = departmentRepository.findByName(request.getDepartment())
+                    .orElseGet(() -> {
+                        Department newDept = Department.builder()
+                                .name(request.getDepartment())
+                                .users(new ArrayList<>())
+                                .build();
+                        return departmentRepository.save(newDept);
+                    });
+
+            if (dept.getUsers() == null) {
+                dept.setUsers(new ArrayList<>());
+            }
+            dept.getUsers().add(savedUser);
+
+            departmentRepository.save(dept);
+        }
+        emailService.sendAccountCreatedEmail(
+                request.getEmail(),
+                request.getName(),
+                password
+        );
         // Create initial gamification stats
         UserGamificationStats stats = UserGamificationStats.builder()
                 .userId(savedUser.getId())

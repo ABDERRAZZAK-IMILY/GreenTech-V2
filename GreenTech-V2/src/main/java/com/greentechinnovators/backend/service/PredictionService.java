@@ -1,8 +1,8 @@
 package com.greentechinnovators.backend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.greentechinnovators.backend.dto.AI.DailyStat;
-import com.greentechinnovators.backend.dto.AI.PredictionResponse;
+import com.greentechinnovators.backend.dto.ai.DailyStat;
+import com.greentechinnovators.backend.dto.ai.PredictionResponse;
 import com.greentechinnovators.backend.repository.EnergyRepository;
 import com.greentechinnovators.backend.repository.GasRepository;
 import com.greentechinnovators.backend.repository.TrashRepository;

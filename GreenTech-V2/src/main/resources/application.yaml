@@ -2,12 +2,15 @@ spring:
   application:
     name: backend
 
+
   server:
     port: 8080
+
 
   data:
     mongodb:
       uri: mongodb://localhost:27017/greentech_db
+
 
   ai:
     deepseek:
@@ -15,9 +18,27 @@ spring:
       base-url: https://api.deepseek.com/chat/completions
       model: deepseek-chat
 
+
   docker:
     compose:
       enabled: false
+
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: itsmoustir@gmail.com
+    password: zesm lbav korz iiec
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: "*"
+
 
 springdoc:
   swagger-ui:
@@ -26,11 +47,8 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+
 app:
   jwtSecret: sqbddsjvqfhjskhlfdskjlhfdlskqgfsldbfhkdskflhsdhklfsqdhkfgqhsdklfhk
   jwtExpirationMs: 36000
 
-  twilio:
-    account-sid: AC9226a83c6bd1e71b0f22c4671c95a1f4
-    auth-token: 3fd4ddae8ef3789af683b3c8e6b53db2
-    messaging-sid: MGcecdbbb0226389355f738a06a10c6c40

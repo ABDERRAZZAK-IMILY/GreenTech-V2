@@ -61,4 +61,5 @@ public class DepartmentMapper {
                 .email(user.getEmail())
                 .build();
     }
+
 }
