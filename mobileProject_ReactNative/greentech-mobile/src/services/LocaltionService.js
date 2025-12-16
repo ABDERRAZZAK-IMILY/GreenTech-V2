@@ -77,9 +77,9 @@ export const getCurrentPosition = async () => {
 };
 
 // Envoyer la position au backend
-export const sendPositionToBackend = async (latitude, longitude) => {
+export const sendPositionToBackend = async (latitude, longitude,vid) => {
     try {
-        const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.POSITION}`, {
+        const response = await fetch(`${API_CONFIG.BASE_URL}api/vehicle/log`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -87,8 +87,7 @@ export const sendPositionToBackend = async (latitude, longitude) => {
             body: JSON.stringify({
                 latitude,
                 longitude,
-                timestamp: new Date().toISOString(),
-                deviceId: 'mobile-app-01', // Identifiant unique du device
+                vehicleId:vid
             }),
         });
 
@@ -102,6 +101,24 @@ export const sendPositionToBackend = async (latitude, longitude) => {
         throw error;
     }
 };
+
+export const findVehivle = async (id) => {
+    try {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/v1/vehicles/${id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Erreur récupération véhicule:', error);
+        throw error;
+    }
+}
 
 // Démarrer le tracking en background
 export const startBackgroundTracking = async () => {

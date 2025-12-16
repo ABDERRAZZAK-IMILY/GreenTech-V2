@@ -4,6 +4,7 @@ import com.greentechinnovators.backend.dto.vehicle.request.VehicleLogRequestDTO;
 import com.greentechinnovators.backend.dto.vehicle.request.VehicleRequestDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.DailyDistanceDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.VehicleLogResponseDTO;
+import com.greentechinnovators.backend.dto.vehicle.responce.VehicleResponseDTO;
 import com.greentechinnovators.backend.entity.VehicleLog;
 import com.greentechinnovators.backend.repository.VehicleLogRepository;
 import com.greentechinnovators.backend.service.VehicleLogservice;
@@ -27,8 +28,8 @@ public class TransportController {
     public ResponseEntity<VehicleLogResponseDTO> crate(@RequestBody VehicleLogRequestDTO dto) {
         return ResponseEntity.ok(service.create(dto));
     }
-    @GetMapping("test")
-    public ResponseEntity<List<DailyDistanceDTO>> test() {
-        return ResponseEntity.ok(VLservice.getDistanceHistory(LocalDateTime.parse("2025-12-12T11:29:40.3526666"),LocalDateTime.parse("2025-12-12T14:56:52.8142666")));
+    @GetMapping()
+    public ResponseEntity<VehicleResponseDTO> findByUserId(@RequestParam String userId)  {
+        return ResponseEntity.ok(VLservice.findVehicleByUserId(userId));
     }
 }

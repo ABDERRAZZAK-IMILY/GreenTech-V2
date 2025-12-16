@@ -7,11 +7,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../styles/colors';
 import { useEffect, useRef, useState } from 'react';
-import { checkGPSEnabled, getCurrentPosition, requestLocationPermissions, sendPositionToBackend, startBackgroundTracking, stopBackgroundTracking } from '../../services/LocaltionService';
+import { checkGPSEnabled, findVehivle, getCurrentPosition, requestLocationPermissions, sendPositionToBackend, startBackgroundTracking, stopBackgroundTracking } from '../../services/LocaltionService';
 import { API_CONFIG } from './../../config/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const GpsTraker = () => {
     const [isTracking, setIsTracking] = useState(false);
@@ -138,9 +139,11 @@ const GpsTraker = () => {
             const position = await getCurrentPosition();
             setCurrentPosition(position);
             setLastUpdate(new Date());
+            const userId = await AsyncStorage.getItem('userId');
+            const vehicule  = await findVehivle(userId);
 
             // Envoyer au backend et récupérer les stats
-            const response = await sendPositionToBackend(position.latitude, position.longitude);
+            const response = await sendPositionToBackend(position.latitude, position.longitude,vehicule.id);
 
             // Mettre à jour la distance totale depuis la réponse du backend
             if (response && response.totalDistance !== undefined) {
