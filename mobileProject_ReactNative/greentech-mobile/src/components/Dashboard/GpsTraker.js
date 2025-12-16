@@ -141,6 +141,8 @@ const GpsTraker = () => {
             setLastUpdate(new Date());
             const userId = await AsyncStorage.getItem('userId');
             const vehicule  = await findVehivle(userId);
+            console.log(vehicule);
+            
 
             // Envoyer au backend et récupérer les stats
             const response = await sendPositionToBackend(position.latitude, position.longitude,vehicule.id);

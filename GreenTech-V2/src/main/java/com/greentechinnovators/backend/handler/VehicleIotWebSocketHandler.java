@@ -3,7 +3,7 @@ package com.greentechinnovators.backend.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.greentechinnovators.backend.dto.vehicle.request.VehicleLogRequestDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.VehicleLogResponseDTO;
-import com.greentechinnovators.backend.service.VehicleLogservice;
+import com.greentechinnovators.backend.service.VehicleLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class VehicleIotWebSocketHandler extends TextWebSocketHandler {
 
-    private final VehicleLogservice vehicleLogservice;
+    private final VehicleLogService vehicleLogservice;
     private final ObjectMapper objectMapper;
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 

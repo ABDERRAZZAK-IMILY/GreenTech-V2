@@ -11,7 +11,7 @@ import com.greentechinnovators.backend.dto.vehicle.responce.VehicleLogResponseDT
 import com.greentechinnovators.backend.service.EnergyService;
 import com.greentechinnovators.backend.service.GasService;
 import com.greentechinnovators.backend.service.TrashService;
-import com.greentechinnovators.backend.service.VehicleLogservice;
+import com.greentechinnovators.backend.service.VehicleLogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +27,7 @@ public class DashboardController {
     private final EnergyService energyService;
     private final TrashService trashService;
     private final GasService gasService;
-    private final VehicleLogservice vehicleLogservice;
+    private final VehicleLogService vehicleLogservice;
 
     // Energy endpoints
     @PostMapping("/energy/ingest")

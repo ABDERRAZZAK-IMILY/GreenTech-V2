@@ -78,6 +78,8 @@ export const getCurrentPosition = async () => {
 
 // Envoyer la position au backend
 export const sendPositionToBackend = async (latitude, longitude,vid) => {
+    console.log(latitude,longitude);
+    
     try {
         const response = await fetch(`${API_CONFIG.BASE_URL}api/vehicle/log`, {
             method: 'POST',
@@ -104,7 +106,7 @@ export const sendPositionToBackend = async (latitude, longitude,vid) => {
 
 export const findVehivle = async (id) => {
     try {
-        const response = await fetch(`${API_CONFIG.BASE_URL}/api/v1/vehicles/${id}`, {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/transport${id}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

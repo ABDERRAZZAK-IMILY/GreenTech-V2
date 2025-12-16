@@ -7,7 +7,7 @@ import com.greentechinnovators.backend.dto.vehicle.responce.VehicleLogResponseDT
 import com.greentechinnovators.backend.dto.vehicle.responce.VehicleResponseDTO;
 import com.greentechinnovators.backend.entity.VehicleLog;
 import com.greentechinnovators.backend.repository.VehicleLogRepository;
-import com.greentechinnovators.backend.service.VehicleLogservice;
+import com.greentechinnovators.backend.service.VehicleLogService;
 import com.greentechinnovators.backend.service.VehicleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +21,7 @@ import java.util.List;
 @RequestMapping("api/transport")
 @RequiredArgsConstructor
 public class TransportController {
-    private final VehicleLogservice service;
+    private final VehicleLogService service;
     private final VehicleService VLservice;
 
     @PostMapping
