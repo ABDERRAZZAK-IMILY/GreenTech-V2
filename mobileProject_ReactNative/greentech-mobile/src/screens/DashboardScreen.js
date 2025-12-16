@@ -9,7 +9,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { employeeData } from '../data/employeeData';
 import colors from '../styles/colors';
-import { startTracking, stopTracking } from '../services/LocationService';
 import Header from '../components/Dashboard/header';
 import Level from '../components/Dashboard/Level';
 import StatsGrid from '../components/Dashboard/StatsGrid';
@@ -18,9 +17,7 @@ import GpsTraker from '../components/Dashboard/GpsTraker';
 export default function DashboardScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
 
-  useEffect(() => {
-    return () => stopTracking();
-  }, []);
+
 
   
 
