@@ -19,6 +19,18 @@ const WasteTab = () => {
   const [currentSubtypes, setCurrentSubtypes] = useState([]);
   const [sensorCounter, setSensorCounter] = useState(13);
 
+  // Manual entry form state
+  const [manualEntryForm, setManualEntryForm] = useState({
+    wasteType: 'organic',
+    weight: ''
+  });
+
+  // History of manual entries
+  const [manualEntryHistory, setManualEntryHistory] = useState([]);
+
+  // New subtype input state
+  const [newSubtypeInput, setNewSubtypeInput] = useState('');
+
   // Form state for adding new sensor
   const [newSensorForm, setNewSensorForm] = useState({
     location: '',
@@ -129,6 +141,18 @@ const WasteTab = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Load manual entry history from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedHistory = localStorage.getItem('wasteManualEntryHistory');
+      if (savedHistory) {
+        setManualEntryHistory(JSON.parse(savedHistory));
+      }
+    } catch (e) {
+      console.warn('Could not load from localStorage:', e);
+    }
+  }, []);
+
   // Initialize filter and subtypes on component mount
   useEffect(() => {
     // Show all sensors by default
@@ -169,32 +193,13 @@ const WasteTab = () => {
   };
 
   const updateWasteTypeDisplay = (wasteType) => {
-    const typeNames = {
-      organic: 'Organique',
-      recyclable: 'Recyclable',
-      'non-recyclable': 'Non-Recyclable',
-      electronic: 'Électronique',
-      dangerous: 'Dangereux'
-    };
-
-    // Update the title in sub-types management
-    const currentWasteTypeName = document.getElementById('currentWasteTypeName');
-    if (currentWasteTypeName) {
-      currentWasteTypeName.textContent = typeNames[wasteType] || wasteType;
-    }
-
-    // Update manual entry form fields
-    const wasteTypeManual = document.getElementById('wasteTypeManual');
-    const wasteTypeDisplay = document.getElementById('wasteTypeDisplay');
-    if (wasteTypeManual && wasteTypeDisplay) {
-      wasteTypeManual.value = wasteType;
-      wasteTypeDisplay.value = typeNames[wasteType] || wasteType;
-    }
+    // This function is no longer needed for manual entry form
+    // but kept for subtitle management updates
+    // The currentSubtypes state is already updated in filterWasteSensors via useEffect
   };
 
   const addSubtype = () => {
-    const input = document.getElementById('newSubtypeInput');
-    const subtypeText = input.value.trim();
+    const subtypeText = newSubtypeInput.trim();
 
     if (!subtypeText) {
       showNotification('Veuillez entrer un sous-type', 'error');
@@ -211,7 +216,7 @@ const WasteTab = () => {
     setCurrentSubtypes([...currentSubtypes, subtypeText]);
 
     // Clear input
-    input.value = '';
+    setNewSubtypeInput('');
     showNotification(`Sous-type "${subtypeText}" ajouté`, 'success');
   };
 
@@ -225,50 +230,76 @@ const WasteTab = () => {
   const submitWasteManualData = async (event) => {
     event.preventDefault();
 
-    const wasteType = document.getElementById('wasteTypeManual').value;
-    const wasteTypeDisplay = document.getElementById('wasteTypeDisplay').value;
-    const weight = document.getElementById('wasteWeight').value;
-
-    if (!wasteType) {
-      showNotification('Veuillez sélectionner un type de déchet via les boutons ci-dessus', 'warning');
+    if (!manualEntryForm.wasteType || !manualEntryForm.weight) {
+      showNotification('Veuillez remplir tous les champs requis', 'warning');
       return;
     }
 
+    const typeNames = {
+      'organic': 'Organique',
+      'recyclable': 'Recyclable',
+      'non-recyclable': 'Non-Recyclable',
+      'electronic': 'Électronique',
+      'dangerous': 'Dangereux'
+    };
+
     try {
-      // Submit to backend
+      // Send to Backend - saves to Trash collection directly (not as IoT monitor)
       const payload = {
-        weight: parseFloat(weight),
+        weight: parseFloat(manualEntryForm.weight),
         macAddress: 'MANUAL_ENTRY'
       };
 
       await trashDataService.submitManualData(payload);
+      console.log('✅ Manual entry saved to database');
 
-      // Get current date and time
+      // Create new manual entry for local history
       const now = new Date();
-      const dateStr = now.toLocaleDateString('fr-FR');
-      const timeStr = now.toLocaleTimeString('fr-FR');
+      const newEntry = {
+        id: Date.now(),
+        dateTime: `${now.toLocaleDateString('fr-FR')} ${now.toLocaleTimeString('fr-FR')}`,
+        wasteType: typeNames[manualEntryForm.wasteType] || manualEntryForm.wasteType,
+        wasteTypeKey: manualEntryForm.wasteType,
+        weight: parseFloat(manualEntryForm.weight).toFixed(2)
+      };
 
-      // Add to history table
-      const tableBody = document.getElementById('wasteHistoryTableBody');
-      const newRow = document.createElement('tr');
-      newRow.innerHTML = `
-        <td>${dateStr} ${timeStr}</td>
-        <td>${wasteTypeDisplay}</td>
-        <td>${weight}</td>
-      `;
+      // Update history state
+      const updatedHistory = [newEntry, ...manualEntryHistory];
+      setManualEntryHistory(updatedHistory);
 
-      tableBody.insertBefore(newRow, tableBody.firstChild);
+      // Save to localStorage for UI persistence
+      try {
+        localStorage.setItem('wasteManualEntryHistory', JSON.stringify(updatedHistory));
+      } catch (e) {
+        console.warn('Could not save to localStorage:', e);
+      }
 
       // Reset form
-      event.target.reset();
-      // Re-apply the waste type after reset
-      updateWasteTypeDisplay(activeFilter);
+      setManualEntryForm({
+        wasteType: manualEntryForm.wasteType,
+        weight: ''
+      });
 
-      showNotification('Données de déchet enregistrées avec succès !', 'success');
+      showNotification('Saisie manuelle enregistrée avec succès !', 'success');
     } catch (error) {
-      console.error('Error submitting waste data:', error);
-      showNotification('Erreur lors de l\'enregistrement des données', 'error');
+      console.error('Error saving manual entry to database:', error);
+      showNotification('Erreur lors de l\'enregistrement', 'error');
     }
+  };
+
+  // Delete manual entry
+  const deleteManualEntry = (entryId) => {
+    const updatedHistory = manualEntryHistory.filter(entry => entry.id !== entryId);
+    setManualEntryHistory(updatedHistory);
+
+    // Update localStorage
+    try {
+      localStorage.setItem('wasteManualEntryHistory', JSON.stringify(updatedHistory));
+    } catch (e) {
+      console.warn('Could not save to localStorage:', e);
+    }
+
+    showNotification('Entrée supprimée', 'info');
   };
 
   const viewSensorDetails = (sensorId) => {
@@ -326,6 +357,16 @@ const WasteTab = () => {
   const handleAddSensor = async (event) => {
     event.preventDefault();
 
+    // Check if MAC address already exists locally before sending to backend
+    const existingMac = sensors.find(
+      s => s.macAddress && s.macAddress.toLowerCase() === newSensorForm.macAddress.toLowerCase()
+    );
+
+    if (existingMac) {
+      showNotification(`Un capteur avec l'adresse MAC "${newSensorForm.macAddress}" existe déjà`, 'error');
+      return;
+    }
+
     try {
       // Prepare data for backend
       const monitorData = {
@@ -353,8 +394,13 @@ const WasteTab = () => {
       closeModals();
     } catch (error) {
       console.error('Error adding sensor:', error);
-      const errorMessage = error.response?.data?.message || 'Erreur lors de l\'ajout du capteur';
-      showNotification(errorMessage, 'error');
+      // Check for duplicate MAC address error from backend
+      if (error.response?.status === 400 || error.response?.data?.message?.includes('existe déjà')) {
+        showNotification(`Un capteur avec cette adresse MAC existe déjà`, 'error');
+      } else {
+        const errorMessage = error.response?.data?.message || 'Erreur lors de l\'ajout du capteur';
+        showNotification(errorMessage, 'error');
+      }
     }
   };
 
@@ -682,7 +728,20 @@ const WasteTab = () => {
       <div className="subtypes-management-section">
         <h4>
           <i className="fas fa-tags" /> Liste des types de Déchets existants -{" "}
-          <span id="currentWasteTypeName">Organique</span>
+          <span style={{
+            color: activeFilter === 'organic' ? '#22c55e' :
+              activeFilter === 'recyclable' ? '#3b82f6' :
+                activeFilter === 'non-recyclable' ? '#f59e0b' :
+                  activeFilter === 'electronic' ? '#a855f7' :
+                    activeFilter === 'dangerous' ? '#ef4444' : 'var(--text-primary)'
+          }}>
+            {activeFilter === 'all' ? 'Tous les types' :
+              activeFilter === 'organic' ? 'Organique' :
+                activeFilter === 'recyclable' ? 'Recyclable' :
+                  activeFilter === 'non-recyclable' ? 'Non-Recyclable' :
+                    activeFilter === 'electronic' ? 'Électronique' :
+                      activeFilter === 'dangerous' ? 'Dangereux' : activeFilter}
+          </span>
         </h4>
         <div className="subtypes-card">
           <div className="subtypes-container" id="wasteSubtypesContainer">
@@ -701,7 +760,9 @@ const WasteTab = () => {
           <div className="add-subtype-input">
             <input
               type="text"
-              id="newSubtypeInput"
+              value={newSubtypeInput}
+              onChange={(e) => setNewSubtypeInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && addSubtype()}
               placeholder="Ajouter un sous-type (ex: Épluchures)"
               maxLength={50}
             />
@@ -725,29 +786,39 @@ const WasteTab = () => {
           className="manual-waste-form"
           onSubmit={submitWasteManualData}
         >
-          <input type="hidden" id="wasteTypeManual" required />
           <div className="form-row">
             <div className="form-group">
               <label>Type de déchet</label>
-              <input
-                type="text"
-                id="wasteTypeDisplay"
-                readOnly
+              <select
+                value={manualEntryForm.wasteType}
+                onChange={(e) => setManualEntryForm({ ...manualEntryForm, wasteType: e.target.value })}
                 style={{
-                  cursor: "not-allowed",
-                  background: "rgba(255, 255, 255, 0.03)"
+                  padding: '12px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: 'white',
+                  width: '100%',
+                  fontSize: '14px'
                 }}
-                placeholder="Sélectionnez un type via les boutons ci-dessus"
-              />
+                required
+              >
+                <option value="organic">🍃 Organique</option>
+                <option value="recyclable">♻️ Recyclable</option>
+                <option value="non-recyclable">🗑️ Non-Recyclable</option>
+                <option value="electronic">💻 Électronique</option>
+                <option value="dangerous">☢️ Dangereux</option>
+              </select>
             </div>
             <div className="form-group">
               <label>Poids (kg)</label>
               <input
                 type="number"
-                id="wasteWeight"
+                value={manualEntryForm.weight}
+                onChange={(e) => setManualEntryForm({ ...manualEntryForm, weight: e.target.value })}
                 placeholder="Ex: 45.5"
                 min={0}
-                step="0.1"
+                step="0.01"
                 required
               />
             </div>
@@ -763,8 +834,28 @@ const WasteTab = () => {
       {/* Waste Manual Entry History Table */}
       <div className="waste-history-section">
         <h4>
-          <i className="fas fa-history" /> Historique des Saisies
+          <i className="fas fa-history" /> Historique des Saisies Manuelles
+          {manualEntryHistory.length > 0 && (
+            <span style={{
+              marginLeft: '10px',
+              background: 'rgba(102, 126, 234, 0.3)',
+              padding: '4px 10px',
+              borderRadius: '12px',
+              fontSize: '12px'
+            }}>
+              {manualEntryHistory.length} entrées
+            </span>
+          )}
         </h4>
+        <p style={{
+          fontSize: '12px',
+          color: 'var(--text-secondary)',
+          marginBottom: '15px',
+          fontStyle: 'italic'
+        }}>
+          <i className="fas fa-info-circle" style={{ marginRight: '5px' }} />
+          Ces données sont stockées localement et ne sont pas liées aux capteurs IoT
+        </p>
         <div className="history-table-container">
           <table className="history-table">
             <thead>
@@ -772,10 +863,43 @@ const WasteTab = () => {
                 <th>Date &amp; Heure</th>
                 <th>Type de déchet</th>
                 <th>Poids (kg)</th>
+                <th style={{ textAlign: 'center', width: '80px' }}>Actions</th>
               </tr>
             </thead>
-            <tbody id="wasteHistoryTableBody">
-              {/* Rows will be added dynamically */}
+            <tbody>
+              {manualEntryHistory.length === 0 ? (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>
+                    <i className="fas fa-inbox" style={{ fontSize: '24px', marginBottom: '10px', display: 'block', opacity: 0.5 }} />
+                    Aucune saisie manuelle enregistrée
+                  </td>
+                </tr>
+              ) : (
+                manualEntryHistory.map((entry) => (
+                  <tr key={entry.id}>
+                    <td>{entry.dateTime}</td>
+                    <td>{entry.wasteType}</td>
+                    <td>{entry.weight} kg</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button
+                        onClick={() => deleteManualEntry(entry.id)}
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.2)',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '6px 10px',
+                          color: '#ef4444',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                        title="Supprimer cette entrée"
+                      >
+                        <i className="fas fa-trash" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

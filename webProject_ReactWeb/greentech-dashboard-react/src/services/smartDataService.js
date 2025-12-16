@@ -88,7 +88,7 @@ class TrashDataService {
           macAddress: monitor.macAddress,
           location: monitor.location,
           wasteType: this.mapTrashTypeToFilter(monitor.trashType),
-          value: this.calculateMonitorWeight(monitor.trashLogs),
+          value: parseFloat(this.calculateMonitorWeight(monitor.trashLogs).toFixed(2)),
           unit: 'kg',
           status: monitor.status,
           co2Impact: monitor.co2Impact || 0.5,
@@ -160,6 +160,40 @@ class EnergyDataService {
     return axiosInstance.get(`/energy/today`);
   }
 
+  // Get metrics - used by EnergyTab for dynamic data
+  async getMetrics(type) {
+    try {
+      const response = await axiosInstance.get('/energy/monitor/all');
+      console.log('Energy monitors response:', response.data);
+
+      // Transform monitors data to sensor format expected by EnergyTab
+      const monitors = response.data || [];
+      return {
+        data: monitors.map(monitor => ({
+          id: monitor.id,
+          sensorId: monitor.sensorId,
+          macAddress: monitor.macAddress,
+          location: monitor.location || 'production',
+          value: parseFloat(this.calculateMonitorEnergy(monitor.energyReadings).toFixed(2)),
+          unit: 'kWh',
+          status: monitor.status,
+          co2Impact: monitor.co2Impact || 0.5,
+          formattedTimestamp: monitor.timestamp ? new Date(monitor.timestamp).toLocaleString('fr-FR') : 'Maintenant',
+          energyReadings: monitor.energyReadings || []
+        }))
+      };
+    } catch (error) {
+      console.error('Error fetching energy metrics:', error);
+      return { data: [] };
+    }
+  }
+
+  // Calculate total energy from readings
+  calculateMonitorEnergy(energyReadings) {
+    if (!energyReadings || energyReadings.length === 0) return 0;
+    return energyReadings.reduce((sum, reading) => sum + (reading.energyConsumed || 0), 0);
+  }
+
   // Get all energy monitors
   getAllMonitors() {
     return axiosInstance.get(`/energy/monitor/all`);
@@ -173,6 +207,11 @@ class EnergyDataService {
   // Update energy monitor status
   updateMonitorStatus(macAddress, statusData) {
     return axiosInstance.patch(`/energy/monitor/update/${macAddress}`, statusData);
+  }
+
+  // Delete energy monitor
+  deleteMonitor(monitorId) {
+    return axiosInstance.delete(`/energy/monitor/${monitorId}`);
   }
 
   // Submit manual energy data

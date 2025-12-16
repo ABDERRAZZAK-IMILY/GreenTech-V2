@@ -33,16 +33,21 @@ public class EnergyService {
     private final CarbonFootprintService carbonFootprintService;
 
     public EnergyResponseDTO createReading(EnergyRequestDTO dto) {
-        Energy energy = mapper.toEntity(dto);
-        
+
         String macAddress = dto.getMacAddress();
         if (macAddress == null || macAddress.trim().isEmpty()) {
             log.warn("Received energy data without MAC address, generating default");
             macAddress = "UNKNOWN-" + System.currentTimeMillis();
         }
-        
+
+        // Check if this is a manual entry - save directly without creating a monitor
+        if ("MANUAL_ENTRY".equals(macAddress)) {
+            return saveManualEntry(dto);
+        }
+
         final String finalMacAddress = macAddress;
-        
+        Energy energy = mapper.toEntity(dto);
+
         // Find or create EnergyMonitor by MAC address
         EnergyMonitor monitor = monitorRepository.findByMacAddress(finalMacAddress)
                 .orElseGet(() -> {
@@ -56,29 +61,46 @@ public class EnergyService {
                     newMonitor.setEnergy(new ArrayList<>());
                     return monitorRepository.save(newMonitor);
                 });
-        
+
         Energy res = repository.save(energy);
         monitor.getEnergy().add(res);
         monitorRepository.save(monitor);
         return mapper.toResponse(res);
     }
 
+    /**
+     * Save manual entry directly to Energy collection without linking to a monitor.
+     * This keeps manual entries separate from IoT sensor data.
+     */
+    public EnergyResponseDTO saveManualEntry(EnergyRequestDTO dto) {
+        log.info("Saving manual energy entry: {} kWh", dto.getEnergyConsumed());
+
+        Energy energy = mapper.toEntity(dto);
+        // Ensure manual entries have a created date
+        if (energy.getCreatedAt() == null) {
+            energy.setCreatedAt(LocalDateTime.now());
+        }
+        Energy savedEntity = repository.save(energy);
+
+        log.info("Manual energy entry saved with ID: {}", savedEntity.getId());
+        return mapper.toResponse(savedEntity);
+    }
 
     public List<EnergyResponseDTO> getAllReadings() {
-        List<Energy> energyList =  repository.findAll();
+        List<Energy> energyList = repository.findAll();
         return energyList.stream().map(mapper::toResponse).toList();
     }
 
     public List<EnergyResponseDTO> getTodayReadings() {
         LocalDateTime startOfToday = LocalDateTime.now().toLocalDate().atStartOfDay();
         LocalDateTime endOfToday = startOfToday.plusDays(1);
-        
+
         List<Energy> energyList = repository.findAll().stream()
-                .filter(e -> e.getCreatedAt() != null && 
-                           !e.getCreatedAt().isBefore(startOfToday) && 
-                           e.getCreatedAt().isBefore(endOfToday))
+                .filter(e -> e.getCreatedAt() != null &&
+                        !e.getCreatedAt().isBefore(startOfToday) &&
+                        e.getCreatedAt().isBefore(endOfToday))
                 .toList();
-        
+
         return energyList.stream().map(mapper::toResponse).toList();
     }
 
@@ -88,10 +110,11 @@ public class EnergyService {
 
         return allEnergy.stream()
                 .filter(e -> {
-                    if (e.getCreatedAt() == null) return false;
+                    if (e.getCreatedAt() == null)
+                        return false;
 
                     boolean isAfterStart = !e.getCreatedAt().isBefore(start); // >= start
-                    boolean isBeforeEnd = !e.getCreatedAt().isAfter(end);     // <= end
+                    boolean isBeforeEnd = !e.getCreatedAt().isAfter(end); // <= end
 
                     return isAfterStart && isBeforeEnd;
                 })

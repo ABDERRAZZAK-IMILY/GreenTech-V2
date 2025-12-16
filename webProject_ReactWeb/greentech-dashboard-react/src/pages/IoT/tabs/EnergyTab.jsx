@@ -7,6 +7,7 @@ const EnergyTab = () => {
   const [sensors, setSensors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
+  const [isIoTManagementOpen, setIsIoTManagementOpen] = useState(true);
   const [activeFilter, setActiveFilter] = useState('production');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -14,6 +15,64 @@ const EnergyTab = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentSensorId, setCurrentSensorId] = useState(null);
   const [currentEquipments, setCurrentEquipments] = useState([]);
+
+  // Calculate stats from sensors
+  const stats = {
+    totalSensors: sensors.length,
+    onlineSensors: sensors.filter(s => s.status === 'ONLINE').length,
+    totalConsumption: sensors.reduce((sum, s) => sum + (s.value || 0), 0),
+    topDepartment: 'Production',
+    totalCO2: sensors.reduce((sum, s) => sum + ((s.value || 0) * 0.5), 0)
+  };
+
+  // Manual entry state
+  const [manualEntryForm, setManualEntryForm] = useState({
+    department: '',
+    consumption: ''
+  });
+  const [manualEntryHistory, setManualEntryHistory] = useState([]);
+  const [newEquipmentInput, setNewEquipmentInput] = useState('');
+  const [allMonitors, setAllMonitors] = useState([]);
+
+  // Calculate overview stats by department
+  const overviewStats = [
+    {
+      name: 'Production',
+      key: 'production',
+      icon: { icon: 'fa-industry', color: '#667eea' },
+      totalSensors: sensors.filter(s => s.location === 'production').length,
+      onlineSensors: sensors.filter(s => s.location === 'production' && s.status === 'ONLINE').length,
+      totalConsumption: sensors.filter(s => s.location === 'production').reduce((sum, s) => sum + (s.value || 0), 0),
+      totalCO2: sensors.filter(s => s.location === 'production').reduce((sum, s) => sum + ((s.value || 0) * 0.5), 0)
+    },
+    {
+      name: 'Bureaux',
+      key: 'bureaux',
+      icon: { icon: 'fa-building', color: '#43e97b' },
+      totalSensors: sensors.filter(s => s.location === 'bureaux').length,
+      onlineSensors: sensors.filter(s => s.location === 'bureaux' && s.status === 'ONLINE').length,
+      totalConsumption: sensors.filter(s => s.location === 'bureaux').reduce((sum, s) => sum + (s.value || 0), 0),
+      totalCO2: sensors.filter(s => s.location === 'bureaux').reduce((sum, s) => sum + ((s.value || 0) * 0.5), 0)
+    },
+    {
+      name: 'Entrepôt',
+      key: 'entrepot',
+      icon: { icon: 'fa-warehouse', color: '#f59e0b' },
+      totalSensors: sensors.filter(s => s.location === 'entrepot').length,
+      onlineSensors: sensors.filter(s => s.location === 'entrepot' && s.status === 'ONLINE').length,
+      totalConsumption: sensors.filter(s => s.location === 'entrepot').reduce((sum, s) => sum + (s.value || 0), 0),
+      totalCO2: sensors.filter(s => s.location === 'entrepot').reduce((sum, s) => sum + ((s.value || 0) * 0.5), 0)
+    },
+    {
+      name: 'Cafétéria',
+      key: 'cafeteria',
+      icon: { icon: 'fa-utensils', color: '#ec4899' },
+      totalSensors: sensors.filter(s => s.location === 'cafeteria').length,
+      onlineSensors: sensors.filter(s => s.location === 'cafeteria' && s.status === 'ONLINE').length,
+      totalConsumption: sensors.filter(s => s.location === 'cafeteria').reduce((sum, s) => sum + (s.value || 0), 0),
+      totalCO2: sensors.filter(s => s.location === 'cafeteria').reduce((sum, s) => sum + ((s.value || 0) * 0.5), 0)
+    }
+  ];
 
   // Form state for adding new sensor
   const [newSensorForm, setNewSensorForm] = useState({
@@ -33,16 +92,49 @@ const EnergyTab = () => {
   };
 
   // Fetch energy data from backend
+  // Fetch energy data from backend
   const fetchEnergyData = async () => {
     try {
       const response = await energyDataService.getMetrics('ENERGY');
-      setSensors(response.data);
+
+      // Filter out manual entries and normalize sensor locations
+      const realSensors = response.data
+        .filter(sensor => sensor.macAddress !== 'MANUAL_ENTRY')
+        .map(sensor => {
+          // Normalize location to ensure it matches filters
+          let loc = (sensor.location || 'production').toLowerCase();
+
+          // If location is unknown or auto-registered, default to production to ensure visibility
+          if (loc === 'auto-registered' || !['production', 'bureaux', 'entrepot', 'cafeteria'].includes(loc)) {
+            loc = 'production';
+          }
+
+          return {
+            ...sensor,
+            location: loc
+          };
+        });
+
+      setSensors(realSensors);
+      setAllMonitors(realSensors); // Store real monitors for IoT management
       setLoading(false);
     } catch (error) {
       console.error("Error fetching energy data:", error);
       setLoading(false);
     }
   };
+
+  // Load manual entry history from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedHistory = localStorage.getItem('energyManualEntryHistory');
+      if (savedHistory) {
+        setManualEntryHistory(JSON.parse(savedHistory));
+      }
+    } catch (e) {
+      console.warn('Could not load from localStorage:', e);
+    }
+  }, []);
 
   // Initialize filter and equipments on component mount
   useEffect(() => {
@@ -53,74 +145,40 @@ const EnergyTab = () => {
 
   // Initialize filter and equipments on component mount
   useEffect(() => {
-    // Apply initial filter to show only production sensors
-    const allSensors = document.querySelectorAll('.energy-sensor');
-    allSensors.forEach(sensor => {
-      if (sensor.getAttribute('data-dept') === 'production') {
-        sensor.style.display = '';
-      } else {
-        sensor.style.display = 'none';
-      }
-    });
-
-    // Update the department display for manual entry
-    updateDeptDisplay('production');
-
     // Load initial equipments for production
     setCurrentEquipments(equipmentTypesConfig['production']);
   }, []);
 
   // Update equipments when activeFilter changes
   useEffect(() => {
-    setCurrentEquipments(equipmentTypesConfig[activeFilter] || []);
+    if (activeFilter === 'all') {
+      // Collect all equipments via Set to avoid duplicates
+      const allEquipments = new Set();
+      Object.values(equipmentTypesConfig).forEach(list => list.forEach(item => allEquipments.add(item)));
+      setCurrentEquipments(Array.from(allEquipments));
+    } else {
+      setCurrentEquipments(equipmentTypesConfig[activeFilter] || []);
+    }
   }, [activeFilter]);
 
   const toggleEnergyOverview = () => {
     setIsOverviewOpen(!isOverviewOpen);
   };
 
-  const filterEnergySensors = (dept) => {
-    setActiveFilter(dept);
-    // Filter sensor cards based on department
-    const allSensors = document.querySelectorAll('.energy-sensor');
-    allSensors.forEach(sensor => {
-      if (sensor.getAttribute('data-dept') === dept) {
-        sensor.style.display = '';
-      } else {
-        sensor.style.display = 'none';
-      }
-    });
-
-    // Update department name in equipment section
-    updateDeptDisplay(dept);
-  };
-
-  const updateDeptDisplay = (dept) => {
+  // Helper to get formatted department name
+  const getDeptName = (deptKey) => {
     const deptNames = {
-      production: 'Production',
-      bureaux: 'Bureaux',
-      entrepot: 'Entrepôt',
-      cafeteria: 'Cafétéria'
+      'all': 'Tous',
+      'production': 'Production',
+      'bureaux': 'Bureaux',
+      'entrepot': 'Entrepôt',
+      'cafeteria': 'Cafétéria'
     };
-
-    // Update the title in equipment management
-    const currentDeptName = document.getElementById('currentDeptName');
-    if (currentDeptName) {
-      currentDeptName.textContent = deptNames[dept] || dept;
-    }
-
-    // Update manual entry form fields
-    const deptManual = document.getElementById('deptManual');
-    const deptDisplay = document.getElementById('deptDisplay');
-    if (deptManual && deptDisplay) {
-      deptManual.value = dept;
-      deptDisplay.value = deptNames[dept] || dept;
-    }
+    return deptNames[deptKey] || deptKey;
   };
 
   const addEquipment = () => {
-    const input = document.getElementById('newEquipmentInput');
-    const equipmentText = input.value.trim();
+    const equipmentText = newEquipmentInput.trim();
 
     if (!equipmentText) {
       showNotification('Veuillez entrer un équipement', 'error');
@@ -137,7 +195,7 @@ const EnergyTab = () => {
     setCurrentEquipments([...currentEquipments, equipmentText]);
 
     // Clear input
-    input.value = '';
+    setNewEquipmentInput('');
     showNotification(`Équipement "${equipmentText}" ajouté`, 'success');
   };
 
@@ -151,50 +209,91 @@ const EnergyTab = () => {
   const submitEnergyManualData = async (event) => {
     event.preventDefault();
 
-    const dept = document.getElementById('deptManual').value;
-    const deptDisplay = document.getElementById('deptDisplay').value;
-    const consumption = document.getElementById('energyConsumption').value;
-
-    if (!dept) {
-      showNotification('Veuillez sélectionner un département via les boutons ci-dessus', 'warning');
+    if (!manualEntryForm.department || !manualEntryForm.consumption) {
+      showNotification('Veuillez remplir tous les champs requis', 'warning');
       return;
     }
 
+    const deptNames = {
+      'production': 'Production',
+      'bureaux': 'Bureaux',
+      'entrepot': 'Entrepôt',
+      'cafeteria': 'Cafétéria'
+    };
+
     try {
-      // Submit to backend
+      // Send to Backend - saves to Energy collection directly
       const payload = {
-        energyConsumed: parseFloat(consumption),
+        energyConsumed: parseFloat(manualEntryForm.consumption),
         macAddress: 'MANUAL_ENTRY'
       };
 
       await energyDataService.submitManualData(payload);
+      console.log('✅ Manual energy entry saved to database');
 
-      // Get current date and time
+      // Create new manual entry for local history
       const now = new Date();
-      const dateStr = now.toLocaleDateString('fr-FR');
-      const timeStr = now.toLocaleTimeString('fr-FR');
+      const newEntry = {
+        id: Date.now(),
+        dateTime: `${now.toLocaleDateString('fr-FR')} ${now.toLocaleTimeString('fr-FR')}`,
+        department: deptNames[manualEntryForm.department] || manualEntryForm.department,
+        departmentKey: manualEntryForm.department,
+        consumption: parseFloat(manualEntryForm.consumption).toFixed(2)
+      };
 
-      // Add to history table
-      const tableBody = document.getElementById('energyHistoryTableBody');
-      const newRow = document.createElement('tr');
-      newRow.innerHTML = `
-        <td>${dateStr} ${timeStr}</td>
-        <td>${deptDisplay}</td>
-        <td>${consumption}</td>
-      `;
+      // Update history state
+      const updatedHistory = [newEntry, ...manualEntryHistory];
+      setManualEntryHistory(updatedHistory);
 
-      tableBody.insertBefore(newRow, tableBody.firstChild);
+      // Save to localStorage for UI persistence
+      try {
+        localStorage.setItem('energyManualEntryHistory', JSON.stringify(updatedHistory));
+      } catch (e) {
+        console.warn('Could not save to localStorage:', e);
+      }
 
       // Reset form
-      event.target.reset();
-      // Re-apply the dept after reset
-      updateDeptDisplay(activeFilter);
+      setManualEntryForm({
+        department: manualEntryForm.department,
+        consumption: ''
+      });
 
-      showNotification('Données d\'énergie enregistrées avec succès !', 'success');
+      showNotification('Saisie manuelle enregistrée avec succès !', 'success');
     } catch (error) {
-      console.error('Error submitting energy data:', error);
-      showNotification('Erreur lors de l\'enregistrement des données', 'error');
+      console.error('Error saving manual entry to database:', error);
+      showNotification('Erreur lors de l\'enregistrement', 'error');
     }
+  };
+
+  // Delete manual entry
+  const deleteManualEntry = (entryId) => {
+    const updatedHistory = manualEntryHistory.filter(entry => entry.id !== entryId);
+    setManualEntryHistory(updatedHistory);
+
+    try {
+      localStorage.setItem('energyManualEntryHistory', JSON.stringify(updatedHistory));
+    } catch (e) {
+      console.warn('Could not save to localStorage:', e);
+    }
+
+    showNotification('Entrée supprimée', 'info');
+  };
+
+  // Handle delete monitor from backend
+  const handleDeleteMonitor = async (sensorId) => {
+    try {
+      const sensor = sensors.find(s => s.sensorId === sensorId);
+      if (sensor && sensor.id) {
+        await energyDataService.deleteMonitor(sensor.id);
+        showNotification('Capteur supprimé avec succès', 'success');
+        fetchEnergyData();
+      }
+    } catch (error) {
+      console.error('Error deleting monitor:', error);
+      showNotification('Erreur lors de la suppression du capteur', 'error');
+    }
+    setShowDeleteModal(false);
+    setCurrentSensorId(null);
   };
 
   const viewSensorDetails = (sensorId) => {
@@ -213,22 +312,15 @@ const EnergyTab = () => {
   };
 
   const confirmDeleteSensor = () => {
-    const sensorCard = document.querySelector(`[data-sensor-id="${currentSensorId}"]`);
-    if (sensorCard) {
-      sensorCard.style.opacity = '0';
-      sensorCard.style.transform = 'scale(0.8)';
-      setTimeout(() => sensorCard.remove(), 300);
-    }
-    showNotification(`Capteur ${currentSensorId} supprimé avec succès`, 'success');
-    setShowDeleteModal(false);
-    setCurrentSensorId(null);
+    // Use handleDeleteMonitor for actual backend deletion
+    handleDeleteMonitor(currentSensorId);
   };
 
   const openAddSensorModal = () => {
     // Generate sensor counter if not exists
     const sensorCounter = sensors.length + 1;
     const newSensorId = `ESP32-ENERGY-${String(sensorCounter).padStart(3, '0')}`;
-    
+
     setNewSensorForm({
       location: '',
       sensorId: newSensorId,
@@ -250,6 +342,16 @@ const EnergyTab = () => {
   const handleAddSensor = async (event) => {
     event.preventDefault();
 
+    // Check if MAC address already exists locally before sending to backend
+    const existingMac = sensors.find(
+      s => s.macAddress && s.macAddress.toLowerCase() === newSensorForm.macAddress.toLowerCase()
+    );
+
+    if (existingMac) {
+      showNotification(`Un capteur avec l'adresse MAC "${newSensorForm.macAddress}" existe déjà`, 'error');
+      return;
+    }
+
     try {
       // Prepare data for backend
       const monitorData = {
@@ -263,7 +365,7 @@ const EnergyTab = () => {
 
       // Send to backend
       const response = await energyDataService.createMonitor(monitorData);
-      
+
       console.log('Energy Monitor created:', response.data);
 
       // Refresh sensors list
@@ -273,8 +375,13 @@ const EnergyTab = () => {
       closeModals();
     } catch (error) {
       console.error('Error adding energy sensor:', error);
-      const errorMessage = error.response?.data?.message || 'Erreur lors de l\'ajout du capteur';
-      showNotification(errorMessage, 'error');
+      // Check for duplicate MAC address error from backend
+      if (error.response?.status === 400 || error.response?.data?.message?.includes('existe déjà')) {
+        showNotification('Un capteur avec cette adresse MAC existe déjà', 'error');
+      } else {
+        const errorMessage = error.response?.data?.message || 'Erreur lors de l\'ajout du capteur';
+        showNotification(errorMessage, 'error');
+      }
     }
   };
 
@@ -360,50 +467,19 @@ const EnergyTab = () => {
                 </tr>
               </thead>
               <tbody id="energyOverviewTableBody">
-                <tr>
-                  <td>
-                    <div className="usage-icon">
-                      <i className="fas fa-industry" style={{ color: '#3b82f6' }} />
-                      Production
-                    </div>
-                  </td>
-                  <td><strong>3/3</strong> capteurs</td>
-                  <td><strong>345.6 kWh</strong></td>
-                  <td><span className="status-badge status-partial">172.8 kg CO2</span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div className="usage-icon">
-                      <i className="fas fa-building" style={{ color: '#22c55e' }} />
-                      Bureaux
-                    </div>
-                  </td>
-                  <td><strong>3/3</strong> capteurs</td>
-                  <td><strong>156.0 kWh</strong></td>
-                  <td><span className="status-badge status-partial">78.0 kg CO2</span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div className="usage-icon">
-                      <i className="fas fa-warehouse" style={{ color: '#f59e0b' }} />
-                      Entrepôt
-                    </div>
-                  </td>
-                  <td><strong>3/3</strong> capteurs</td>
-                  <td><strong>201.6 kWh</strong></td>
-                  <td><span className="status-badge status-partial">100.8 kg CO2</span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div className="usage-icon">
-                      <i className="fas fa-utensils" style={{ color: '#a855f7' }} />
-                      Cafétéria
-                    </div>
-                  </td>
-                  <td><strong>3/3</strong> capteurs</td>
-                  <td><strong>124.8 kWh</strong></td>
-                  <td><span className="status-badge status-partial">62.4 kg CO2</span></td>
-                </tr>
+                {overviewStats.map((stat, index) => (
+                  <tr key={index}>
+                    <td>
+                      <div className="usage-icon">
+                        <i className={`fas ${stat.icon.icon}`} style={{ color: stat.icon.color }} />
+                        {stat.name}
+                      </div>
+                    </td>
+                    <td><strong>{stat.onlineSensors}/{stat.totalSensors}</strong> capteurs</td>
+                    <td><strong>{stat.totalConsumption.toFixed(1)} kWh</strong></td>
+                    <td><span className="status-badge status-partial">{stat.totalCO2.toFixed(1)} kg CO2</span></td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -412,34 +488,31 @@ const EnergyTab = () => {
 
       {/* Department Filter */}
       <div className="department-filter">
-        <button
-          className={`filter-btn ${activeFilter === 'production' ? 'active' : ''}`}
-          data-dept="production"
-          onClick={() => filterEnergySensors('production')}
-        >
-          <i className="fas fa-industry" /> Production
-        </button>
-        <button
-          className={`filter-btn ${activeFilter === 'bureaux' ? 'active' : ''}`}
-          data-dept="bureaux"
-          onClick={() => filterEnergySensors('bureaux')}
-        >
-          <i className="fas fa-building" /> Bureaux
-        </button>
-        <button
-          className={`filter-btn ${activeFilter === 'entrepot' ? 'active' : ''}`}
-          data-dept="entrepot"
-          onClick={() => filterEnergySensors('entrepot')}
-        >
-          <i className="fas fa-warehouse" /> Entrepôt
-        </button>
-        <button
-          className={`filter-btn ${activeFilter === 'cafeteria' ? 'active' : ''}`}
-          data-dept="cafeteria"
-          onClick={() => filterEnergySensors('cafeteria')}
-        >
-          <i className="fas fa-utensils" /> Cafétéria
-        </button>
+        {['all', 'production', 'bureaux', 'entrepot', 'cafeteria'].map(dept => (
+          <button
+            key={dept}
+            className={`filter-btn ${activeFilter === dept ? 'active' : ''}`}
+            onClick={() => {
+              setActiveFilter(dept);
+              const deptNames = {
+                'all': 'Tous',
+                'production': 'Production',
+                'bureaux': 'Bureaux',
+                'entrepot': 'Entrepôt',
+                'cafeteria': 'Cafétéria'
+              };
+              setManualEntryForm(prev => ({ ...prev, department: dept === 'all' ? '' : dept }));
+              const deptDisplay = document.getElementById('currentDeptName');
+              if (deptDisplay) deptDisplay.textContent = deptNames[dept];
+            }}
+          >
+            <i className={`fas fa-${dept === 'all' ? 'border-all' :
+              dept === 'production' ? 'industry' :
+                dept === 'bureaux' ? 'building' :
+                  dept === 'entrepot' ? 'warehouse' : 'utensils'}`} />
+            {dept === 'all' ? 'Tous' : dept.charAt(0).toUpperCase() + dept.slice(1)}
+          </button>
+        ))}
       </div>
 
       {/* Energy Stats */}
@@ -450,7 +523,7 @@ const EnergyTab = () => {
           </div>
           <div className="stat-content">
             <h4>Capteurs Actifs</h4>
-            <div className="stat-value" id="energyActiveSensors">12/12</div>
+            <div className="stat-value">{stats.onlineSensors}/{stats.totalSensors}</div>
             <div className="stat-label">En ligne</div>
           </div>
         </div>
@@ -460,8 +533,8 @@ const EnergyTab = () => {
             <i className="fas fa-bolt" />
           </div>
           <div className="stat-content">
-            <h4>Consommation Totale Aujourd'hui</h4>
-            <div className="stat-value" id="energyTotalConsumption">828 kWh</div>
+            <h4>Consommation Totale</h4>
+            <div className="stat-value">{stats.totalConsumption.toFixed(1)} kWh</div>
             <div className="stat-label">Tous départements</div>
           </div>
         </div>
@@ -471,9 +544,9 @@ const EnergyTab = () => {
             <i className="fas fa-chart-pie" />
           </div>
           <div className="stat-content">
-            <h4>Département le Plus Consommateur</h4>
-            <div className="stat-value" id="energyTopDept">Production</div>
-            <div className="stat-label" id="energyTopDeptPercent">42%</div>
+            <h4>Département Principal</h4>
+            <div className="stat-value">{stats.topDepartment}</div>
+            <div className="stat-label">Plus gros consommateur</div>
           </div>
         </div>
 
@@ -482,9 +555,9 @@ const EnergyTab = () => {
             <i className="fas fa-leaf" />
           </div>
           <div className="stat-content">
-            <h4>Émissions Totales CO2</h4>
-            <div className="stat-value" id="energyCO2Emissions">414 kg</div>
-            <div className="stat-label">Aujourd'hui</div>
+            <h4>Émissions CO2</h4>
+            <div className="stat-value">{stats.totalCO2.toFixed(1)} kg</div>
+            <div className="stat-label">Estimé (0.5 kg/kWh)</div>
           </div>
         </div>
       </div>
@@ -495,68 +568,66 @@ const EnergyTab = () => {
           <div style={{ padding: '20px', color: 'white', textAlign: 'center' }}>
             Chargement...
           </div>
-        ) : sensors.length === 0 ? (
+        ) : sensors.filter(s => activeFilter === 'all' || s.location === activeFilter).length === 0 ? (
           <div style={{ padding: '20px', color: 'white', textAlign: 'center' }}>
-            Aucun capteur détecté. Vérifiez votre ESP32.
+            Aucun capteur détecté pour ce département.
           </div>
         ) : (
-          sensors.map((sensor, index) => (
+          sensors.filter(s => activeFilter === 'all' || s.location === activeFilter).map((sensor, index) => (
             <div
               key={index}
-              className="sensor-card sensor-online energy-sensor"
-              data-sensor-id={sensor.sensorId || `SENSOR-${index}`}
-              data-dept={sensor.location || 'production'}
+              className={`sensor-card sensor-${sensor.status === 'ONLINE' ? 'online' : 'offline'} energy-sensor`}
             >
               <div className="sensor-header">
                 <div className="sensor-name">
                   <i className="fas fa-bolt" />
-                  <span>{sensor.sensorId || `ESP32-ELEC-${index + 1}`}</span>
+                  <span>{sensor.sensorId}</span>
                 </div>
                 <label className="sensor-toggle">
                   <input
                     type="checkbox"
-                    defaultChecked
-                    onChange={(e) => console.log('Toggle sensor:', e.target.checked)}
+                    checked={sensor.status === 'ONLINE'}
+                    readOnly
                   />
                   <span className="toggle-slider" />
                 </label>
               </div>
               <div className={`sensor-department ${sensor.location || 'production'}`}>
                 <i className="fas fa-industry" />
-                <span>{sensor.location || 'Production'}</span>
+                <span>{sensor.location ? sensor.location.charAt(0).toUpperCase() + sensor.location.slice(1) : 'Inconnu'}</span>
               </div>
               <div className="sensor-value">
-                <span className="value">{sensor.value}</span>
-                <span className="unit">{sensor.unit || 'kWh'}</span>
+                <span className="value">{sensor.value?.toFixed(2)}</span>
+                <span className="unit">kWh</span>
               </div>
               <div className="sensor-daily">
                 <i className="fas fa-calendar-day" />
-                <span>{(sensor.value * 24).toFixed(1)} {sensor.unit || 'kWh'}/jour</span>
+                <span>{(sensor.value * 24).toFixed(1)} kWh/jour</span>
               </div>
               <div className="sensor-status">
-                <span className="status-badge online">
-                  <i className="fas fa-circle" /> En ligne
+                <span className={`status-badge ${sensor.status === 'ONLINE' ? 'online' : 'offline'}`}>
+                  <i className="fas fa-circle" /> {sensor.status === 'ONLINE' ? 'En ligne' : 'Hors ligne'}
                 </span>
               </div>
               <div className="sensor-timestamp">
-                {sensor.formattedTimestamp || 'Maintenant'}
+                {sensor.formattedTimestamp || new Date().toLocaleString()}
               </div>
               <div className="sensor-actions">
                 <button
                   className="btn-sensor-detail"
-                  onClick={() => viewSensorDetails(sensor.sensorId || `SENSOR-${index}`)}
+                  onClick={() => viewSensorDetails(sensor.sensorId)}
                 >
                   <i className="fas fa-eye" /> Détails
                 </button>
                 <button
                   className="btn-sensor-config"
-                  onClick={() => configureSensor(sensor.sensorId || `SENSOR-${index}`)}
+                  onClick={() => configureSensor(sensor.sensorId)}
                 >
                   <i className="fas fa-cog" /> Modifier
                 </button>
                 <button
                   className="btn-sensor-delete"
-                  onClick={() => deleteSensor(sensor.sensorId || `SENSOR-${index}`)}
+                  onClick={() => deleteSensor(sensor.sensorId)}
                 >
                   <i className="fas fa-trash" /> Supprimer
                 </button>
@@ -570,28 +641,36 @@ const EnergyTab = () => {
       <div className="subtypes-management-section">
         <h4>
           <i className="fas fa-tools" /> Liste des Équipements Électriques existants -{" "}
-          <span id="currentDeptName">Production</span>
+          <span id="currentDeptName">{(activeFilter === 'all' ? 'Tous' : activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1))}</span>
         </h4>
         <div className="subtypes-card">
-          <div className="subtypes-container" id="equipmentTypesContainer">
-            {currentEquipments.map((equipment, index) => (
-              <div key={index} className="subtype-tag" data-index={index}>
-                <span className="subtype-tag-text">{equipment}</span>
-                <span
-                  className="subtype-tag-delete"
-                  onClick={() => deleteEquipment(index)}
-                >
-                  ×
-                </span>
+          <div className="subtypes-container">
+            {currentEquipments.length === 0 ? (
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', padding: '10px' }}>
+                Aucun équipement configuré pour ce département
               </div>
-            ))}
+            ) : (
+              currentEquipments.map((equipment, index) => (
+                <div key={index} className="subtype-tag">
+                  <span className="subtype-tag-text">{equipment}</span>
+                  <span
+                    className="subtype-tag-delete"
+                    onClick={() => deleteEquipment(index)}
+                  >
+                    ×
+                  </span>
+                </div>
+              ))
+            )}
           </div>
           <div className="add-subtype-input">
             <input
               type="text"
-              id="newEquipmentInput"
+              value={newEquipmentInput}
+              onChange={(e) => setNewEquipmentInput(e.target.value)}
               placeholder="Ajouter un équipement (ex: Four industriel)"
               maxLength={50}
+              onKeyPress={(e) => e.key === 'Enter' && addEquipment()}
             />
             <button
               type="button"
@@ -613,23 +692,35 @@ const EnergyTab = () => {
           className="manual-waste-form"
           onSubmit={submitEnergyManualData}
         >
-          <input type="hidden" id="deptManual" required />
           <div className="form-row">
             <div className="form-group">
               <label>Département</label>
-              <input
-                type="text"
-                id="deptDisplay"
-                readOnly
-                style={{ cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.03)' }}
-                placeholder="Sélectionnez un département via les boutons ci-dessus"
-              />
+              <select
+                value={manualEntryForm.department}
+                onChange={(e) => setManualEntryForm({ ...manualEntryForm, department: e.target.value })}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: 'white'
+                }}
+              >
+                <option value="">Sélectionnez un département</option>
+                <option value="production">Production</option>
+                <option value="bureaux">Bureaux</option>
+                <option value="entrepot">Entrepôt</option>
+                <option value="cafeteria">Cafétéria</option>
+              </select>
             </div>
             <div className="form-group">
               <label>Consommation (kWh)</label>
               <input
                 type="number"
-                id="energyConsumption"
+                value={manualEntryForm.consumption}
+                onChange={(e) => setManualEntryForm({ ...manualEntryForm, consumption: e.target.value })}
                 placeholder="Ex: 125.5"
                 min="0"
                 step="0.1"
@@ -657,19 +748,285 @@ const EnergyTab = () => {
                 <th>Date & Heure</th>
                 <th>Département</th>
                 <th>Consommation (kWh)</th>
+                <th style={{ width: '50px' }}>Action</th>
               </tr>
             </thead>
-            <tbody id="energyHistoryTableBody">
-              {/* Rows will be added dynamically */}
+            <tbody>
+              {manualEntryHistory.length === 0 ? (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: 'rgba(255,255,255,0.5)' }}>
+                    Aucune saisie manuelle enregistrée
+                  </td>
+                </tr>
+              ) : (
+                manualEntryHistory.map((entry) => (
+                  <tr key={entry.id}>
+                    <td>{entry.dateTime}</td>
+                    <td>
+                      <span className={`dept-badge ${entry.departmentKey}`}>
+                        {entry.department}
+                      </span>
+                    </td>
+                    <td><strong>{entry.consumption} kWh</strong></td>
+                    <td>
+                      <button
+                        onClick={() => deleteManualEntry(entry.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#ef4444',
+                          cursor: 'pointer',
+                          padding: '5px'
+                        }}
+                        title="Supprimer"
+                      >
+                        <i className="fas fa-trash-alt" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
+
+
+      {/* IoT Management Section */}
+      <div className="iot-management-section" style={{
+        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: '16px',
+        padding: '25px',
+        marginTop: '30px',
+        border: '1px solid rgba(102, 126, 234, 0.3)'
+      }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '20px',
+            cursor: 'pointer'
+          }}
+          onClick={() => setIsIoTManagementOpen(!isIoTManagementOpen)}
+        >
+          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <i className="fas fa-microchip" style={{ color: '#667eea' }} />
+            Gestion des Appareils IoT
+            <span style={{
+              background: 'rgba(102, 126, 234, 0.3)',
+              padding: '4px 12px',
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: '600'
+            }}>
+              {sensors.length} appareils
+            </span>
+          </h3>
+          <i className={`fas fa-chevron-${isIoTManagementOpen ? 'up' : 'down'}`} style={{ color: 'var(--text-secondary)' }} />
+        </div>
+
+        {isIoTManagementOpen && (
+          <>
+            {/* IoT Stats Cards */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '15px',
+              marginBottom: '25px'
+            }}>
+              <div style={{
+                background: 'rgba(67, 233, 123, 0.15)',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center',
+                border: '1px solid rgba(67, 233, 123, 0.3)'
+              }}>
+                <i className="fas fa-check-circle" style={{ fontSize: '24px', color: '#43e97b', marginBottom: '10px', display: 'block' }} />
+                <div style={{ fontSize: '24px', fontWeight: '700', color: '#43e97b' }}>{stats.onlineSensors}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Appareils En Ligne</div>
+              </div>
+              <div style={{
+                background: 'rgba(245, 158, 11, 0.15)',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center',
+                border: '1px solid rgba(245, 158, 11, 0.3)'
+              }}>
+                <i className="fas fa-exclamation-triangle" style={{ fontSize: '24px', color: '#f59e0b', marginBottom: '10px', display: 'block' }} />
+                <div style={{ fontSize: '24px', fontWeight: '700', color: '#f59e0b' }}>{stats.totalSensors - stats.onlineSensors}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Appareils Hors Ligne</div>
+              </div>
+              <div style={{
+                background: 'rgba(102, 126, 234, 0.15)',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center',
+                border: '1px solid rgba(102, 126, 234, 0.3)'
+              }}>
+                <i className="fas fa-network-wired" style={{ fontSize: '24px', color: '#667eea', marginBottom: '10px', display: 'block' }} />
+                <div style={{ fontSize: '24px', fontWeight: '700', color: '#667eea' }}>{stats.totalSensors}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Total Appareils</div>
+              </div>
+              <div style={{
+                background: 'rgba(236, 72, 153, 0.15)',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center',
+                border: '1px solid rgba(236, 72, 153, 0.3)'
+              }}>
+                <i className="fas fa-signal" style={{ fontSize: '24px', color: '#ec4899', marginBottom: '10px', display: 'block' }} />
+                <div style={{ fontSize: '24px', fontWeight: '700', color: '#ec4899' }}>
+                  {stats.totalSensors > 0 ? Math.round((stats.onlineSensors / stats.totalSensors) * 100) : 0}%
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Taux de Connexion</div>
+              </div>
+            </div>
+
+            {/* IoT Devices Table */}
+            <div style={{
+              background: 'rgba(0, 0, 0, 0.2)',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <div style={{
+                padding: '15px 20px',
+                background: 'rgba(30, 58, 138, 0.4)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="fas fa-list" /> Liste des Appareils IoT
+                </h4>
+                <button
+                  onClick={openAddSensorModal}
+                  style={{
+                    background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 16px',
+                    color: 'white',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px'
+                  }}
+                >
+                  <i className="fas fa-plus" /> Ajouter un Appareil
+                </button>
+              </div>
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead style={{ position: 'sticky', top: 0, background: 'rgba(30, 39, 46, 0.98)', zIndex: 1 }}>
+                    <tr>
+                      <th style={{ padding: '12px 15px', textAlign: 'left', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' }}>ID Appareil</th>
+                      <th style={{ padding: '12px 15px', textAlign: 'left', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' }}>MAC</th>
+                      <th style={{ padding: '12px 15px', textAlign: 'left', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' }}>Département</th>
+                      <th style={{ padding: '12px 15px', textAlign: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' }}>Statut</th>
+                      <th style={{ padding: '12px 15px', textAlign: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' }}>Valeur</th>
+                      <th style={{ padding: '12px 15px', textAlign: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sensors.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                          <i className="fas fa-inbox" style={{ fontSize: '48px', marginBottom: '15px', display: 'block', opacity: 0.5 }} />
+                          Aucun appareil IoT configuré
+                        </td>
+                      </tr>
+                    ) : (
+                      sensors.map((sensor, index) => {
+                        const deptNames = {
+                          'production': 'Production',
+                          'bureaux': 'Bureaux',
+                          'entrepot': 'Entrepôt',
+                          'cafeteria': 'Cafétéria'
+                        };
+                        const deptColors = {
+                          'production': '#3b82f6',
+                          'bureaux': '#22c55e',
+                          'entrepot': '#f59e0b',
+                          'cafeteria': '#a855f7'
+                        };
+                        return (
+                          <tr key={index} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            <td style={{ padding: '12px 15px', fontWeight: '600' }}>
+                              <i className="fas fa-microchip" style={{ color: '#667eea', marginRight: '8px' }} />
+                              {sensor.sensorId}
+                            </td>
+                            <td style={{ padding: '12px 15px', fontFamily: 'monospace', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                              {sensor.macAddress || 'N/A'}
+                            </td>
+                            <td style={{ padding: '12px 15px' }}>
+                              <span style={{
+                                background: `${deptColors[sensor.location] || '#666'}20`,
+                                color: deptColors[sensor.location] || '#666',
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                fontSize: '11px',
+                                fontWeight: '600'
+                              }}>
+                                {deptNames[sensor.location] || sensor.location || 'N/A'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px 15px', textAlign: 'center' }}>
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                background: sensor.status === 'ONLINE' ? 'rgba(67, 233, 123, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                color: sensor.status === 'ONLINE' ? '#43e97b' : '#ef4444',
+                                padding: '4px 10px',
+                                borderRadius: '20px',
+                                fontSize: '11px',
+                                fontWeight: '600'
+                              }}>
+                                <i className="fas fa-circle" style={{ fontSize: '6px' }} />
+                                {sensor.status === 'ONLINE' ? 'En ligne' : 'Hors ligne'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px 15px', textAlign: 'center', fontWeight: '600' }}>
+                              {sensor.value?.toFixed(1) || 0} kWh
+                            </td>
+                            <td style={{ padding: '12px 15px', textAlign: 'center' }}>
+                              <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
+                                <button onClick={() => viewSensorDetails(sensor.sensorId)} style={{ background: 'rgba(59, 130, 246, 0.2)', border: 'none', borderRadius: '6px', padding: '6px 10px', color: '#3b82f6', cursor: 'pointer' }} title="Détails">
+                                  <i className="fas fa-eye" />
+                                </button>
+                                <button onClick={() => configureSensor(sensor.sensorId)} style={{ background: 'rgba(245, 158, 11, 0.2)', border: 'none', borderRadius: '6px', padding: '6px 10px', color: '#f59e0b', cursor: 'pointer' }} title="Configurer">
+                                  <i className="fas fa-cog" />
+                                </button>
+                                <button onClick={() => deleteSensor(sensor.sensorId)} style={{ background: 'rgba(239, 68, 68, 0.2)', border: 'none', borderRadius: '6px', padding: '6px 10px', color: '#ef4444', cursor: 'pointer' }} title="Supprimer">
+                                  <i className="fas fa-trash" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+
+
+
       {/* Add Sensor Modal */}
       {showAddModal && (
-        <div id="addSensorModal" className="modal" style={{display: 'block'}} onClick={closeModals}>
-          <div className="modal-content" style={{maxWidth: '600px'}} onClick={(e) => e.stopPropagation()}>
+        <div id="addSensorModal" className="modal" style={{ display: 'block' }} onClick={closeModals}>
+          <div className="modal-content" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3><i className="fas fa-plus-circle" /> Ajouter un Nouveau Capteur</h3>
               <button className="modal-close" onClick={closeModals}>
@@ -680,15 +1037,15 @@ const EnergyTab = () => {
               <form id="addSensorForm" onSubmit={handleAddSensor}>
                 <div className="form-group">
                   <label htmlFor="sensorId">ID du capteur</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     id="sensorId"
                     value={newSensorForm.sensorId}
-                    readOnly 
-                    style={{cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.03)'}} 
-                    required 
+                    readOnly
+                    style={{ cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.03)' }}
+                    required
                   />
-                  <small style={{color: 'rgba(255,255,255,0.5)', fontSize: '12px'}}>
+                  <small style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>
                     Généré automatiquement
                   </small>
                 </div>
@@ -697,16 +1054,16 @@ const EnergyTab = () => {
                   <label htmlFor="macAddress">
                     <i className="fas fa-wifi" /> Adresse MAC du Capteur ESP32
                   </label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     id="macAddress"
                     placeholder="Ex: AA:BB:CC:DD:EE:FF"
                     value={newSensorForm.macAddress}
-                    onChange={(e) => setNewSensorForm({...newSensorForm, macAddress: e.target.value.toUpperCase()})}
+                    onChange={(e) => setNewSensorForm({ ...newSensorForm, macAddress: e.target.value.toUpperCase() })}
                     pattern="^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
-                    required 
+                    required
                   />
-                  <small style={{color: 'rgba(255,255,255,0.5)', fontSize: '12px'}}>
+                  <small style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>
                     Format: XX:XX:XX:XX:XX:XX - Identifiant unique du capteur
                   </small>
                 </div>
@@ -715,30 +1072,42 @@ const EnergyTab = () => {
                   <label htmlFor="location">
                     <i className="fas fa-map-marker-alt" /> Emplacement
                   </label>
-                  <input 
-                    type="text" 
+                  <select
                     id="location"
-                    placeholder="Ex: Zone Production, Salle des Serveurs, etc."
                     value={newSensorForm.location}
-                    onChange={(e) => setNewSensorForm({...newSensorForm, location: e.target.value})}
-                    required 
-                  />
+                    onChange={(e) => setNewSensorForm({ ...newSensorForm, location: e.target.value })}
+                    style={{
+                      padding: '10px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      color: 'white',
+                      width: '100%'
+                    }}
+                    required
+                  >
+                    <option value="">Sélectionnez un emplacement</option>
+                    <option value="production">Production</option>
+                    <option value="bureaux">Bureaux</option>
+                    <option value="entrepot">Entrepôt</option>
+                    <option value="cafeteria">Cafétéria</option>
+                  </select>
                 </div>
 
                 <div className="form-group">
                   <label htmlFor="co2Impact">
                     <i className="fas fa-leaf" /> Impact CO2 par kWh (kg)
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     id="co2Impact"
                     placeholder="Ex: 0.233"
                     step="0.001"
                     value={newSensorForm.co2Impact}
-                    onChange={(e) => setNewSensorForm({...newSensorForm, co2Impact: e.target.value})}
-                    required 
+                    onChange={(e) => setNewSensorForm({ ...newSensorForm, co2Impact: e.target.value })}
+                    required
                   />
-                  <small style={{color: 'rgba(255,255,255,0.5)', fontSize: '12px'}}>
+                  <small style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>
                     Facteur d'émission CO2 (moyenne France: 0.0571 kg/kWh)
                   </small>
                 </div>
@@ -748,7 +1117,7 @@ const EnergyTab = () => {
                   <select
                     id="status"
                     value={newSensorForm.status}
-                    onChange={(e) => setNewSensorForm({...newSensorForm, status: e.target.value})}
+                    onChange={(e) => setNewSensorForm({ ...newSensorForm, status: e.target.value })}
                     style={{
                       padding: '10px',
                       background: 'rgba(255, 255, 255, 0.05)',
@@ -771,9 +1140,9 @@ const EnergyTab = () => {
                   padding: '12px',
                   marginTop: '15px'
                 }}>
-                  <div style={{display: 'flex', alignItems: 'flex-start', gap: '10px'}}>
-                    <i className="fas fa-info-circle" style={{color: '#3b82f6', marginTop: '2px'}} />
-                    <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.8)'}}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <i className="fas fa-info-circle" style={{ color: '#3b82f6', marginTop: '2px' }} />
+                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>
                       <strong>Note:</strong> L'adresse MAC doit correspondre exactement à celle de votre ESP32.
                       Vous la trouverez à l'écrande votre ESP32.
                     </div>
@@ -796,7 +1165,7 @@ const EnergyTab = () => {
 
       {/* Sensor Details Modal */}
       {showDetailsModal && (
-        <div id="sensorDetailsModal" className="modal" style={{display: 'block'}} onClick={closeModals}>
+        <div id="sensorDetailsModal" className="modal" style={{ display: 'block' }} onClick={closeModals}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3><i className="fas fa-eye" /> Détails du Capteur</h3>
@@ -840,7 +1209,7 @@ const EnergyTab = () => {
 
       {/* Sensor Configuration Modal */}
       {showConfigModal && (
-        <div id="sensorConfigModal" className="modal" style={{display: 'block'}} onClick={closeModals}>
+        <div id="sensorConfigModal" className="modal" style={{ display: 'block' }} onClick={closeModals}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3><i className="fas fa-cog" /> Configuration du Capteur</h3>
@@ -873,19 +1242,19 @@ const EnergyTab = () => {
 
       {/* Delete Sensor Confirmation Modal */}
       {showDeleteModal && (
-        <div id="deleteSensorModal" className="modal" style={{display: 'block'}} onClick={closeModals}>
-          <div className="modal-content" style={{maxWidth: '500px'}} onClick={(e) => e.stopPropagation()}>
+        <div id="deleteSensorModal" className="modal" style={{ display: 'block' }} onClick={closeModals}>
+          <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3><i className="fas fa-exclamation-triangle" style={{color: '#ef4444'}} /> Confirmer la suppression</h3>
+              <h3><i className="fas fa-exclamation-triangle" style={{ color: '#ef4444' }} /> Confirmer la suppression</h3>
               <button className="modal-close" onClick={closeModals}>
                 <i className="fas fa-times" />
               </button>
             </div>
             <div className="modal-body">
-              <p style={{color: 'var(--text-secondary)', fontSize: '1rem', lineHeight: '1.6', marginBottom: '20px', textAlign: 'center'}}>
-                Êtes-vous sûr de vouloir supprimer le capteur <strong style={{color: 'var(--accent-color)'}}>{currentSensorId}</strong> ?
+              <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', lineHeight: '1.6', marginBottom: '20px', textAlign: 'center' }}>
+                Êtes-vous sûr de vouloir supprimer le capteur <strong style={{ color: 'var(--accent-color)' }}>{currentSensorId}</strong> ?
               </p>
-              <p style={{color: '#ef4444', fontSize: '0.9rem', marginBottom: '20px', textAlign: 'center'}}>
+              <p style={{ color: '#ef4444', fontSize: '0.9rem', marginBottom: '20px', textAlign: 'center' }}>
                 <i className="fas fa-exclamation-circle" /> Cette action est irréversible.
               </p>
               <div className="form-actions">
