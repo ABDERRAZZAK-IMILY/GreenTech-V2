@@ -24,6 +24,14 @@ public class TrashMonitorService {
     private final TrashMapper trashMapper;
 
     public TrashMonitorResponseDTO create(TrashMonitorRequestDTO dto) {
+        // Check if a monitor with the same MAC address already exists
+        if (dto.getMacAddress() != null && !dto.getMacAddress().isEmpty()) {
+            if (trashMonitorRepository.findByMacAddress(dto.getMacAddress()).isPresent()) {
+                throw new IllegalArgumentException(
+                        "Un capteur avec l'adresse MAC '" + dto.getMacAddress() + "' existe déjà");
+            }
+        }
+
         TrashMonitor trash = trashMonitorRepository.save(trashMapper.toEntity(dto));
         return trashMapper.toResponse(trash);
     }
