@@ -125,4 +125,34 @@ public class EnergyService {
                         .build())
                 .collect(Collectors.toList());
     }
+
+    public List<com.greentechinnovators.backend.dto.Energy.Responce.DailyEnergyDTO> getDailyEnergy(LocalDateTime start,
+            LocalDateTime end) {
+        List<Energy> allEnergy = repository.findAll();
+        List<com.greentechinnovators.backend.dto.Energy.Responce.DailyEnergyDTO> report = new ArrayList<>();
+        LocalDateTime current = start;
+
+        while (!current.isAfter(end)) {
+            LocalDateTime startOfDay = current.toLocalDate().atStartOfDay();
+            LocalDateTime endOfDay = startOfDay.plusDays(1);
+
+            double totalEnergy = allEnergy.stream()
+                    .filter(e -> e.getCreatedAt() != null &&
+                            !e.getCreatedAt().isBefore(startOfDay) &&
+                            e.getCreatedAt().isBefore(endOfDay))
+                    .mapToDouble(Energy::getEnergyConsumed)
+                    .sum();
+
+            double carbonFootprint = carbonFootprintService.calculateEnergyFootprint(totalEnergy);
+
+            report.add(com.greentechinnovators.backend.dto.Energy.Responce.DailyEnergyDTO.builder()
+                    .date(current)
+                    .totalEnergyKwh(totalEnergy)
+                    .carbonFootprintKg(carbonFootprint)
+                    .build());
+
+            current = current.plusDays(1);
+        }
+        return report;
+    }
 }

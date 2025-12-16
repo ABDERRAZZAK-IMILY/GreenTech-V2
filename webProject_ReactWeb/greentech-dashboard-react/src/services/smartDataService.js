@@ -223,6 +223,10 @@ class EnergyDataService {
     if (!dataList || dataList.length === 0) return 0;
     return dataList.reduce((sum, item) => sum + (item.energyConsumed || 0), 0);
   }
+
+  getHistoryMetrics(days) {
+    return axiosInstance.get(`/energy/history/${days}`);
+  }
 }
 
 class GasDataService {
@@ -239,6 +243,10 @@ class GasDataService {
     return axiosInstance.get(`/gas/today`);
   }
 
+  getHistoryMetrics(days) {
+    return axiosInstance.get(`/gas/history/${days}`);
+  }
+
   calculateTotal(dataList) {
     if (!dataList || dataList.length === 0) return 0;
     return dataList.reduce((sum, item) => sum + (item.consumedGas || 0), 0);
@@ -252,6 +260,12 @@ class VehicleDataService {
 
   getTodayMetrics() {
     return axiosInstance.get(`/vehicle/today`);
+  }
+  
+  // No history endpoint for vehicle yet, using fallback or static
+  getHistoryMetrics(days) {
+    // Return empty promise to avoid errors, logic in Dashboard will handle empty
+    return Promise.resolve({ data: [] }); 
   }
 
   // Submit manual vehicle data
@@ -319,6 +333,9 @@ class VehicleDataService {
 
 export const energyDataService = new EnergyDataService();
 export const trashDataService = new TrashDataService();
+trashDataService.getHistoryMetrics = function(days) {
+    return axiosInstance.get(`/trash/history/${days}`);
+};
 export const gasDataService = new GasDataService();
 export const vehicleDataService = new VehicleDataService();
 

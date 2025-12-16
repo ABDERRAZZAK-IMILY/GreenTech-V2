@@ -52,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/webjars/**").permitAll()
                         .requestMatchers("/configuration/**").permitAll()
                         .requestMatchers("/api/transport/**").permitAll()
+                        .requestMatchers("api/vehicle/log/**").permitAll()
                         .requestMatchers("api/departments/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )

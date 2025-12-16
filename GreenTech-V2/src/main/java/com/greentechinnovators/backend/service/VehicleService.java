@@ -5,6 +5,7 @@ import com.greentechinnovators.backend.dto.vehicle.responce.DailyDistanceDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.VehicleResponseDTO;
 import com.greentechinnovators.backend.entity.Vehicle;
 import com.greentechinnovators.backend.entity.VehicleLog;
+import com.greentechinnovators.backend.exeptions.ResourceNotFoundException;
 import com.greentechinnovators.backend.mapper.VehicleMapper;
 import com.greentechinnovators.backend.repository.EnergyRepository;
 import com.greentechinnovators.backend.repository.VehicleLogRepository;
@@ -39,6 +40,10 @@ public class VehicleService {
     public List<VehicleResponseDTO> all() {
         List<Vehicle> vehicles = vehicleRepository.findAll();
         return vehicles.stream().map(mapper::toVehicleResponse).toList();
+    }
+    public VehicleResponseDTO findVehicleByUserId(String id) {
+        Vehicle vehicle = vehicleRepository.findVehicleByUserId(id).orElseThrow(()->{throw new ResourceNotFoundException("Vehicle not found");});
+        return mapper.toVehicleResponse(vehicle);
     }
 
     public VehicleResponseDTO findById(String id) {
