@@ -14,7 +14,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { dailyActions as initialActions, currentPosition, tripData } from '../data/dailyActions';
 import { useEmployee } from '../contexts/EmployeeContext';
 import colors from '../styles/colors';
-import GPSMapCard from '../components/GPSMapCard';
+
 
 export default function ActionsScreen() {
   const [dailyActions, setDailyActions] = useState(initialActions);
@@ -281,10 +281,7 @@ export default function ActionsScreen() {
             </View>
           </View>
 
-          {/* GPS Map Card */}
-          <View style={styles.marginTop}>
-            <GPSMapCard currentPosition={currentPosition} />
-          </View>
+          
         </View>
 
         <View style={{ height: 20 }} />
