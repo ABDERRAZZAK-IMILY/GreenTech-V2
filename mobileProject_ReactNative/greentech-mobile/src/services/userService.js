@@ -12,18 +12,22 @@ const getAuthHeaders = async () => {
   };
 };
 
-const getUserById = async (id) => {
+const getUserById = async () => {
   const headers = await getAuthHeaders();
+  const id = await AsyncStorage.getItem('userId');
   const response = await fetch(`${API_URL}/${id}`, {
     method: 'GET',
     headers: headers,
   });
   if (!response.ok) throw new Error('Erreur récupération utilisateur');
+  // console.log(response);
+  
   return await response.json();
 };
 
-const getUserProfile = async (id) => {
+const getUserProfile = async () => {
   const headers = await getAuthHeaders();
+  const id = await AsyncStorage.getItem('userId');
   const response = await fetch(`${API_URL}/${id}/profile`, {
     method: 'GET',
     headers: headers,
