@@ -12,7 +12,6 @@ const Level = () => {
         const fetchData = async () => {
             try {
                 const response = await gamification.getMyStats();
-                console.log("Stats received:", response); // Check your logs!
                 
                 // FIX 1: Remove '.data' unless your backend explicitly wraps it in a 'data' field
                 // With fetch(), the response IS the data.
