@@ -26,7 +26,7 @@ const Dashboard = () => {
   const trashWsRef = useRef(null);
 
 
-useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
 
@@ -42,10 +42,10 @@ useEffect(() => {
         localStorage.setItem('realtime_vehicle', JSON.stringify(vehicleRes.data || []));
 
         const totalEnergy = energyDataService.calculateTotal(energyRes.data);
+        // Manual entries are now saved to database and included in getTodayMetrics() response
         const totalWaste = trashDataService.calculateTotal(wasteRes.data);
         const totalGas = gasDataService.calculateTotal(gasRes.data);
         const totalVehicle = vehicleDataService.calculateTotal(vehicleRes.data);
-
 
         const totalCo2 = (totalEnergy * 0.5) + (totalWaste * 2.0) + (totalGas * 0.2) + (totalVehicle * 0.19);
 
@@ -81,7 +81,7 @@ useEffect(() => {
       energyWs.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          
+
           if (message.type === 'ENERGY_UPDATE' && message.data) {
             console.log(' Real-time Energy Update:', message.data);
             // Refresh data and trigger charts update
@@ -122,7 +122,7 @@ useEffect(() => {
       trashWs.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          
+
           if (message.type === 'TRASH_UPDATE' && message.data) {
             console.log('🗑️ Real-time Trash Update:', message.data);
             // Refresh data and trigger charts update
