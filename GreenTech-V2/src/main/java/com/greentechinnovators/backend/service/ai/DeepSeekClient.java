@@ -29,6 +29,41 @@ public class DeepSeekClient {
     @Value("${spring.ai.deepseek.model}")
     private String model;
 
+    /**
+     * Méthode SYNCHRONE (Bloquante) pour générer du JSON complet.
+     * Utilise "stream": false
+     */
+    public String generate(String prompt) {
+        WebClient webClient = webClientBuilder.baseUrl(apiUrl).build();
+
+        Map<String, Object> body = Map.of(
+                "model", model,
+                "stream", false, // Important pour recevoir tout le JSON d'un coup
+                "temperature", 0.1, // Faible température pour garantir un JSON valide
+                "messages", List.of(Map.of("role", "user", "content", prompt))
+        );
+
+        try {
+            JsonNode response = webClient.post()
+                    .header("Authorization", "Bearer " + apiKey)
+                    .header("Content-Type", "application/json")
+                    .bodyValue(body)
+                    .retrieve()
+                    .bodyToMono(JsonNode.class)
+                    .block(); // On bloque pour attendre la réponse complète
+
+            if (response != null && response.has("choices")) {
+                return response.path("choices").get(0).path("message").path("content").asText();
+            }
+        } catch (Exception e) {
+            log.error("Erreur appel DeepSeek Synchronous", e);
+        }
+        return "{}";
+    }
+
+    /**
+     * Méthode ASYNCHRONE (Streaming) pour le Chat UI (effet machine à écrire).
+     */
     public Flux<String> streamChat(List<Map<String, String>> messages) {
         WebClient webClient = webClientBuilder.baseUrl(apiUrl).build();
 
@@ -44,11 +79,11 @@ public class DeepSeekClient {
                 .bodyValue(body)
                 .retrieve()
                 .bodyToFlux(String.class)
-                .map(this::extractContent)
+                .map(this::extractStreamContent)
                 .filter(content -> !content.isEmpty());
     }
 
-    private String extractContent(String jsonChunk) {
+    private String extractStreamContent(String jsonChunk) {
         try {
             if (jsonChunk.contains("[DONE]")) return "";
             JsonNode root = objectMapper.readTree(jsonChunk);

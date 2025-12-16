@@ -37,6 +37,10 @@ public class JwtUtils {
 
 
     public Boolean validateToken(String token) {
+        if (token == null || token.isBlank()) {
+            return false;
+        }
+
         try {
             JWT.require(Algorithm.HMAC256(secretKey))
                     .build()

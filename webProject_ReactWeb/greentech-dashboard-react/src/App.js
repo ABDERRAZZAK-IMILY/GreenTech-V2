@@ -16,7 +16,7 @@ import Login from './pages/Login/Login';
 import { LoadingProvider, useLoading } from './contexts/LoadingContext';
 import { EmployeeProvider } from './contexts/EmployeeContext';
 import { PendingActionsProvider } from './contexts/PendingActionsContext';
-
+import { AIProvider } from './contexts/AIContext';// Tu l'as déjà sûrement
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [employeeTab, setEmployeeTab] = useState('dashboard');
@@ -552,7 +552,10 @@ function AppContent() {
 function App() {
   return (
     <LoadingProvider>
-      <AppContent />
+    
+      <AIProvider> 
+          <AppContent />
+      </AIProvider>
     </LoadingProvider>
   );
 }

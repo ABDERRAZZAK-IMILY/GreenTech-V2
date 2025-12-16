@@ -2,7 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLoading } from '../../../contexts/LoadingContext';
 import gamificationService from '../../../services/gamificationService';
 import './ActionValidationTab.css';
-
+import { 
+  ClipboardList, 
+  Clock, 
+  CheckCircle2, 
+  XCircle, 
+  Coins, 
+  Trophy 
+} from 'lucide-react';
 const ActionValidationTab = () => {
   const {
     setIsProcessingPurchase,
@@ -27,7 +34,6 @@ const ActionValidationTab = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // UI states
   const [selectedProof, setSelectedProof] = useState(null);
   const [showProofModal, setShowProofModal] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState('validation');
@@ -374,103 +380,115 @@ const ActionValidationTab = () => {
           </button>
         </h3>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '20px'
-        }}>
-          {/* Total Actions */}
-          <div className="stat-box" style={{
-            background: 'rgba(102, 126, 234, 0.2)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            border: '1px solid rgba(102, 126, 234, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📋</div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#667eea', marginBottom: '5px' }}>
-              {stats.totalActions}
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Total Actions Soumises</div>
-          </div>
-
-          {/* Pending */}
-          <div className="stat-box" style={{
-            background: 'rgba(245, 158, 11, 0.2)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            border: '1px solid rgba(245, 158, 11, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>⏳</div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#f59e0b', marginBottom: '5px' }}>
-              {stats.pendingCount}
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>En Attente de Validation</div>
-          </div>
-
-          {/* Approved */}
-          <div className="stat-box" style={{
-            background: 'rgba(67, 233, 123, 0.2)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            border: '1px solid rgba(67, 233, 123, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#43e97b', marginBottom: '5px' }}>
-              {stats.approvedCount}
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Actions Approuvées</div>
-          </div>
-
-          {/* Rejected */}
-          <div className="stat-box" style={{
-            background: 'rgba(239, 68, 68, 0.2)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            border: '1px solid rgba(239, 68, 68, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>❌</div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#ef4444', marginBottom: '5px' }}>
-              {stats.rejectedCount}
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Actions Rejetées</div>
-          </div>
-
-          {/* Total Points Awarded */}
-          <div className="stat-box" style={{
-            background: 'rgba(250, 177, 160, 0.2)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            border: '1px solid rgba(250, 177, 160, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>💰</div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#fab1a0', marginBottom: '5px' }}>
-              {stats.totalPointsAwarded.toLocaleString()}
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Points Attribués</div>
-          </div>
-
-          {/* Most Active Employee */}
-          <div className="stat-box" style={{
-            background: 'rgba(254, 202, 87, 0.2)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            border: '1px solid rgba(254, 202, 87, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🏆</div>
-            <div style={{ fontSize: '18px', fontWeight: '700', color: '#feca57', marginBottom: '2px' }}>
-              {stats.mostActiveUser.name}
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-              {stats.mostActiveUser.count} actions soumises
-            </div>
-          </div>
+       <div style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '20px'
+}}>
+    {/* Total Actions */}
+    <div className="stat-box" style={{
+        background: 'rgba(102, 126, 234, 0.2)',
+        borderRadius: '12px',
+        padding: '20px',
+        textAlign: 'center',
+        border: '1px solid rgba(102, 126, 234, 0.3)'
+    }}>
+        <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+            <ClipboardList size={32} color="#667eea" />
         </div>
+        <div style={{ fontSize: '28px', fontWeight: '700', color: '#667eea', marginBottom: '5px' }}>
+            {stats.totalActions}
+        </div>
+        <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Total Actions Soumises</div>
+    </div>
+
+    {/* Pending */}
+    <div className="stat-box" style={{
+        background: 'rgba(245, 158, 11, 0.2)',
+        borderRadius: '12px',
+        padding: '20px',
+        textAlign: 'center',
+        border: '1px solid rgba(245, 158, 11, 0.3)'
+    }}>
+        <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+            <Clock size={32} color="#f59e0b" />
+        </div>
+        <div style={{ fontSize: '28px', fontWeight: '700', color: '#f59e0b', marginBottom: '5px' }}>
+            {stats.pendingCount}
+        </div>
+        <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>En Attente de Validation</div>
+    </div>
+
+    {/* Approved */}
+    <div className="stat-box" style={{
+        background: 'rgba(67, 233, 123, 0.2)',
+        borderRadius: '12px',
+        padding: '20px',
+        textAlign: 'center',
+        border: '1px solid rgba(67, 233, 123, 0.3)'
+    }}>
+        <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+            <CheckCircle2 size={32} color="#43e97b" />
+        </div>
+        <div style={{ fontSize: '28px', fontWeight: '700', color: '#43e97b', marginBottom: '5px' }}>
+            {stats.approvedCount}
+        </div>
+        <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Actions Approuvées</div>
+    </div>
+
+    {/* Rejected */}
+    <div className="stat-box" style={{
+        background: 'rgba(239, 68, 68, 0.2)',
+        borderRadius: '12px',
+        padding: '20px',
+        textAlign: 'center',
+        border: '1px solid rgba(239, 68, 68, 0.3)'
+    }}>
+        <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+            <XCircle size={32} color="#ef4444" />
+        </div>
+        <div style={{ fontSize: '28px', fontWeight: '700', color: '#ef4444', marginBottom: '5px' }}>
+            {stats.rejectedCount}
+        </div>
+        <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Actions Rejetées</div>
+    </div>
+
+    {/* Total Points Awarded */}
+    <div className="stat-box" style={{
+        background: 'rgba(250, 177, 160, 0.2)',
+        borderRadius: '12px',
+        padding: '20px',
+        textAlign: 'center',
+        border: '1px solid rgba(250, 177, 160, 0.3)'
+    }}>
+        <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+            <Coins size={32} color="#fab1a0" />
+        </div>
+        <div style={{ fontSize: '28px', fontWeight: '700', color: '#fab1a0', marginBottom: '5px' }}>
+            {stats.totalPointsAwarded.toLocaleString()}
+        </div>
+        <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Points Attribués</div>
+    </div>
+
+    {/* Most Active Employee */}
+    <div className="stat-box" style={{
+        background: 'rgba(254, 202, 87, 0.2)',
+        borderRadius: '12px',
+        padding: '20px',
+        textAlign: 'center',
+        border: '1px solid rgba(254, 202, 87, 0.3)'
+    }}>
+        <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+            <Trophy size={32} color="#feca57" />
+        </div>
+        <div style={{ fontSize: '18px', fontWeight: '700', color: '#feca57', marginBottom: '2px' }}>
+            {stats.mostActiveUser.name}
+        </div>
+        <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            {stats.mostActiveUser.count} actions soumises
+        </div>
+    </div>
+</div>
       </div>
 
       {/* Main Sub-Tabs Navigation */}

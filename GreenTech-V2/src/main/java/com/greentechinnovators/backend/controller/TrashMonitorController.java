@@ -24,11 +24,19 @@ public class TrashMonitorController {
     }
 
     @PatchMapping("{id}")
-    private ResponseEntity<TrashMonitorResponseDTO> update(@Valid @RequestBody StatusChangeDTO dto, @PathVariable String id) {
+    private ResponseEntity<TrashMonitorResponseDTO> update(@Valid @RequestBody StatusChangeDTO dto,
+            @PathVariable String id) {
         return ResponseEntity.ok().body(trashMonitorService.Update(dto, id));
     }
+
     @GetMapping("/all")
-    private ResponseEntity<List<TrashMonitorResponseDTO>>  findAll() {
+    private ResponseEntity<List<TrashMonitorResponseDTO>> findAll() {
         return ResponseEntity.ok().body(trashMonitorService.findAll());
+    }
+
+    @DeleteMapping("/{id}")
+    private ResponseEntity<Void> deleteMonitor(@PathVariable String id) {
+        trashMonitorService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

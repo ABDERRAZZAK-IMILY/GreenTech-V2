@@ -28,6 +28,20 @@ public class ChallengeSubmissionService {
     private final GamificationService gamificationService;
     private final UserRepository userRepository;
 
+    // helper function
+    private User findUserByEmailOrId(String userIdentifier) {
+        if (userIdentifier == null || userIdentifier.isEmpty()) {
+            return null;
+        }
+        // First try to find by email (since authentication.getName() returns email)
+        User user = userRepository.findByEmail(userIdentifier).orElse(null);
+        if (user == null) {
+            // Fallback: try to find by ID
+            user = userRepository.findById(userIdentifier).orElse(null);
+        }
+        return user;
+    }
+
     public ChallengeSubmission submitProof(String userId, SubmitChallengeRequestDTO request) {
         if (!challengeRepository.existsById(request.getChallengeId())) {
             throw new RuntimeException("Challenge not found");
@@ -95,12 +109,12 @@ public class ChallengeSubmissionService {
      */
     public Map<String, Object> getSubmissionsStats() {
         List<ChallengeSubmission> allSubmissions = submissionRepository.findAll();
-        
+
         long totalCount = allSubmissions.size();
         long pendingCount = allSubmissions.stream().filter(s -> s.getStatus() == SubmissionStatus.PENDING).count();
         long approvedCount = allSubmissions.stream().filter(s -> s.getStatus() == SubmissionStatus.APPROVED).count();
         long rejectedCount = allSubmissions.stream().filter(s -> s.getStatus() == SubmissionStatus.REJECTED).count();
-        
+
         // Calculate total points awarded
         int totalPointsAwarded = allSubmissions.stream()
                 .filter(s -> s.getStatus() == SubmissionStatus.APPROVED)
@@ -113,16 +127,17 @@ public class ChallengeSubmissionService {
         // Find most active user
         Map<String, Long> userSubmissionCounts = allSubmissions.stream()
                 .collect(Collectors.groupingBy(ChallengeSubmission::getUserId, Collectors.counting()));
-        
+
         String mostActiveUserId = userSubmissionCounts.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
                 .orElse(null);
-        
+
         String mostActiveUserName = "N/A";
         long mostActiveUserCount = 0;
         if (mostActiveUserId != null) {
-            User user = userRepository.findById(mostActiveUserId).orElse(null);
+            // Use the helper method to find user by email or ID
+            User user = findUserByEmailOrId(mostActiveUserId);
             mostActiveUserName = user != null ? user.getName() : "Unknown";
             mostActiveUserCount = userSubmissionCounts.get(mostActiveUserId);
         }
@@ -134,10 +149,9 @@ public class ChallengeSubmissionService {
         stats.put("rejectedCount", rejectedCount);
         stats.put("totalPointsAwarded", totalPointsAwarded);
         stats.put("mostActiveUser", Map.of(
-            "name", mostActiveUserName,
-            "count", mostActiveUserCount
-        ));
-        
+                "name", mostActiveUserName,
+                "count", mostActiveUserCount));
+
         return stats;
     }
 
@@ -163,18 +177,19 @@ public class ChallengeSubmissionService {
             } catch (Exception e) {
                 // Challenge not found, continue with null
             }
-            
-            // Get user name
+
+            // Get user name - userId is actually the email (from authentication.getName())
             String userName = "Unknown User";
             try {
-                User user = userRepository.findById(submission.getUserId()).orElse(null);
+                // Use the helper method to find user by email or ID
+                User user = findUserByEmailOrId(submission.getUserId());
                 if (user != null) {
                     userName = user.getName();
                 }
             } catch (Exception e) {
                 // User not found, use default name
             }
-            
+
             return SubmissionResponseDTO.builder()
                     .id(submission.getId())
                     .userId(submission.getUserId())
