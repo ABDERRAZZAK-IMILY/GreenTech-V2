@@ -22,8 +22,65 @@ const Dashboard = () => {
     co2: 0
   });
 
+  const [historyData, setHistoryData] = useState(null);
+
   const energyWsRef = useRef(null);
   const trashWsRef = useRef(null);
+
+  // Fetch history data when period or metric changes (for 7j and 30j)
+  useEffect(() => {
+    const fetchHistory = async () => {
+      // For 24h, let useCharts/dataGenerator handle it (it uses realtime data locally)
+      if (selectedPeriod === '24h') {
+        setHistoryData(null);
+        return;
+      }
+
+      const days = selectedPeriod === '7j' ? 7 : 30;
+      let service;
+      switch (selectedMetric) {
+        case 'electricity': service = energyDataService; break;
+        case 'waste': service = trashDataService; break;
+        case 'gas': service = gasDataService; break;
+        case 'transport': service = vehicleDataService; break;
+        default: service = energyDataService;
+      }
+
+      setHistoryData(null); // Clear previous data while loading (optional)
+
+      if (service && service.getHistoryMetrics) {
+        try {
+          console.log(`Fetching history for ${selectedMetric} over ${days} days...`);
+          const res = await service.getHistoryMetrics(days);
+          console.log('History Response:', res.data);
+
+          if (res.data) {
+            // Sort data by date
+            const sortedData = res.data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Format for Chart.js
+            const formattedData = {
+              metric: selectedMetric,
+              labels: sortedData.map(d => new Date(d.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })),
+              data: sortedData.map(d => {
+                if (d.totalEnergyKwh !== undefined) return d.totalEnergyKwh;
+                if (d.totalWeightKg !== undefined) return d.totalWeightKg; // totalWeightKg from Trash DTO
+                if (d.totalGasConsumed !== undefined) return d.totalGasConsumed; // totalGasConsumed from Gas DTO
+                // Vehicle might default to 0 for now as we didn't implement backend
+                return 0;
+              })
+            };
+            setHistoryData(formattedData);
+          }
+        } catch (e) {
+          console.error("Fetch history failed", e);
+          setHistoryData(null); // Fallback to static if failed
+        }
+      }
+    };
+
+    fetchHistory();
+  }, [selectedPeriod, selectedMetric]);
 
 
   useEffect(() => {
@@ -168,7 +225,7 @@ const Dashboard = () => {
 
 
 
-  useCharts(selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod, refreshTrigger, metrics);
+  useCharts(selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod, refreshTrigger, metrics, historyData);
 
   // Titres des métriques
   const metricTitles = {
