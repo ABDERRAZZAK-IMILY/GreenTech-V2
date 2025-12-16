@@ -33,6 +33,147 @@ const GasTab = () => {
     setCurrentEquipments(gasEquipmentsConfig[activeFilter] || []);
   }, [activeFilter]);
 
+  // State for KPIs
+  const [kpis, setKpis] = useState({
+    stockTotal: 0,
+    stockWeight: 0,
+    consumptionMonth: 0,
+    emptyBottles: 0,
+    co2Emissions: 0
+  });
+
+  const fetchGasData = async () => {
+    try {
+      const response = await gasDataService.getGasMetrics();
+      const logs = response.data || [];
+
+      // Group logs by usage for history table
+      const newHistory = {
+        cuisine: [],
+        chauffage: [],
+        climatisation: [],
+        'eau-chaude': [],
+        production: []
+      };
+
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      let stockCount = 0;
+      let stockKg = 0;
+      let monthConsumption = 0;
+      let emptyCount = 0;
+      let co2Total = 0;
+
+      logs.forEach(log => {
+        const logDate = new Date(log.createdAt);
+        const logEntry = {
+          date: logDate.toLocaleString('fr-FR'),
+          usage: log.usage || 'Autre',
+          gasType: log.gasType || '-',
+          quantity: log.quantity || log.consumedGas || 0,
+          capacity: log.capacity || '-',
+          status: log.status || 'encours',
+          originalLog: log
+        };
+
+        // Find group key
+        const groupKey = Object.keys(usageNames).find(key => usageNames[key] === log.usage);
+
+        if (groupKey && newHistory[groupKey]) {
+          newHistory[groupKey].unshift(logEntry); // Add to start (newest first)
+        }
+
+        if (log.status === 'pleine' || log.status === 'encours') {
+          stockCount += (log.quantity || 0);
+          let weight = 0;
+          if (log.gasType === 'Butane') weight = (log.quantity || 0) * 13;
+          else weight = (log.quantity || 0);
+
+          stockKg += weight;
+        }
+
+        if (log.status === 'vide') {
+          emptyCount += (log.quantity || 0);
+        }
+
+        if (logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear) {
+          monthConsumption += (log.quantity || 0);
+          let weightForCo2 = (log.quantity || 0);
+          if (log.gasType === 'Butane') weightForCo2 *= 13;
+
+          co2Total += (weightForCo2 * 3.0);
+        }
+      });
+
+      setGasHistory(newHistory);
+      setKpis({
+        stockTotal: stockCount,
+        stockWeight: stockKg,
+        consumptionMonth: monthConsumption,
+        emptyBottles: emptyCount,
+        co2Emissions: co2Total
+      });
+
+    } catch (error) {
+      console.error("Failed to fetch gas logs", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchGasData();
+  }, []);
+
+  useEffect(() => {
+    const currentLogs = gasHistory[activeFilter] || [];
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    let stockCount = 0;
+    let stockKg = 0;
+    let monthConsumption = 0;
+    let emptyCount = 0;
+    let co2Total = 0;
+
+    currentLogs.forEach(entry => {
+      const qty = Number(entry.quantity) || 0;
+      const status = entry.status;
+      const logDate = entry.originalLog ? new Date(entry.originalLog.createdAt) : new Date();
+      const type = entry.gasType;
+
+      // Stock (Pleine or Encours)
+      if (status === 'pleine' || status === 'encours') {
+        stockCount += qty;
+        let weight = qty;
+        if (type === 'Butane') weight = qty * 13;
+        stockKg += weight;
+      }
+
+      // Empty
+      if (status === 'vide') {
+        emptyCount += qty;
+      }
+
+      // Consumption (This Month)
+      if (logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear) {
+        monthConsumption += qty;
+        let weightForCo2 = qty;
+        if (type === 'Butane') weightForCo2 *= 13;
+        co2Total += (weightForCo2 * 3.0);
+      }
+    });
+
+    setKpis({
+      stockTotal: stockCount,
+      stockWeight: stockKg,
+      consumptionMonth: monthConsumption,
+      emptyBottles: emptyCount,
+      co2Emissions: co2Total
+    });
+  }, [gasHistory, activeFilter]);
+
   const toggleGasOverview = () => {
     setIsOverviewOpen(!isOverviewOpen);
   };
@@ -76,7 +217,7 @@ const GasTab = () => {
     event.preventDefault();
 
     const gasType = gasTypes[activeFilter];
-    const quantity = document.getElementById('gasQuantity').value;
+    const quantity = parseFloat(document.getElementById('gasQuantity').value);
     const capacity = document.getElementById('gasCapacity').value;
     const status = document.getElementById('gasStatus').value;
 
@@ -85,35 +226,22 @@ const GasTab = () => {
     try {
       // Submit to backend
       const payload = {
-        consumedGas: parseFloat(quantity)
+        consumedGas: quantity, // Keep for compatibility if needed
+        quantity: quantity,
+        usage: usageName,
+        gasType: gasType,
+        capacity: capacity,
+        status: status,
+        unit: gasType === 'Butane' ? 'bouteilles' : 'kg'
       };
 
       await gasDataService.submitManualData(payload);
 
-      // Get current date and time
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('fr-FR');
-      const timeStr = now.toLocaleTimeString('fr-FR');
-
-      // Add to history
-      const newEntry = {
-        date: `${dateStr} ${timeStr}`,
-        usage: usageName,
-        gasType: gasType,
-        quantity: quantity,
-        capacity: capacity,
-        status: status
-      };
-
-      setGasHistory(prev => ({
-        ...prev,
-        [activeFilter]: [newEntry, ...prev[activeFilter]]
-      }));
-
       showNotification(`Gaz enregistré: ${usageName} - ${gasType} (${quantity} ${gasType === 'Butane' ? 'bouteilles' : 'kg'})`, 'success');
 
-      // Reset form
+      // Reset form and refresh data
       event.target.reset();
+      fetchGasData();
     } catch (error) {
       console.error('Error submitting gas data:', error);
       showNotification('Erreur lors de l\'enregistrement des données', 'error');
@@ -160,8 +288,8 @@ const GasTab = () => {
           </div>
           <div className="stat-content">
             <h4>Stock Total Actuel</h4>
-            <div className="stat-value" id="gasStockTotal">12 bouteilles</div>
-            <div className="stat-label">156 kg</div>
+            <div className="stat-value" id="gasStockTotal">{kpis.stockTotal.toFixed(1)} {activeFilter === 'climatisation' ? 'kg' : 'bouteilles'}</div>
+            <div className="stat-label">{kpis.stockWeight.toFixed(0)} kg</div>
           </div>
         </div>
 
@@ -171,7 +299,7 @@ const GasTab = () => {
           </div>
           <div className="stat-content">
             <h4>Consommation ce Mois</h4>
-            <div className="stat-value" id="gasConsumptionMonth">2.3 bouteilles</div>
+            <div className="stat-value" id="gasConsumptionMonth">{kpis.consumptionMonth.toFixed(1)} {activeFilter === 'climatisation' ? 'kg' : 'bouteilles'}</div>
             <div className="stat-label">Usage actuel</div>
           </div>
         </div>
@@ -182,7 +310,7 @@ const GasTab = () => {
           </div>
           <div className="stat-content">
             <h4>Bouteilles Vides</h4>
-            <div className="stat-value" id="gasEmptyBottles">1 bouteille</div>
+            <div className="stat-value" id="gasEmptyBottles">{kpis.emptyBottles.toFixed(1)} bouteille(s)</div>
             <div className="stat-label">À échanger</div>
           </div>
         </div>
@@ -193,7 +321,7 @@ const GasTab = () => {
           </div>
           <div className="stat-content">
             <h4>Émissions CO2 Estimées</h4>
-            <div className="stat-value" id="gasCO2Emissions">45 kg</div>
+            <div className="stat-value" id="gasCO2Emissions">{kpis.co2Emissions.toFixed(1)} kg</div>
             <div className="stat-label">Ce mois</div>
           </div>
         </div>
@@ -263,19 +391,24 @@ const GasTab = () => {
                 </tr>
               </thead>
               <tbody id="gasOverviewTableBody">
-                {Object.keys(usageNames).map((usageKey) => (
-                  <tr key={usageKey}>
-                    <td>
-                      <div className="usage-icon">
-                        <i className={`fas ${usageIcons[usageKey]}`} style={{ color: '#3b82f6' }} />
-                        {usageNames[usageKey]}
-                      </div>
-                    </td>
-                    <td><strong>{gasTypes[usageKey]}</strong></td>
-                    <td><strong>0 {gasTypes[usageKey] === 'Butane' ? 'bouteilles' : 'kg'}</strong></td>
-                    <td><span className="status-badge status-partial">0 kg CO2</span></td>
-                  </tr>
-                ))}
+                {Object.keys(usageNames).map((usageKey) => {
+                  const totalQty = gasHistory[usageKey] ? gasHistory[usageKey].reduce((sum, item) => sum + (Number(item.quantity) || 0), 0) : 0;
+                  const totalCo2 = totalQty * 13 * 3.0; // Very rough approx
+
+                  return (
+                    <tr key={usageKey}>
+                      <td>
+                        <div className="usage-icon">
+                          <i className={`fas ${usageIcons[usageKey]}`} style={{ color: '#3b82f6' }} />
+                          {usageNames[usageKey]}
+                        </div>
+                      </td>
+                      <td><strong>{gasTypes[usageKey]}</strong></td>
+                      <td><strong>{totalQty.toFixed(1)} {gasTypes[usageKey] === 'Butane' ? 'bouteilles' : 'kg'}</strong></td>
+                      <td><span className="status-badge status-partial">{totalCo2.toFixed(1)} kg CO2</span></td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -370,6 +503,23 @@ const GasTab = () => {
         >
           <div className="form-row">
             <div className="form-group">
+              <label>Usage</label>
+              <select id="gasUsage" value={activeFilter} onChange={(e) => setActiveFilter(e.target.value)}>
+                {Object.keys(usageNames).map(key => (
+                  <option key={key} value={key}>{usageNames[key]}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Type de gaz</label>
+              <input
+                type="text"
+                id="gasType"
+                value={gasTypes[activeFilter]}
+                readOnly
+              />
+            </div>
+            <div className="form-group">
               <label>{gasTypes[activeFilter] === 'Butane' ? 'Quantité en bouteilles' : 'Quantité en kg'}</label>
               <input
                 type="number"
@@ -410,7 +560,7 @@ const GasTab = () => {
       {/* Gas Manual Entry History Table */}
       <div className="waste-history-section">
         <h4>
-          <i className="fas fa-fire" /> Liste des bouteilles de gaz
+          <i className="fas fa-fire" /> Liste des bouteilles de gaz - {usageNames[activeFilter]}
         </h4>
         <div className="history-table-container">
           <table className="history-table">
@@ -433,14 +583,13 @@ const GasTab = () => {
                   <td>{entry.quantity} {entry.gasType === 'Butane' ? 'bouteilles' : 'kg'}</td>
                   <td>{entry.capacity}</td>
                   <td>
-                    <span className={`status-badge ${
-                      entry.status === 'pleine' ? 'online' :
+                    <span className={`status-badge ${entry.status === 'pleine' ? 'online' :
                       entry.status === 'encours' ? 'status-partial' :
-                      'offline'
-                    }`}>
+                        'offline'
+                      }`}>
                       {entry.status === 'pleine' ? 'Pleine' :
-                       entry.status === 'encours' ? 'En cours' :
-                       'Vide'}
+                        entry.status === 'encours' ? 'En cours' :
+                          'Vide'}
                     </span>
                   </td>
                 </tr>
