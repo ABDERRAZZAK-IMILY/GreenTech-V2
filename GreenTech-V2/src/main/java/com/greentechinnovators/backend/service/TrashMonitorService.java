@@ -27,14 +27,23 @@ public class TrashMonitorService {
         TrashMonitor trash = trashMonitorRepository.save(trashMapper.toEntity(dto));
         return trashMapper.toResponse(trash);
     }
+
     public TrashMonitorResponseDTO Update(StatusChangeDTO dto, String address) {
-        TrashMonitor trashMonitor = trashMonitorRepository.findByMacAddress(address).orElseThrow(()->{
-            throw new ResourceNotFoundException("monitor with address "+address+" not found");
+        TrashMonitor trashMonitor = trashMonitorRepository.findByMacAddress(address).orElseThrow(() -> {
+            throw new ResourceNotFoundException("monitor with address " + address + " not found");
         });
         trashMonitor.setStatus(dto.getStatus());
         return trashMapper.toResponse(trashMonitorRepository.save(trashMonitor));
     }
+
     public List<TrashMonitorResponseDTO> findAll() {
         return trashMonitorRepository.findAll().stream().map(trashMapper::toResponse).toList();
+    }
+
+    public void deleteById(String id) {
+        if (!trashMonitorRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Monitor with id " + id + " not found");
+        }
+        trashMonitorRepository.deleteById(id);
     }
 }

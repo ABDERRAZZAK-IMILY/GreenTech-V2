@@ -3,13 +3,13 @@ package com.greentechinnovators.backend.service.ai;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.greentechinnovators.backend.dto.Energy.Responce.EnergyResponseDTO;
+import com.greentechinnovators.backend.dto.department.DepartmentResponseDTO;
 import com.greentechinnovators.backend.dto.gas.responce.GasResponseDTO;
 import com.greentechinnovators.backend.dto.trash.response.DailyTrashDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.DailyDistanceDTO;
-import com.greentechinnovators.backend.service.EnergyService;
-import com.greentechinnovators.backend.service.GasService;
-import com.greentechinnovators.backend.service.TrashService;
-import com.greentechinnovators.backend.service.VehicleService;
+import com.greentechinnovators.backend.entity.Department;
+import com.greentechinnovators.backend.entity.User;
+import com.greentechinnovators.backend.service.*;
 import com.greentechinnovators.backend.utils.AiDataHelper;
 import com.greentechinnovators.backend.utils.CarbonFootprintService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +32,7 @@ public class AiContextManager {
     private final ObjectMapper objectMapper;
     private final AiDataHelper helper;
     private final CarbonFootprintService carbonService;
+    private final DepartmentService departmentService;
 
     /**
      * Hada howa "le cerveau" li kayjma3 data mn ga3 les services.
@@ -52,7 +53,7 @@ public class AiContextManager {
         context.put("TRASH", getTrashData(startOfMonth, now, startOfLastMonth, endOfLastMonth));
         context.put("ENERGY", getEnergyData(startOfMonth, now, startOfLastMonth, endOfLastMonth));
         context.put("GAS", getGasData(startOfMonth, now, startOfLastMonth, endOfLastMonth));
-
+        context.put("DEPARTMENTS", getDepartmentOverview());
         try {
             return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(context);
         } catch (JsonProcessingException e) {
@@ -153,5 +154,31 @@ public class AiContextManager {
         }
     }
 
+    private Map<String, Object> getDepartmentOverview() {
+        try {
+            List<DepartmentResponseDTO> departments = departmentService.getAllDepartments();
 
+            List<Map<String, Object>> deptList = new ArrayList<>();
+
+            for (DepartmentResponseDTO dept : departments) {
+                int userCount = (dept.getUsers() != null) ? dept.getUsers().size() : 0;
+
+                Map<String, Object> info = new HashMap<>();
+                info.put("Name", dept.getName());
+                info.put("Employee_Count", userCount);
+
+                deptList.add(info);
+            }
+
+
+            return Map.of(
+                    "Total_Departments", departments.size(),
+                    "List", deptList
+            );
+
+        } catch (Exception e) {
+            log.error("Erreur Department Data", e);
+            return Map.of("Status", "Données indisponibles");
+        }
+    }
     }

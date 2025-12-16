@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import { useLoading } from '../contexts/LoadingContext';
 import { showNotification } from '../utils/notifications';
-import { getAIPredictions } from '../services/AI/aiService'; // Import du service séparé
-
+import { getAIPredictions } from '../services/AI/aiService'; 
+import { useAI } from '../contexts/AIContext'; 
 const useAIPrediction = () => {
-  const [predictionData, setPredictionData] = useState(null);
+  const { chatMessages, setChatMessages } = useAI();
+  const { 
+        predictionData, 
+        setPredictionData, 
+        isPredictionsGenerated, 
+        setIsPredictionsGenerated 
+    } = useAI();
 
-  const {
-    setIsGeneratingPredictions,
-    setPredictionProgress,
-    setPredictionStep,
-    setIsPredictionsGenerated
-  } = useLoading();
-
+    const { 
+        setIsGeneratingPredictions,
+        setPredictionProgress,
+        setPredictionStep
+    } = useLoading();
   const generatePredictions = async () => {
     setIsGeneratingPredictions(true);
     setPredictionProgress(0);
@@ -36,7 +40,7 @@ const useAIPrediction = () => {
           try {
             const data = await getAIPredictions();
             setPredictionData(data);
-            console.log(data)
+           
           } catch (error) {
             console.error(error);
             showNotification("Impossible de récupérer les prédictions", "error");
@@ -67,6 +71,7 @@ const useAIPrediction = () => {
 
   return {
     predictionData,
+    isPredictionsGenerated, 
     generatePredictions
   };
 };

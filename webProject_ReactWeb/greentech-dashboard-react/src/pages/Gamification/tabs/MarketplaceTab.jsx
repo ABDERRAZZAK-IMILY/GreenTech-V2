@@ -2,7 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { showNotification } from '../../../utils/notifications';
 import marketplaceService from '../../../services/marketplaceService';
 import authService from '../../../services/authService';
-
+import { 
+  LineChart, 
+  Coins, 
+  Gift, 
+  BarChart3, 
+  Trophy, 
+  Flame 
+} from 'lucide-react';
 const MarketplaceTab = () => {
   const [isAdmin, setIsAdmin] = useState(localStorage.getItem('userRole') === 'admin'); 
   const [loading, setLoading] = useState(true);
@@ -41,12 +48,15 @@ const MarketplaceTab = () => {
     try {
       setLoading(true);
       
-      const productsData = await marketplaceService.getAllProducts();
-      setProducts(productsData || []);
-
       const currentUserRole = localStorage.getItem('userRole'); 
       const isUserAdmin = currentUserRole === 'ADMIN' || currentUserRole === 'admin';
       setIsAdmin(isUserAdmin);
+
+      // Admin gets all products (including inactive), users get only active
+      const productsData = isUserAdmin 
+        ? await marketplaceService.getAllProductsAdmin()
+        : await marketplaceService.getAllProducts();
+      setProducts(productsData || []);
 
       if (isUserAdmin) {
         const ordersData = await marketplaceService.getAllOrders();
@@ -185,8 +195,18 @@ const MarketplaceTab = () => {
 
   const handleToggleActive = async (productId) => {
       const product = products.find(p => p.id === productId);
+      const currentStatus = product.isActive ?? product.active ?? true;
       try {
-          await marketplaceService.updateProduct(productId, { ...product, active: !product.active });
+          await marketplaceService.updateProduct(productId, {
+              name: product.name,
+              description: product.description,
+              costInPoints: product.costInPoints || product.cost,
+              emoji: product.emoji,
+              stockQuantity: product.stockQuantity ?? product.stock ?? 0,
+              category: product.category,
+              rating: product.rating,
+              isActive: !currentStatus
+          });
           fetchData();
       } catch (error) {
           console.error(error);
@@ -243,10 +263,10 @@ const MarketplaceTab = () => {
       name: product.name,
       emoji: product.emoji || '🎁',
       description: product.description,
-      cost: product.cost,
+      cost: product.costInPoints || product.cost || 0,
       category: product.category,
-      badge: product.badge,
-      stock: product.stock,
+      badge: product.badge || '',
+      stock: product.stockQuantity ?? product.stock ?? 100,
       imageUrl: product.imageUrl || ''
     });
     setShowEditProductModal(true);
@@ -307,99 +327,111 @@ const MarketplaceTab = () => {
     <div className="marketplace-tab">
 
       {/* ADMIN VIEW - Analytics KPIs */}
-      <div className="admin-statistics-section" style={{
-        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)',
-        backdropFilter: 'blur(10px)',
-        borderRadius: '16px',
-        padding: '25px',
-        marginBottom: '30px',
-        border: '1px solid rgba(102, 126, 234, 0.3)'
-      }}>
-        <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <i className="fas fa-chart-line"></i> Statistiques du Marketplace
-        </h3>
+    <div className="admin-statistics-section" style={{
+    background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '16px',
+    padding: '25px',
+    marginBottom: '30px',
+    border: '1px solid rgba(102, 126, 234, 0.3)'
+}}>
+    <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Badalt FontAwesome b Lucide LineChart */}
+        <LineChart size={24} /> Statistiques du Marketplace
+    </h3>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-          {/* Total Points Spent */}
-          <div className="stat-box" style={{
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+        
+        {/* Total Points Spent */}
+        <div className="stat-box" style={{
             background: 'rgba(118, 75, 162, 0.25)',
             borderRadius: '12px',
             padding: '20px',
             textAlign: 'center',
             border: '1px solid rgba(118, 75, 162, 0.4)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>💰</div>
+        }}>
+            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+                <Coins size={32} color="#a78bfa" />
+            </div>
             <div style={{ fontSize: '28px', fontWeight: '700', color: '#a78bfa', marginBottom: '5px' }}>
-              {totalPointsSpent.toLocaleString()}
+                {totalPointsSpent.toLocaleString()}
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Points Totaux Dépensés</div>
-          </div>
+        </div>
 
-          {/* Total Exchanges */}
-          <div className="stat-box" style={{
+        {/* Total Exchanges */}
+        <div className="stat-box" style={{
             background: 'rgba(67, 233, 123, 0.2)',
             borderRadius: '12px',
             padding: '20px',
             textAlign: 'center',
             border: '1px solid rgba(67, 233, 123, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🎁</div>
+        }}>
+            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+                <Gift size={32} color="#5cdb95" />
+            </div>
             <div style={{ fontSize: '28px', fontWeight: '700', color: '#5cdb95', marginBottom: '5px' }}>
-              {totalExchanges}
+                {totalExchanges}
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Échanges Totaux</div>
-          </div>
+        </div>
 
-          {/* Average per Employee */}
-          <div className="stat-box" style={{
+        {/* Average per Employee */}
+        <div className="stat-box" style={{
             background: 'rgba(250, 177, 160, 0.2)',
             borderRadius: '12px',
             padding: '20px',
             textAlign: 'center',
             border: '1px solid rgba(250, 177, 160, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📊</div>
+        }}>
+            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+                <BarChart3 size={32} color="#fab1a0" />
+            </div>
             <div style={{ fontSize: '28px', fontWeight: '700', color: '#fab1a0', marginBottom: '5px' }}>
-              {avgPointsPerEmployee.toLocaleString()}
+                {avgPointsPerEmployee.toLocaleString()}
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Moyenne par Employé</div>
-          </div>
+        </div>
 
-          {/* Top Spender */}
-          <div className="stat-box" style={{
+        {/* Top Spender */}
+        <div className="stat-box" style={{
             background: 'rgba(254, 202, 87, 0.2)',
             borderRadius: '12px',
             padding: '20px',
             textAlign: 'center',
             border: '1px solid rgba(254, 202, 87, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🏆</div>
+        }}>
+            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+                <Trophy size={32} color="#feca57" />
+            </div>
             <div style={{ fontSize: '18px', fontWeight: '700', color: '#feca57', marginBottom: '2px' }}>
-              {topSpender.employeeName}
+                {topSpender.employeeName}
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-              {topSpender.pointsSpent.toLocaleString()} points dépensés
+                {topSpender.pointsSpent.toLocaleString()} points dépensés
             </div>
-          </div>
+        </div>
 
-          {/* Most Popular Product */}
-          <div className="stat-box" style={{
+        {/* Most Popular Product */}
+        <div className="stat-box" style={{
             background: 'rgba(255, 107, 107, 0.2)',
             borderRadius: '12px',
             padding: '20px',
             textAlign: 'center',
             border: '1px solid rgba(255, 107, 107, 0.3)'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔥</div>
+        }}>
+            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+                <Flame size={32} color="#ff6b6b" />
+            </div>
             <div style={{ fontSize: '18px', fontWeight: '700', color: '#ff6b6b', marginBottom: '2px' }}>
-              {mostPopularProduct}
+                {mostPopularProduct}
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-              Produit le Plus Populaire
+                Produit le Plus Populaire
             </div>
-          </div>
         </div>
-      </div>
+    </div>
+</div>
 
       {/* Sub-Tabs Navigation */}
       <div style={{
@@ -928,10 +960,12 @@ const MarketplaceTab = () => {
                     </td>
                   </tr>
                 ) : (
-                products.map(product => (
+                products.map(product => {
+                  const isProductActive = product.isActive ?? product.active ?? true;
+                  return (
                   <tr key={product.id} style={{
                     borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                    opacity: product.active ? 1 : 0.5
+                    opacity: isProductActive ? 1 : 0.5
                   }}>
                     <td style={{ padding: '12px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -958,29 +992,41 @@ const MarketplaceTab = () => {
                     </td>
                     <td style={{ padding: '12px' }}>
                       <span style={{ color: 'var(--accent-color)', fontWeight: '700' }}>
-                        {product.cost} <i className="fas fa-coins" style={{ fontSize: '12px' }}></i>
+                        {product.costInPoints || product.cost || 0} <i className="fas fa-coins" style={{ fontSize: '12px' }}></i>
                       </span>
                     </td>
-                    <td style={{ padding: '12px' }}>{product.stock}</td>
+                    <td style={{ padding: '12px' }}>{product.stockQuantity ?? product.stock ?? 0}</td>
                     <td style={{ padding: '12px' }}>
-                      {product.badge && (
-                        <span style={{
-                          background: 'rgba(240, 147, 251, 0.2)',
-                          padding: '4px 10px',
-                          borderRadius: '12px',
-                          fontSize: '11px',
-                          fontWeight: '600',
-                          color: '#f093fb'
-                        }}>
-                          {product.badge}
-                        </span>
-                      )}
+                      {(() => {
+                        const badge = product.badge || (
+                          (product.stockQuantity ?? product.stock) <= 3 && (product.stockQuantity ?? product.stock) > 0 ? 'Stock limité' :
+                          product.rating >= 4.5 ? 'Populaire' :
+                          (product.costInPoints || product.cost) >= 5000 ? 'Premium' : null
+                        );
+                        return badge ? (
+                          <span style={{
+                            background: badge === 'Stock limité' ? 'rgba(245, 158, 11, 0.2)' :
+                                       badge === 'Populaire' ? 'rgba(59, 130, 246, 0.2)' :
+                                       badge === 'Premium' ? 'rgba(139, 92, 246, 0.2)' :
+                                       'rgba(240, 147, 251, 0.2)',
+                            padding: '4px 10px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            color: badge === 'Stock limité' ? '#f59e0b' :
+                                   badge === 'Populaire' ? '#3b82f6' :
+                                   badge === 'Premium' ? '#8b5cf6' : '#f093fb'
+                          }}>
+                            {badge}
+                          </span>
+                        ) : null;
+                      })()}
                     </td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>
                       <button
                         onClick={() => handleToggleActive(product.id)}
                         style={{
-                          background: product.active
+                          background: isProductActive
                             ? 'linear-gradient(135deg, #2d9561, #28a68a)'
                             : 'linear-gradient(135deg, #c94b4b, #b84855)',
                           border: 'none',
@@ -990,7 +1036,7 @@ const MarketplaceTab = () => {
                           cursor: 'pointer',
                           fontSize: '13px',
                           fontWeight: '700',
-                          boxShadow: product.active
+                          boxShadow: isProductActive
                             ? '0 3px 10px rgba(45, 149, 97, 0.3)'
                             : '0 3px 10px rgba(201, 75, 75, 0.3)',
                           transition: 'all 0.3s ease',
@@ -1000,19 +1046,19 @@ const MarketplaceTab = () => {
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = product.active
+                          e.currentTarget.style.boxShadow = isProductActive
                             ? '0 5px 15px rgba(45, 149, 97, 0.5)'
                             : '0 5px 15px rgba(201, 75, 75, 0.5)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = product.active
+                          e.currentTarget.style.boxShadow = isProductActive
                             ? '0 3px 10px rgba(45, 149, 97, 0.3)'
                             : '0 3px 10px rgba(201, 75, 75, 0.3)';
                         }}
                       >
-                        <i className={product.active ? 'fas fa-check-circle' : 'fas fa-times-circle'}></i>
-                        {product.active ? 'Actif' : 'Inactif'}
+                        <i className={isProductActive ? 'fas fa-check-circle' : 'fas fa-times-circle'}></i>
+                        {isProductActive ? 'Actif' : 'Inactif'}
                       </button>
                     </td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>
@@ -1078,7 +1124,7 @@ const MarketplaceTab = () => {
                       </div>
                     </td>
                   </tr>
-                ))
+                )})
                 )}
               </tbody>
             </table>

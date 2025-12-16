@@ -29,4 +29,6 @@ public class ProductRequestDTO {
 
     @Min(value = 0, message = "Rating cannot be negative")
     private Double rating;
+
+    private Boolean isActive;
 }

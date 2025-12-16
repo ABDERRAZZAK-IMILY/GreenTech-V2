@@ -1,9 +1,15 @@
-FROM eclipse-temurin:17-jdk-focal
-
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-COPY target/backend-0.0.1-SNAPSHOT.jar greentech.jar
+COPY pom.xml .
+COPY src ./src
+
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:17-jdk-focal
+WORKDIR /app
+
+COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar greentech.jar
 
 EXPOSE 8080
-
-CMD ["java", "-jar", "greentech.jar"]
+ENTRYPOINT ["java", "-jar", "greentech.jar"]
