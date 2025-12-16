@@ -3542,12 +3542,331 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 2
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/repository/DepartmentRepository.java",
+      "timestamp": 1765892708633,
+      "startOffset": 417,
+      "endOffset": 462,
+      "codeContent": "Optional\u003cDepartment\u003e findByName(String name);",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/DepartmentRepository.java",
+      "timestamp": 1765892712219,
+      "startOffset": 429,
+      "endOffset": 449,
+      "codeContent": "IntellijIdeaRulezzz;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/repository/DepartmentRepository.java",
+      "timestamp": 1765892713424,
+      "startOffset": 228,
+      "endOffset": 254,
+      "codeContent": "import java.util.Optional;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/UserService.java",
+      "timestamp": 1765892725039,
+      "startOffset": 1144,
+      "endOffset": 1213,
+      "codeContent": "private final DepartmentRepository departmentRepository; // أضفنا هذا",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/UserService.java",
+      "timestamp": 1765892729442,
+      "startOffset": 483,
+      "endOffset": 554,
+      "codeContent": "import com.greentechinnovators.backend.repository.DepartmentRepository;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/UserService.java",
+      "timestamp": 1765892745071,
+      "startOffset": 1720,
+      "endOffset": 2162,
+      "codeContent": "if (request.getDepartment() !\u003d null \u0026\u0026 !request.getDepartment().isEmpty()) {\n            departmentRepository.findByName(request.getDepartment())\n                .orElseGet(() -\u003e departmentRepository.save(\n                    Department.builder()\n                        .name(request.getDepartment())\n                        .description(\"تم إنشاؤه تلقائياً مع المستخدم الجديد\")\n                        .build()\n                ));\n        }",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 9
+    },
+    {
+      "filePath": "/UserService.java",
+      "timestamp": 1765892750035,
+      "startOffset": 1968,
+      "endOffset": 1988,
+      "codeContent": "IntellijIdeaRulezzz ",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/UserService.java",
+      "timestamp": 1765892751029,
+      "startOffset": 257,
+      "endOffset": 314,
+      "codeContent": "import com.greentechinnovators.backend.entity.Department;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/UserService.java",
+      "timestamp": 1765892892790,
+      "startOffset": 2015,
+      "endOffset": 2054,
+      "codeContent": "com.greentechinnovators.backend.entity.",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/UserService.java",
+      "timestamp": 1765892897820,
+      "startOffset": 2550,
+      "endOffset": 3497,
+      "codeContent": "if (request.getDepartment() !\u003d null \u0026\u0026 !request.getDepartment().isEmpty()) {\n            \n            // N9albo 3la department wach kayna\n            Department dept \u003d departmentRepository.findByName(request.getDepartment())\n                    .orElseGet(() -\u003e {\n                        // Ila makantch, n-créewha\n                        Department newDept \u003d Department.builder()\n                                .name(request.getDepartment())\n                                .users(new ArrayList\u003c\u003e())\n                                .build();\n                        return departmentRepository.save(newDept);\n                    });\n\n            // Nzido User l la liste\n            if (dept.getUsers() \u003d\u003d null) {\n                dept.setUsers(new ArrayList\u003c\u003e());\n            }\n            dept.getUsers().add(savedUser);\n            \n            // N-sauvgardiw Department b la liste jdida\n            departmentRepository.save(dept);\n        }",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 22
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/UserService.java",
+      "timestamp": 1765892902951,
+      "startOffset": 257,
+      "endOffset": 314,
+      "codeContent": "import com.greentechinnovators.backend.entity.Department;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/UserService.java",
+      "timestamp": 1765892904751,
+      "startOffset": 932,
+      "endOffset": 959,
+      "codeContent": "import java.util.ArrayList;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/repository/UserRepository.java",
+      "timestamp": 1765893368394,
+      "startOffset": 426,
+      "endOffset": 473,
+      "codeContent": "List\u003cUser\u003e findByDepartment(String department);",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/UserRepository.java",
+      "timestamp": 1765893371044,
+      "startOffset": 434,
+      "endOffset": 454,
+      "codeContent": "IntellijIdeaRulezzz;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/repository/UserRepository.java",
+      "timestamp": 1765893371972,
+      "startOffset": 224,
+      "endOffset": 246,
+      "codeContent": "import java.util.List;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/DepartmentService.java",
+      "timestamp": 1765893383003,
+      "startOffset": 789,
+      "endOffset": 862,
+      "codeContent": "private final UserRepository userRepository; // نحتاج هذا لجلب المستخدمين",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/DepartmentService.java",
+      "timestamp": 1765893391249,
+      "startOffset": 397,
+      "endOffset": 462,
+      "codeContent": "import com.greentechinnovators.backend.repository.UserRepository;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/DepartmentService.java",
+      "timestamp": 1765893402737,
+      "startOffset": 1250,
+      "endOffset": 1977,
+      "codeContent": "public List\u003cDepartmentResponseDTO\u003e getAllDepartments() {\n        // 1. جلب كل الأقسام\n        List\u003cDepartment\u003e departments \u003d departmentRepository.findAll();\n\n        // 2. الدوران على كل قسم وتعبئة المستخدمين يدوياً\n        // هذا يضمن أن users لن تكون null أبداً\n        return departments.stream().map(dept -\u003e {\n            \n            // نجلب المستخدمين الذين لديهم نفس اسم القسم\n            List\u003cUser\u003e usersInDept \u003d userRepository.findByDepartment(dept.getName());\n            \n            // نضعهم داخل كائن القسم (في الذاكرة فقط للعرض)\n            dept.setUsers(usersInDept);\n\n            // نحول القسم إلى DTO\n            return departmentMapper.toDTO(dept);\n            \n        }).collect(Collectors.toList());\n    }\n",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 20
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/DepartmentService.java",
+      "timestamp": 1765893413073,
+      "startOffset": 261,
+      "endOffset": 312,
+      "codeContent": "import com.greentechinnovators.backend.entity.User;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/DepartmentService.java",
+      "timestamp": 1765893646781,
+      "startOffset": 50,
+      "endOffset": 109,
+      "codeContent": "import com.greentechinnovators.backend.dto.UserResponseDTO;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/DepartmentService.java",
+      "timestamp": 1765893661200,
+      "startOffset": 1736,
+      "endOffset": 1756,
+      "codeContent": "IntellijIdeaRulezzz ",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/mapper/DepartmentMapper.java",
+      "timestamp": 1765893738395,
+      "startOffset": 2075,
+      "endOffset": 2484,
+      "codeContent": "private UserResponseDTO mapToUserDTO(User user) {\n        return UserResponseDTO.builder()\n                .id(user.getId())\n                .name(user.getName())\n                .email(user.getEmail())\n                .jobTitle(user.getJobTitle())\n                .role(user.getRole())\n                .profilePicture(user.getProfilePicture()) // تأكد من وجود هذا الحقل في DTO\n                .build();\n    }",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 10
+    },
+    {
+      "filePath": "/DepartmentService.java",
+      "timestamp": 1765893856442,
+      "startOffset": 1724,
+      "endOffset": 1790,
+      "codeContent": "toUserDTOIntellijIdeaRulezzz ) // الآن هذه الدالة موجودة في الأسفل",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/DepartmentService.java",
+      "timestamp": 1765893856442,
+      "startOffset": 1542,
+      "endOffset": 1597,
+      "codeContent": "            // 1. جلب المستخدمين يدوياً من الريبوزيتوري",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "/DepartmentService.java",
+      "timestamp": 1765893856442,
+      "startOffset": 1628,
+      "endOffset": 1671,
+      "codeContent": "            // 2. تحويل المستخدمين إلى DTOs",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/mapper/UserMapper.java",
+      "timestamp": 1765893905609,
+      "startOffset": 529,
+      "endOffset": 1030,
+      "codeContent": "private UserResponseDTO toUserDTO(User user) {\n        if (user \u003d\u003d null) return null;\n        \n        return UserResponseDTO.builder()\n                .id(user.getId())\n                .name(user.getName())\n                .email(user.getEmail())\n                .role(user.getRole())\n                .jobTitle(user.getJobTitle())\n                .profilePicture(user.getProfilePicture())\n                // .department(user.getDepartment()) // يمكنك إضافته إذا أردت\n                .build();\n    }\n}",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 14
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/mapper/UserMapper.java",
+      "timestamp": 1765893912709,
+      "startOffset": 49,
+      "endOffset": 108,
+      "codeContent": "import com.greentechinnovators.backend.dto.UserResponseDTO;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/DepartmentService.java",
+      "timestamp": 1765893961267,
+      "startOffset": 1816,
+      "endOffset": 1855,
+      "codeContent": "com.greentechinnovators.backend.mapper.",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
+    },
+    {
+      "filePath": "C:/Users/safiy/Documents/OneDrive/Bureau/GreenTech-V2/GreenTech-V2/src/main/java/com/greentechinnovators/backend/service/DepartmentService.java",
+      "timestamp": 1765893961280,
+      "startOffset": 437,
+      "endOffset": 494,
+      "codeContent": "import com.greentechinnovators.backend.mapper.UserMapper;",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 1
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 322,
-      "totalLines": 6185
+      "usageCount": 351,
+      "totalLines": 6284
     }
   }
 }

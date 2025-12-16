@@ -1,5 +1,6 @@
 package com.greentechinnovators.backend.mapper;
 
+import com.greentechinnovators.backend.dto.UserResponseDTO;
 import com.greentechinnovators.backend.dto.auth.RegisterRequest;
 import com.greentechinnovators.backend.entity.User;
 import org.springframework.stereotype.Component;
@@ -14,4 +15,15 @@ public class UserMapper {
                 .department(dto.getDepartment())
                 .build();
     }
+
+    public static UserResponseDTO toUserDTO(User user) {
+        if (user == null) return null;
+
+        return UserResponseDTO.builder()
+                .id(user.getId())
+                .username(user.getName())
+                .email(user.getEmail())
+                .build();
+    }
+
 }

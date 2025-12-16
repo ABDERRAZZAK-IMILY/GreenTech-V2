@@ -1,10 +1,14 @@
 package com.greentechinnovators.backend.service;
 
+import com.greentechinnovators.backend.dto.UserResponseDTO;
 import com.greentechinnovators.backend.dto.department.DepartmentRequestDTO;
 import com.greentechinnovators.backend.dto.department.DepartmentResponseDTO;
 import com.greentechinnovators.backend.entity.Department;
+import com.greentechinnovators.backend.entity.User;
 import com.greentechinnovators.backend.mapper.DepartmentMapper;
+import com.greentechinnovators.backend.mapper.UserMapper;
 import com.greentechinnovators.backend.repository.DepartmentRepository;
+import com.greentechinnovators.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
@@ -18,7 +22,7 @@ public class DepartmentService {
 
     private final DepartmentRepository departmentRepository;
     private final DepartmentMapper departmentMapper;
-
+    private final UserRepository userRepository;
     // --- CREATE ---
     public DepartmentResponseDTO createDepartment(DepartmentRequestDTO requestDTO) {
         Department department = departmentMapper.toEntity(requestDTO);
@@ -28,9 +32,22 @@ public class DepartmentService {
 
     // --- READ (All) ---
     public List<DepartmentResponseDTO> getAllDepartments() {
-        return departmentRepository.findAll().stream()
-                .map(departmentMapper::toDTO)
-                .collect(Collectors.toList());
+        List<Department> departments = departmentRepository.findAll();
+
+        return departments.stream().map(dept -> {
+            List<User> realUsers = userRepository.findByDepartment(dept.getName());
+
+            List<UserResponseDTO> userDTOs = realUsers.stream()
+                    .map(UserMapper::toUserDTO)
+                    .collect(Collectors.toList());
+
+            return DepartmentResponseDTO.builder()
+                    .id(dept.getId())
+                    .name(dept.getName())
+                    .users(userDTOs)
+                    .build();
+
+        }).collect(Collectors.toList());
     }
 
     // --- READ (One) ---
