@@ -48,6 +48,8 @@ public class VehicleMapper {
         dto.setLicensePlate(entity.getLicensePlate());
         dto.setModel(entity.getModel());
         dto.setLastSignalTime(entity.getLastSignalTime());
+        dto.setLat(entity.getLatitude());
+        dto.setLonge(entity.getLongitude());
 
         // Extract User ID safely
         if (entity.getUser() != null) {

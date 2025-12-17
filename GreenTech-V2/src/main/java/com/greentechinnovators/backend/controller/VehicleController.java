@@ -5,18 +5,27 @@ import com.greentechinnovators.backend.dto.vehicle.responce.VehicleResponseDTO;
 import com.greentechinnovators.backend.service.VehicleService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("api/vehicle")
 public class VehicleController {
     private VehicleService vehicleService;
 
-    @PostMapping("")
+    @PostMapping("/add")
     public ResponseEntity<VehicleResponseDTO> save(@Valid @RequestBody VehicleRequestDTO dto) {
         return ResponseEntity.ok(vehicleService.create(dto));
     }
+    @GetMapping("/all")
+    public ResponseEntity<List<VehicleResponseDTO>> all() {
+        return ResponseEntity.ok(vehicleService.all());
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<VehicleResponseDTO> getById(@PathVariable String id) {
+        return ResponseEntity.ok(vehicleService.findById(id));
+    }
+
+
 }
