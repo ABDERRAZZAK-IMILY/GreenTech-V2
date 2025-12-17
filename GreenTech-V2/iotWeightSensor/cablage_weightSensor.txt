@@ -1,4 +1,0 @@
-blanc rx2
-noir tx2
-gris gnd
-mv vin
