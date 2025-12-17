@@ -22,7 +22,24 @@ const Dashboard = () => {
     co2: 0
   });
 
+  // État pour les données mensuelles (utilisé pour le graphique CO2 du mois actuel)
+  const [monthlyMetrics, setMonthlyMetrics] = useState({
+    energy: 0,
+    waste: 0,
+    gas: 0,
+    vehicle: 0,
+    co2: 0
+  });
+
   const [historyData, setHistoryData] = useState(null);
+
+  // État pour les données de comparaison mensuelle (Mois Actuel vs Mois Précédent)
+  const [comparisonData, setComparisonData] = useState({
+    electricity: { labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'], currentMonth: [], previousMonth: [] },
+    waste: { labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'], currentMonth: [], previousMonth: [] },
+    gas: { labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'], currentMonth: [], previousMonth: [] },
+    transport: { labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'], currentMonth: [], previousMonth: [] }
+  });
 
   const energyWsRef = useRef(null);
   const trashWsRef = useRef(null);
@@ -118,11 +135,142 @@ const Dashboard = () => {
       }
     };
 
+    // Fetch monthly data from history endpoints (30 days)
+    const fetchMonthlyData = async () => {
+      try {
+        // Fetch 30 days history for each metric
+        const [energyHistory, trashHistory, gasHistory] = await Promise.all([
+          energyDataService.getHistoryMetrics(30).catch(() => ({ data: [] })),
+          trashDataService.getHistoryMetrics(30).catch(() => ({ data: [] })),
+          gasDataService.getHistoryMetrics(30).catch(() => ({ data: [] }))
+        ]);
+
+        // Calculate monthly totals from history data
+        let monthlyEnergy = 0;
+        let monthlyWaste = 0;
+        let monthlyGas = 0;
+        let monthlyVehicle = 0;
+
+        // Parse energy history
+        if (energyHistory.data && Array.isArray(energyHistory.data)) {
+          monthlyEnergy = energyHistory.data.reduce((sum, d) => sum + (d.totalEnergyKwh || 0), 0);
+        }
+
+        // Parse trash history
+        if (trashHistory.data && Array.isArray(trashHistory.data)) {
+          monthlyWaste = trashHistory.data.reduce((sum, d) => sum + (d.totalWeightKg || 0), 0);
+        }
+
+        // Parse gas history
+        if (gasHistory.data && Array.isArray(gasHistory.data)) {
+          monthlyGas = gasHistory.data.reduce((sum, d) => sum + (d.totalGasConsumed || 0), 0);
+        }
+
+        // Vehicle: for now use today's value * 30 as fallback (no history endpoint yet)
+        // This can be improved when vehicle history API is available
+        const vehicleRes = await vehicleDataService.getTodayMetrics().catch(() => ({ data: [] }));
+        const dailyVehicle = vehicleDataService.calculateTotal(vehicleRes.data || []);
+        monthlyVehicle = dailyVehicle * 30; // Fallback estimation
+
+        const monthlyCo2 = (monthlyEnergy * 0.5) + (monthlyWaste * 2.0) + (monthlyGas * 0.2) + (monthlyVehicle * 0.19);
+
+        console.log('Monthly metrics fetched:', { monthlyEnergy, monthlyWaste, monthlyGas, monthlyVehicle, monthlyCo2 });
+
+        setMonthlyMetrics({
+          energy: monthlyEnergy.toFixed(1),
+          waste: monthlyWaste.toFixed(1),
+          gas: monthlyGas.toFixed(1),
+          vehicle: monthlyVehicle.toFixed(1),
+          co2: monthlyCo2.toFixed(1)
+        });
+      } catch (error) {
+        console.error('Error fetching monthly data:', error);
+      }
+    };
+
+    // Fetch comparison data for current month vs previous month (weekly breakdown)
+    const fetchComparisonData = async () => {
+      try {
+        // Helper function to group daily data into weeks
+        const groupByWeeks = (data, valueField) => {
+          const weeks = [0, 0, 0, 0];
+          if (!data || !Array.isArray(data)) return weeks;
+
+          data.forEach((item, index) => {
+            // Divide 30 days into 4 weeks (approximately 7-8 days each)
+            const weekIndex = Math.min(Math.floor(index / 7), 3);
+            weeks[weekIndex] += (item[valueField] || 0);
+          });
+
+          return weeks.map(v => Math.round(v * 10) / 10);
+        };
+
+        // Fetch 60 days to cover current month (30 days) + previous month (30 days)
+        const [energyHistory, trashHistory, gasHistory] = await Promise.all([
+          energyDataService.getHistoryMetrics(60).catch(() => ({ data: [] })),
+          trashDataService.getHistoryMetrics(60).catch(() => ({ data: [] })),
+          gasDataService.getHistoryMetrics(60).catch(() => ({ data: [] }))
+        ]);
+
+        // Split data into current month (last 30 days) and previous month (30 days before that)
+        const splitData = (historyData) => {
+          if (!historyData || !Array.isArray(historyData)) return { current: [], previous: [] };
+
+          // Sort by date descending to ensure correct split
+          const sorted = [...historyData].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+          // First 30 are current month, next 30 are previous month
+          return {
+            current: sorted.slice(0, 30).reverse(), // Oldest to newest for current month
+            previous: sorted.slice(30, 60).reverse() // Oldest to newest for previous month
+          };
+        };
+
+        const energySplit = splitData(energyHistory.data);
+        const trashSplit = splitData(trashHistory.data);
+        const gasSplit = splitData(gasHistory.data);
+
+        // Group by weeks
+        const newComparisonData = {
+          electricity: {
+            labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+            currentMonth: groupByWeeks(energySplit.current, 'totalEnergyKwh'),
+            previousMonth: groupByWeeks(energySplit.previous, 'totalEnergyKwh')
+          },
+          waste: {
+            labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+            currentMonth: groupByWeeks(trashSplit.current, 'totalWeightKg'),
+            previousMonth: groupByWeeks(trashSplit.previous, 'totalWeightKg')
+          },
+          gas: {
+            labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+            currentMonth: groupByWeeks(gasSplit.current, 'totalGasConsumed'),
+            previousMonth: groupByWeeks(gasSplit.previous, 'totalGasConsumed')
+          },
+          transport: {
+            // Vehicle doesn't have history endpoint yet, keep empty or use fallback
+            labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+            currentMonth: [0, 0, 0, 0],
+            previousMonth: [0, 0, 0, 0]
+          }
+        };
+
+        console.log('Comparison data fetched:', newComparisonData);
+        setComparisonData(newComparisonData);
+      } catch (error) {
+        console.error('Error fetching comparison data:', error);
+      }
+    };
+
     fetchData();
+    fetchMonthlyData();
+    fetchComparisonData();
 
     // Retry fetching data every 10 seconds to get updates from manual gas input and mobile vehicle data
     const retryInterval = setInterval(() => {
       fetchData();
+      fetchMonthlyData();
+      fetchComparisonData();
     }, 10000);
 
     // Setup WebSocket for real-time energy updates
@@ -151,7 +299,7 @@ const Dashboard = () => {
       };
 
       energyWs.onerror = (error) => {
-        console.error('❌ Energy WebSocket Error:', error);
+        console.error(' Energy WebSocket Error:', error);
       };
 
       energyWs.onclose = (event) => {
@@ -159,7 +307,7 @@ const Dashboard = () => {
         // Attempt reconnection after 5 seconds
         if (event.code !== 1000) { // 1000 = normal closure
           setTimeout(() => {
-            console.log('🔄 Attempting to reconnect Energy WebSocket...');
+            console.log(' Attempting to reconnect Energy WebSocket...');
             connectEnergyWs();
           }, 5000);
         }
@@ -172,7 +320,7 @@ const Dashboard = () => {
       trashWsRef.current = trashWs;
 
       trashWs.onopen = () => {
-        console.log('✅ Trash WebSocket Connected');
+        console.log(' Trash WebSocket Connected');
         fetchData();
       };
 
@@ -192,7 +340,7 @@ const Dashboard = () => {
       };
 
       trashWs.onerror = (error) => {
-        console.error('❌ Trash WebSocket Error:', error);
+        console.error(' Trash WebSocket Error:', error);
       };
 
       trashWs.onclose = (event) => {
@@ -200,7 +348,7 @@ const Dashboard = () => {
         // Attempt reconnection after 5 seconds
         if (event.code !== 1000) { // 1000 = normal closure
           setTimeout(() => {
-            console.log('🔄 Attempting to reconnect Trash WebSocket...');
+            console.log(' Attempting to reconnect Trash WebSocket...');
             connectTrashWs();
           }, 5000);
         }
@@ -225,7 +373,7 @@ const Dashboard = () => {
 
 
 
-  useCharts(selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod, refreshTrigger, metrics, historyData);
+  useCharts(selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod, refreshTrigger, metrics, historyData, monthlyMetrics, comparisonData);
 
   // Titres des métriques
   const metricTitles = {
