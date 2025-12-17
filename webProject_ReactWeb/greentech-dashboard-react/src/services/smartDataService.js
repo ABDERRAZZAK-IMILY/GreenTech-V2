@@ -1,12 +1,12 @@
 import axios from 'axios';
 import AuthService from './authService';
 
-// const API_URL = 'http://localhost:8080/api/v1';
-const API_URL = process.env.REACT_APP_API_URL + '/v1';
+const API_URL = 'http://localhost:8080/api/v1';
+// const API_URL = process.env.REACT_APP_API_URL + '/v1';
 
 
-// const TRASH_API_URL = 'http://localhost:8080/api';
-const TRASH_API_URL = process.env.REACT_APP_API_URL + '/api';
+const TRASH_API_URL = 'http://localhost:8080/api';
+// const TRASH_API_URL = process.env.REACT_APP_API_URL + '/api';
 
 
 const axiosInstance = axios.create({
