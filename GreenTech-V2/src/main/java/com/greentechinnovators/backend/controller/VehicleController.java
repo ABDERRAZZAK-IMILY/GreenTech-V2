@@ -28,6 +28,8 @@ public class VehicleController {
     public ResponseEntity<VehicleResponseDTO> getById(@PathVariable String id) {
         return ResponseEntity.ok(vehicleService.findById(id));
     }
-
-
+    @DeleteMapping("delete/{id}")
+    public void DeleteById(@PathVariable String id) {
+        vehicleService.deleteById(id);
+    }
 }
