@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import AddDriverModal from './AddDriverModel';
 import EditDriverModal from './EditDriverModal';
+import DeleteDriverModal from './DeleteDriverModal';
 
 // 1. Mock Data Array
 const driversData = [
@@ -66,6 +67,7 @@ const DriverList = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
     const [driverData, setDriverData] = useState(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     // Placeholder handlers (replace with your actual logic)
     const handleAddVehicleGPS = () => {
         setShowAddModal(true);
@@ -79,7 +81,9 @@ const DriverList = () => {
         setDriverData(driver);
         setShowEditModal(true);
     };
-    const handleDeleteDriver = (id) => console.log("Delete", id);
+    const handleDeleteDriver = (id) => {
+        console.log("Delete", id);
+    }
 
 const getStatusStyles = (status) => {
         return status === 'moving'
@@ -162,7 +166,7 @@ const getStatusStyles = (status) => {
                             </button>
                             <button
                                 className="px-3 py-2 bg-red-900/20 text-red-400 hover:bg-red-900/40 rounded text-sm transition-colors border border-red-900/30"
-                                onClick={() => handleDeleteDriver(driver.id)}
+                                onClick={() => setShowDeleteModal(true)}
                             >
                                 <i className="fas fa-trash" />
                             </button>
@@ -173,6 +177,10 @@ const getStatusStyles = (status) => {
             
             {showAddModal && <AddDriverModal isOpen={showAddModal} onClose={closeAddModal} />}
             {showEditModal && <EditDriverModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} driverData={driverData} setDriverData={setDriverData}  />}
+            {showDeleteModal && <DeleteDriverModal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} driverName={driverData ? driverData.name : ''} onConfirm={() => {
+                handleDeleteDriver(driverData.id);
+                setShowDeleteModal(false);
+            }} />}
         </div>
     );
 };

@@ -7,16 +7,9 @@ import ManualEntrySection from '../../../components/Transport/ManualEntrySection
 
 const TransportTab = () => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentDriverId, setCurrentDriverId] = useState(null);
   const [deleteDriverName, setDeleteDriverName] = useState('');
-  const [editDriverData, setEditDriverData] = useState({
-    id: '',
-    name: '',
-    vehicleType: '',
-    plate: ''
-  });
 
   const { mapRef, markersRef, vehicleCounterRef, addDriverMarker } = useTransportMap();
 
@@ -24,107 +17,6 @@ const TransportTab = () => {
     setIsOverviewOpen(!isOverviewOpen);
   };
 
-  const closeEditModal = () => {
-    setShowEditModal(false);
-  };
-
-  const updateDriver = (event) => {
-    event.preventDefault();
-
-    const driverId = editDriverData.id;
-    const name = editDriverData.name;
-    const vehicleType = editDriverData.vehicleType;
-    const plate = editDriverData.plate;
-
-    // Vehicle icon mapping
-    const vehicleIcons = {
-      'Camionnette': '🚐',
-      'Voiture': '🚗',
-      'Camion': '🚚',
-      'Utilitaire': '🚙',
-      'Moto': '🏍️'
-    };
-    const newIcon = vehicleIcons[vehicleType] || '🚗';
-
-    // Update driver card
-    const driverCard = document.querySelector(`[data-driver-id="${driverId}"]`);
-    if (driverCard) {
-      driverCard.querySelector('.driver-info h5').textContent = name;
-      driverCard.querySelector('.vehicle-name').textContent = `${vehicleType} - ${plate}`;
-    }
-
-    // Update marker on map
-    if (markersRef.current[driverId] && mapRef.current) {
-      const marker = markersRef.current[driverId];
-      const latLng = marker.getLatLng();
-      const status = driverCard?.querySelector('.driver-status')?.classList.contains('status-moving') ? 'moving' : 'parked';
-
-      // Remove old marker
-      mapRef.current.removeLayer(marker);
-
-      // Create new icon with updated vehicle type
-      const iconHtml = `
-        <div style="
-          background: ${status === 'moving' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)'};
-          color: white;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          border: 3px solid white;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-          position: relative;
-        ">
-          <span style="
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 20px;
-            line-height: 1;
-          ">${newIcon}</span>
-        </div>
-      `;
-
-      const customIcon = window.L.divIcon({
-        html: iconHtml,
-        className: 'custom-marker-icon',
-        iconSize: [40, 40],
-        iconAnchor: [20, 20]
-      });
-
-      // Get driver stats from card
-      const distance = driverCard?.querySelector('.driver-stat .stat-value')?.textContent || '0 km';
-      const fuel = driverCard?.querySelectorAll('.driver-stat .stat-value')[1]?.textContent || '0 L';
-      const co2 = driverCard?.querySelectorAll('.driver-stat .stat-value')[2]?.textContent || '0 kg';
-      const destination = driverCard?.querySelectorAll('.driver-stat .stat-value')[4]?.textContent || 'Position inconnue';
-
-      const popupContent = `
-        <div style="min-width: 200px;">
-          <h4 style="margin: 0 0 10px 0; color: #667eea;"><i class="fas fa-user"></i> ${name}</h4>
-          <p style="margin: 5px 0; font-size: 13px;"><i class="fas fa-car" style="margin-right: 6px; color: #667eea;"></i><strong>Véhicule:</strong> ${vehicleType} - ${plate}</p>
-          <p style="margin: 5px 0; font-size: 13px;"><i class="fas fa-circle" style="margin-right: 6px; color: ${status === 'moving' ? '#43e97b' : '#95a5a6'};"></i><strong>Statut:</strong> ${status === 'moving' ? 'En route' : 'Stationné'}</p>
-          <p style="margin: 5px 0; font-size: 13px;"><i class="fas fa-road" style="margin-right: 6px; color: #667eea;"></i><strong>Distance:</strong> ${distance}</p>
-          <p style="margin: 5px 0; font-size: 13px;"><i class="fas fa-gas-pump" style="margin-right: 6px; color: #f59e0b;"></i><strong>Carburant:</strong> ${fuel}</p>
-          <p style="margin: 5px 0; font-size: 13px;"><i class="fas fa-leaf" style="margin-right: 6px; color: #43e97b;"></i><strong>CO2:</strong> ${co2}</p>
-          <p style="margin: 5px 0; font-size: 13px;"><i class="fas fa-map-marker-alt" style="margin-right: 6px; color: #f5576c;"></i><strong>Destination:</strong> ${destination}</p>
-        </div>
-      `;
-
-      // Create new marker with updated icon
-      const newMarker = window.L.marker([latLng.lat, latLng.lng], { icon: customIcon })
-        .addTo(mapRef.current)
-        .bindPopup(popupContent, {
-          maxWidth: 300,
-          className: 'custom-popup'
-        });
-
-      // Update marker reference
-      markersRef.current[driverId] = newMarker;
-    }
-
-    closeEditModal();
-    showNotification(`Chauffeur ${name} modifié avec succès !`, 'success');
-  };
 
   const closeDeleteModal = () => {
     setShowDeleteModal(false);
@@ -153,70 +45,6 @@ const TransportTab = () => {
 
     closeDeleteModal();
     showNotification(`Chauffeur ${driverName} supprimé avec succès`, 'success');
-  };
-
-  const handleSubmitTransportData = async (event) => {
-    event.preventDefault();
-
-    const driver = document.getElementById('transportDriver').value;
-    const vehicleType = document.getElementById('transportVehicleType').value;
-    const plate = document.getElementById('transportPlate').value;
-    const fuel = document.getElementById('transportFuel').value;
-    const destination = document.getElementById('transportDestination').value;
-    const status = document.getElementById('transportStatus').value;
-    const latitude = document.getElementById('transportLatitude').value;
-    const longitude = document.getElementById('transportLongitude').value;
-
-    // Validate latitude and longitude
-    const lat = parseFloat(latitude);
-    const lon = parseFloat(longitude);
-
-    if (isNaN(lat) || lat < -90 || lat > 90) {
-      showNotification('Latitude doit être entre -90 et 90', 'error');
-      return;
-    }
-
-    if (isNaN(lon) || lon < -180 || lon > 180) {
-      showNotification('Longitude doit être entre -180 et 180', 'error');
-      return;
-    }
-
-    try {
-      // Submit to backend
-      const payload = {
-        vehicleId: plate,
-        latitude: lat,
-        longitude: lon
-      };
-
-      await vehicleDataService.submitManualData(payload);
-
-      // Add row to history table
-      const tableBody = document.getElementById('transportHistoryTableBody');
-      const now = new Date();
-      const dateTime = now.toLocaleDateString('fr-FR') + ' ' + now.toLocaleTimeString('fr-FR');
-
-      const newRow = document.createElement('tr');
-      newRow.innerHTML = `
-        <td>${dateTime}</td>
-        <td>${driver}</td>
-        <td>${vehicleType}</td>
-        <td>${plate}</td>
-        <td>${fuel}</td>
-        <td>${destination}</td>
-        <td><span class="status-badge status-${status}">${status === 'moving' ? 'En route' : 'Stationné'}</span></td>
-      `;
-
-      tableBody.insertBefore(newRow, tableBody.firstChild);
-
-      // Reset form
-      event.target.reset();
-
-      showNotification('Données de transport enregistrées avec succès !', 'success');
-    } catch (error) {
-      console.error('Error submitting transport data:', error);
-      showNotification('Erreur lors de l\'enregistrement des données', 'error');
-    }
   };
 
   return (
