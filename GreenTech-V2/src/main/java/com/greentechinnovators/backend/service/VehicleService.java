@@ -44,6 +44,8 @@ public class VehicleService {
     }
     public List<VehicleResponseDTO> all() {
         List<Vehicle> vehicles = vehicleRepository.findAll();
+
+
         return vehicles.stream().map(mapper::toVehicleResponse).toList();
     }
     public VehicleResponseDTO findVehicleByUserId(String id) {

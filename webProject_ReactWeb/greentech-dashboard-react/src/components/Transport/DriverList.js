@@ -1,73 +1,29 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AddDriverModal from './AddDriverModel';
 import EditDriverModal from './EditDriverModal';
 import DeleteDriverModal from './DeleteDriverModal';
-
-// 1. Mock Data Array
-const driversData = [
-    {
-        id: 'driver2',
-        name: 'Fatima El Amrani',
-        vehicle: 'Voiture Service - MAR-5678',
-        status: 'moving', // status used for logic
-        statusLabel: 'En route',
-        stats: {
-            distance: '52 km',
-            fuel: '5.2 L',
-            co2: '12.2 kg',
-            duration: '2h 15min',
-            position: 'Centre Ville'
-        }
-    },
-    {
-        id: 'driver3',
-        name: 'Youssef Berrada',
-        vehicle: 'Camion Transport - MAR-9012',
-        status: 'moving',
-        statusLabel: 'En livraison',
-        stats: {
-            distance: '89 km',
-            fuel: '8.9 L',
-            co2: '21.0 kg',
-            duration: '4h 20min',
-            position: 'Route de Rabat'
-        }
-    },
-    {
-        id: 'driver4',
-        name: 'Karim Tazi',
-        vehicle: 'Utilitaire - MAR-3456',
-        status: 'parked',
-        statusLabel: 'Stationné',
-        stats: {
-            distance: '23 km',
-            fuel: '2.3 L',
-            co2: '5.4 kg',
-            duration: '1h 10min',
-            position: 'Parking Entreprise'
-        }
-    },
-    {
-        id: 'driver5',
-        name: 'Samir Alami',
-        vehicle: 'Voiture Commerciale - MAR-7890',
-        status: 'parked',
-        statusLabel: 'Stationné',
-        stats: {
-            distance: '16 km',
-            fuel: '1.6 L',
-            co2: '3.8 kg',
-            duration: '45min',
-            position: 'Parking Entreprise'
-        }
-    }
-];
+import transporService from '../../services/transporService';
 
 const DriverList = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
     const [driverData, setDriverData] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [drivers, setDrivers] = useState([]);
+    // all Drivers
+    useEffect(() => {
+        const fetchDrivers = async () => {
+            try {
+                const drivers = await transporService.getAllVehicles();
+                setDrivers(drivers);
+                return drivers;
+            } catch (error) {
+                console.log(error);
+            }
+        }
+        fetchDrivers();
+    }, [])
+
     // Placeholder handlers (replace with your actual logic)
     const handleAddVehicleGPS = () => {
         setShowAddModal(true);
@@ -77,12 +33,13 @@ const DriverList = () => {
     };
     const handleTrackDriver = (id) => console.log("Track", id);
     const handleEditDriver = (id) => {
-        const driver = driversData.find(d => d.id === id);
+        const driver = drivers.find(d => d.id === id);
+        console.log(driver);
         setDriverData(driver);
         setShowEditModal(true);
     };
     const handleDeleteDriver = (id) => {
-        console.log("Delete", id);
+        transporService.deleteVehicle(id)
     }
 
     const getStatusStyles = (status) => {
@@ -112,7 +69,7 @@ const DriverList = () => {
 
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto max-h-[calc(100vh-150px)] pb-4">
-                {driversData.map((driver) => (
+                {drivers.map((driver) => (
                     <div
                         key={driver.id}
                         className={`bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-5 transition-all hover:bg-gray-750 ${driver.status === 'moving' ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-gray-600'}`}
@@ -124,31 +81,15 @@ const DriverList = () => {
                                     <i className="fas fa-user" />
                                 </div>
                                 <div>
-                                    <h5 className="font-bold text-white">{driver.name}</h5>
-                                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{driver.vehicle}</p>
+                                    <h5 className="font-bold text-white">{driver.user.username}</h5>
+                                    {/* <h5 className="font-bold text-white">{driver.name}</h5> */}
+                                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{driver.model}</p>
                                 </div>
-                            </div>
-                            <div className={`px-3 py-1 rounded-full text-xs font-semibold border flex items-center gap-1 ${getStatusStyles(driver.status)}`}>
-                                <i className={`fas fa-circle text-[8px] ${getStatusIconColor(driver.status)}`} />
-                                {driver.statusLabel}
                             </div>
                         </div>
 
                         {/* Stats Grid - Dark Background */}
-                        <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-sm text-gray-300 mb-5 bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
-                            <StatItem icon="fa-road" label="Distance" value={driver.stats.distance} />
-                            <StatItem icon="fa-gas-pump" label="Carburant" value={driver.stats.fuel} />
-                            <StatItem icon="fa-leaf" label="CO2" value={driver.stats.co2} />
-                            <StatItem icon="fa-clock" label="Durée" value={driver.stats.duration} />
-
-                            <div className="col-span-2 flex items-center gap-2 pt-1 border-t border-gray-700 mt-1">
-                                <i className="fas fa-map-marker-alt text-red-500 w-5 text-center" />
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] text-gray-500 uppercase">Position actuelle</span>
-                                    <span className="font-semibold text-gray-200">{driver.stats.position}</span>
-                                </div>
-                            </div>
-                        </div>
+                        
 
                         {/* Actions */}
                         <div className="flex gap-2 justify-end pt-2 border-t border-gray-700">

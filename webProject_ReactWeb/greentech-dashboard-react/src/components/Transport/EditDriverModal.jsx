@@ -57,7 +57,7 @@ const EditDriverModal = ({ isOpen, onClose, onSave, driverData, setDriverData })
                                 <input
                                     type="text"
                                     className="w-full pl-9 pr-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                                    value={driverData.name}
+                                    value={driverData.user.username }
                                     onChange={(e) => handleChange('name', e.target.value)}
                                     required
                                 />
@@ -70,7 +70,7 @@ const EditDriverModal = ({ isOpen, onClose, onSave, driverData, setDriverData })
                                 <div className="relative">
                                     <select
                                         className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
-                                        value={driverData.vehicleType}
+                                        value={driverData.model}
                                         onChange={(e) => handleChange('vehicleType', e.target.value)}
                                         required
                                     >
@@ -93,7 +93,7 @@ const EditDriverModal = ({ isOpen, onClose, onSave, driverData, setDriverData })
                                     <input
                                         type="text"
                                         className="w-full pl-9 pr-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none uppercase placeholder-gray-500"
-                                        value={driverData.plate}
+                                        value={driverData.licensePlate}
                                         onChange={(e) => handleChange('plate', e.target.value)}
                                         required
                                     />
