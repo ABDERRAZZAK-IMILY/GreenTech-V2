@@ -30,6 +30,10 @@ public class VehicleMapper {
         Vehicle vehicle = new Vehicle();
         vehicle.setLicensePlate(dto.getLicensePlate());
         vehicle.setModel(dto.getModel());
+        vehicle.setLongitude(dto.getLonge());
+        vehicle.setLatitude(dto.getLat());
+
+
         // User lookup is the responsibility of the Service layer
         return vehicle;
     }
@@ -44,6 +48,8 @@ public class VehicleMapper {
         dto.setLicensePlate(entity.getLicensePlate());
         dto.setModel(entity.getModel());
         dto.setLastSignalTime(entity.getLastSignalTime());
+        dto.setLat(entity.getLatitude());
+        dto.setLonge(entity.getLongitude());
 
         // Extract User ID safely
         if (entity.getUser() != null) {

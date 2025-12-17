@@ -1,6 +1,7 @@
 package com.greentechinnovators.backend.dto.vehicle.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
@@ -15,4 +16,8 @@ public class VehicleRequestDTO {
     // We accept the User ID to link this vehicle to a specific user
     @NotBlank(message = "User ID is required")
     private String userId;
+    @NotNull(message = " longe should not be empty   ")
+    private Double longe;
+    @NotNull(message = " lat should not be empty   ")
+    private Double lat;
 }
