@@ -8,16 +8,37 @@ const Header = ({ onLogout }) => {
   const [userRole, setUserRole] = useState(null);
   const [userName, setUserName] = useState('');
 
-  // Get user role and name from localStorage
+  const [userEmail, setUserEmail] = useState('');
+
+  // Get user role, name and email from localStorage
   useEffect(() => {
     const role = localStorage.getItem('userRole');
     setUserRole(role);
 
-    // Set name based on role
-    if (role === 'admin') {
-      setUserName('Admin PME');
-    } else if (role === 'user') {
-      setUserName('Mohammed Alami');
+    // Get user data from localStorage (saved during login)
+    const userDataStr = localStorage.getItem('user');
+    if (userDataStr) {
+      try {
+        const userData = JSON.parse(userDataStr);
+        // Use name from backend response
+        if (userData.name) {
+          setUserName(userData.name);
+        } else if (role === 'admin') {
+          setUserName('Admin PME');
+        } else {
+          setUserName('Utilisateur');
+        }
+        // Set email from backend response
+        if (userData.email) {
+          setUserEmail(userData.email);
+        }
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+        setUserName(role === 'admin' ? 'Admin PME' : 'Utilisateur');
+      }
+    } else {
+      // Fallback if no user data
+      setUserName(role === 'admin' ? 'Admin PME' : 'Utilisateur');
     }
   }, []);
 
@@ -234,7 +255,7 @@ const Header = ({ onLogout }) => {
                 title="Bleu/Violet"
                 onClick={() => handleThemeChange('default')}
               >
-                <div className="circle-gradient" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}></div>
+                <div className="circle-gradient" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}></div>
               </div>
               <div
                 className={`theme-circle ${activeTheme === 'green' ? 'active' : ''}`}
@@ -242,7 +263,7 @@ const Header = ({ onLogout }) => {
                 title="Vert Foncé"
                 onClick={() => handleThemeChange('green')}
               >
-                <div className="circle-gradient" style={{background: 'linear-gradient(135deg, #0f4c3a 0%, #1b6e4f 100%)'}}></div>
+                <div className="circle-gradient" style={{ background: 'linear-gradient(135deg, #0f4c3a 0%, #1b6e4f 100%)' }}></div>
               </div>
               <div
                 className={`theme-circle ${activeTheme === 'ocean' ? 'active' : ''}`}
@@ -250,7 +271,7 @@ const Header = ({ onLogout }) => {
                 title="Océan"
                 onClick={() => handleThemeChange('ocean')}
               >
-                <div className="circle-gradient" style={{background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'}}></div>
+                <div className="circle-gradient" style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' }}></div>
               </div>
               <div
                 className={`theme-circle ${activeTheme === 'dark' ? 'active' : ''}`}
@@ -258,7 +279,7 @@ const Header = ({ onLogout }) => {
                 title="Nuit"
                 onClick={() => handleThemeChange('dark')}
               >
-                <div className="circle-gradient" style={{background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)'}}></div>
+                <div className="circle-gradient" style={{ background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)' }}></div>
               </div>
               <div
                 className={`theme-circle ${activeTheme === 'sunset' ? 'active' : ''}`}
@@ -266,7 +287,7 @@ const Header = ({ onLogout }) => {
                 title="Coucher de Soleil"
                 onClick={() => handleThemeChange('sunset')}
               >
-                <div className="circle-gradient" style={{background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'}}></div>
+                <div className="circle-gradient" style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }}></div>
               </div>
             </div>
           </div>
@@ -280,7 +301,7 @@ const Header = ({ onLogout }) => {
                 title="Bleu Foncé (Original)"
                 onClick={() => handleBgChange('default')}
               >
-                <div className="circle-gradient" style={{background: '#0a0e27'}}></div>
+                <div className="circle-gradient" style={{ background: '#0a0e27' }}></div>
               </div>
               <div
                 className={`bg-circle ${activeBg === 'purple' ? 'active' : ''}`}
@@ -288,7 +309,7 @@ const Header = ({ onLogout }) => {
                 title="Violet Profond"
                 onClick={() => handleBgChange('purple')}
               >
-                <div className="circle-gradient" style={{background: 'linear-gradient(135deg, #1e1e2e 0%, #2d1b4e 50%, #3a1c5d 100%)'}}></div>
+                <div className="circle-gradient" style={{ background: 'linear-gradient(135deg, #1e1e2e 0%, #2d1b4e 50%, #3a1c5d 100%)' }}></div>
               </div>
               <div
                 className={`bg-circle ${activeBg === 'dark' ? 'active' : ''}`}
@@ -296,7 +317,7 @@ const Header = ({ onLogout }) => {
                 title="Noir"
                 onClick={() => handleBgChange('dark')}
               >
-                <div className="circle-gradient" style={{background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)'}}></div>
+                <div className="circle-gradient" style={{ background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)' }}></div>
               </div>
               <div
                 className={`bg-circle ${activeBg === 'blue' ? 'active' : ''}`}
@@ -304,7 +325,7 @@ const Header = ({ onLogout }) => {
                 title="Bleu Nuit"
                 onClick={() => handleBgChange('blue')}
               >
-                <div className="circle-gradient" style={{background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)'}}></div>
+                <div className="circle-gradient" style={{ background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)' }}></div>
               </div>
               <div
                 className={`bg-circle ${activeBg === 'warm' ? 'active' : ''}`}
@@ -312,7 +333,7 @@ const Header = ({ onLogout }) => {
                 title="Chaud"
                 onClick={() => handleBgChange('warm')}
               >
-                <div className="circle-gradient" style={{background: 'linear-gradient(135deg, #232526 0%, #414345 100%)'}}></div>
+                <div className="circle-gradient" style={{ background: 'linear-gradient(135deg, #232526 0%, #414345 100%)' }}></div>
               </div>
             </div>
           </div>
@@ -359,7 +380,7 @@ const Header = ({ onLogout }) => {
                 <div>
                   <div style={{ fontWeight: '700', fontSize: '16px' }}>{userName}</div>
                   <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    {userRole === 'admin' ? 'admin@greentech.ma' : 'mohammed.alami@greentech.ma'}
+                    {userEmail || 'utilisateur@greentech.ma'}
                   </div>
                 </div>
               </div>
