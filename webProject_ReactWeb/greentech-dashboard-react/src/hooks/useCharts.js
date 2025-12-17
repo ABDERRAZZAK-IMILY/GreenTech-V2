@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { getLineChartData, getComparisonData, getEmissionsData } from '../utils/dataGenerator';
 
-export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod, refreshTrigger = 0, metrics = null, historyData = null) => {
+export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, emissionsPeriod, refreshTrigger = 0, metrics = null, historyData = null, monthlyMetrics = null, comparisonData = null) => {
   const chartsRef = useRef({});
   const isInitialized = useRef(false);
 
@@ -31,7 +31,7 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
       const comparisonCtx = comparisonCanvas.getContext('2d');
 
       // Get initial data
-      const emissionsData = getEmissionsData(emissionsPeriod, metrics);
+      const emissionsData = getEmissionsData(emissionsPeriod, metrics, monthlyMetrics);
 
       // Use historyData if available (for initial load though unlikely), else getLineChartData
       let lineData = getLineChartData(selectedMetric, selectedPeriod);
@@ -44,7 +44,14 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
         };
       }
 
-      const comparisonData = getComparisonData(selectedComparison);
+      // Get initial comparison data - prefer real data from props, fallback to static
+      let initialComparisonData;
+      if (comparisonData && comparisonData[selectedComparison] &&
+        comparisonData[selectedComparison].currentMonth.some(v => v > 0)) {
+        initialComparisonData = comparisonData[selectedComparison];
+      } else {
+        initialComparisonData = getComparisonData(selectedComparison);
+      }
 
       // Emissions Doughnut Chart
       chartsRef.current.emissions = new window.Chart(emissionsCtx, {
@@ -209,16 +216,16 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
       chartsRef.current.comparison = new window.Chart(comparisonCtx, {
         type: 'bar',
         data: {
-          labels: comparisonData.labels,
+          labels: initialComparisonData.labels,
           datasets: [
             {
               label: 'Mois précédent',
-              data: comparisonData.previousMonth,
+              data: initialComparisonData.previousMonth,
               backgroundColor: 'rgba(255, 255, 255, 0.2)'
             },
             {
               label: 'Mois actuel',
-              data: comparisonData.currentMonth,
+              data: initialComparisonData.currentMonth,
               backgroundColor: '#667eea'
             }
           ]
@@ -300,26 +307,35 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
     chart.update();
   }, [selectedMetric, selectedPeriod, historyData]);
 
-  // Update comparison chart when comparison metric changes
+  // Update comparison chart when comparison metric changes or comparisonData updates
   useEffect(() => {
     if (!isInitialized.current || !chartsRef.current.comparison) return;
 
-    const comparisonData = getComparisonData(selectedComparison);
+    // Use real comparison data if available, otherwise fallback to static data
+    let chartData;
+    if (comparisonData && comparisonData[selectedComparison] &&
+      comparisonData[selectedComparison].currentMonth.some(v => v > 0)) {
+      chartData = comparisonData[selectedComparison];
+    } else {
+      // Fallback to static data from dataGenerator
+      chartData = getComparisonData(selectedComparison);
+    }
+
     const chart = chartsRef.current.comparison;
 
-    // Update only the data and labels
-    chart.data.labels = comparisonData.labels;
-    chart.data.datasets[0].data = comparisonData.previousMonth;
-    chart.data.datasets[1].data = comparisonData.currentMonth;
+    // Update the data and labels
+    chart.data.labels = chartData.labels;
+    chart.data.datasets[0].data = chartData.previousMonth;
+    chart.data.datasets[1].data = chartData.currentMonth;
 
     chart.update();
-  }, [selectedComparison]);
+  }, [selectedComparison, comparisonData]);
 
   // Update emissions chart when period or metrics change
   useEffect(() => {
     if (!isInitialized.current || !chartsRef.current.emissions) return;
 
-    const emissionsData = getEmissionsData(emissionsPeriod, metrics);
+    const emissionsData = getEmissionsData(emissionsPeriod, metrics, monthlyMetrics);
     const chart = chartsRef.current.emissions;
 
     // Update data, labels, and colors based on empty state
@@ -331,7 +347,7 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
     chart.options.plugins.tooltip.enabled = !emissionsData.isEmpty;
 
     chart.update();
-  }, [emissionsPeriod, metrics]);
+  }, [emissionsPeriod, metrics, monthlyMetrics]);
 
   // Update all charts when refreshTrigger changes (real-time data from WebSocket)
   useEffect(() => {
@@ -348,7 +364,7 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
 
     // Update emissions chart
     if (chartsRef.current.emissions) {
-      const emissionsData = getEmissionsData(emissionsPeriod, metrics);
+      const emissionsData = getEmissionsData(emissionsPeriod, metrics, monthlyMetrics);
       chartsRef.current.emissions.data.datasets[0].data = emissionsData.data;
       chartsRef.current.emissions.data.labels = emissionsData.labels;
       chartsRef.current.emissions.data.datasets[0].backgroundColor = emissionsData.isEmpty
@@ -360,9 +376,17 @@ export const useCharts = (selectedMetric, selectedPeriod, selectedComparison, em
 
     // Update comparison chart
     if (chartsRef.current.comparison) {
-      const comparisonData = getComparisonData(selectedComparison);
-      chartsRef.current.comparison.data.datasets[0].data = comparisonData.previousMonth;
-      chartsRef.current.comparison.data.datasets[1].data = comparisonData.currentMonth;
+      // Use real comparison data if available
+      let chartData;
+      if (comparisonData && comparisonData[selectedComparison] &&
+        comparisonData[selectedComparison].currentMonth.some(v => v > 0)) {
+        chartData = comparisonData[selectedComparison];
+      } else {
+        chartData = getComparisonData(selectedComparison);
+      }
+
+      chartsRef.current.comparison.data.datasets[0].data = chartData.previousMonth;
+      chartsRef.current.comparison.data.datasets[1].data = chartData.currentMonth;
       chartsRef.current.comparison.update('active');
     }
 
