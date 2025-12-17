@@ -12,6 +12,7 @@ import com.greentechinnovators.backend.repository.GasRepository;
 import com.greentechinnovators.backend.repository.TrashRepository;
 import com.greentechinnovators.backend.repository.VehicleLogRepository;
 import com.greentechinnovators.backend.service.ai.AiContextManager;
+import com.greentechinnovators.backend.service.ai.AiPromptStore;
 import com.greentechinnovators.backend.service.ai.DeepSeekClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,7 @@ public class PredictionService {
     private final GasRepository gasRepository;
     private final TrashRepository trashRepository;
     private final VehicleLogRepository vehicleLogRepository;
-
+    private final AiPromptStore aiPromptStore;
     private final AiContextManager aiContextManager;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
@@ -49,35 +50,13 @@ public class PredictionService {
 
     public PredictionResponse generatePredictions() {
         String contextJson = aiContextManager.getGlobalContextJson();
-
-        // 2. Prompt Dynamique (Incorpore les Prix et le Contexte)
-        String prompt = """
-                    RÔLE : Expert en Audit Énergétique Industriel & Prévision IA.
-                    TÂCHE : Prédire la consommation et les coûts du MOIS PROCHAIN (N+1).
-                
-                    PARAMÈTRES DE COÛT (Utilise ces valeurs pour calculer 'coutPrevu') :
-                    - Électricité : %.2f MAD / kWh
-                    - Gaz (LPG)   : %.2f MAD / kg
-                    - Transport   : %.2f MAD / 100 km
-                    - Déchets     : %.2f MAD / kg
-                
-                    DONNÉES D'ENTRÉE (Mois en cours vs Mois Précédent) :
-                    %s
-                
-                    RÈGLES STRICTES :
-                    1. Réponds UNIQUEMENT avec un JSON valide.
-                    2. PAS de Markdown, PAS d'intro/outro.
-                    3. Pour 'pourcentage', utilise le format "+X%%" ou "-X%%".
-                    4. Si une donnée historique manque pour le pourcentage, mets "N/A".
-                
-                    FORMAT JSON ATTENDU :
-                    {
-                        "electricite": { "valeurPrincipale": "X kWh", "pourcentage": "+X%%", "coutPrevu": "X MAD", "emissionCo2": "X kg CO2" },
-                        "gaz": { "valeurPrincipale": "X kg", "pourcentage": "+X%%", "coutPrevu": "X MAD", "emissionCo2": "X kg CO2" },
-                        "transport": { "valeurPrincipale": "X km", "pourcentage": "+X%%", "coutPrevu": "X MAD", "emissionCo2": "X kg CO2" },
-                        "dechets": { "valeurPrincipale": "X kg", "pourcentage": "+X%%", "coutPrevu": "X MAD", "emissionCo2": "X kg CO2" }
-                    }
-                """.formatted(PRIX_ELEC, PRIX_GAZ, PRIX_TRANSPORT, PRIX_DECHETS, contextJson);
+        String prompt = aiPromptStore.getPredictionPrompt(
+                PRIX_ELEC,
+                PRIX_GAZ,
+                PRIX_TRANSPORT,
+                PRIX_DECHETS,
+                contextJson
+        );
 
         String rawJson = callDeepSeek.generate(prompt);
         String cleanJson = rawJson.replace("```json", "").replace("```", "").trim();

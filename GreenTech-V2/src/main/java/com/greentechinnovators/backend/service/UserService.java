@@ -94,7 +94,20 @@ public class UserService {
         return mapToProfileDTO(savedUser);
     }
 
+    @Transactional
+    public void updatePassword(String userId, String oldPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
+            throw new RuntimeException("Old password is incorrect");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setUpdatedAt(LocalDateTime.now());
+
+        userRepository.save(user);
+    }
     public UserProfileDTO getUserById(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
@@ -152,11 +165,9 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         
-        // Delete user's gamification stats
         gamificationStatsRepository.findByUserId(userId)
                 .ifPresent(gamificationStatsRepository::delete);
         
-        // Delete user
         userRepository.delete(user);
     }
 

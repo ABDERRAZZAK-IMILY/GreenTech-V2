@@ -40,7 +40,7 @@ public class EnergyService {
             macAddress = "UNKNOWN-" + System.currentTimeMillis();
         }
 
-        // Check if this is a manual entry - save directly without creating a monitor
+
         if ("MANUAL_ENTRY".equals(macAddress)) {
             return saveManualEntry(dto);
         }
@@ -48,7 +48,6 @@ public class EnergyService {
         final String finalMacAddress = macAddress;
         Energy energy = mapper.toEntity(dto);
 
-        // Find or create EnergyMonitor by MAC address
         EnergyMonitor monitor = monitorRepository.findByMacAddress(finalMacAddress)
                 .orElseGet(() -> {
                     log.info("Creating new EnergyMonitor for MAC address: {}", finalMacAddress);
@@ -113,8 +112,8 @@ public class EnergyService {
                     if (e.getCreatedAt() == null)
                         return false;
 
-                    boolean isAfterStart = !e.getCreatedAt().isBefore(start); // >= start
-                    boolean isBeforeEnd = !e.getCreatedAt().isAfter(end); // <= end
+                    boolean isAfterStart = !e.getCreatedAt().isBefore(start);
+                    boolean isBeforeEnd = !e.getCreatedAt().isAfter(end);
 
                     return isAfterStart && isBeforeEnd;
                 })
@@ -155,4 +154,6 @@ public class EnergyService {
         }
         return report;
     }
+
+
 }
