@@ -23,12 +23,11 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final UserMapper userMapper;
 
-
     public AuthenticationService(UserRepository userRepository,
-                                 PasswordEncoder passwordEncoder,
-                                 JwtUtils jwtUtils,
-                                 AuthenticationManager authenticationManager,
-                                 UserMapper userMapper) {
+            PasswordEncoder passwordEncoder,
+            JwtUtils jwtUtils,
+            AuthenticationManager authenticationManager,
+            UserMapper userMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtils = jwtUtils;
@@ -51,9 +50,7 @@ public class AuthenticationService {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
-                        request.getPassword()
-                )
-        );
+                        request.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -61,6 +58,6 @@ public class AuthenticationService {
 
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
 
-        return new AuthResponse(token, user.getEmail(),user.getId(), user.getRole().name());
+        return new AuthResponse(token, user.getEmail(), user.getName(), user.getId(), user.getRole().name());
     }
 }
