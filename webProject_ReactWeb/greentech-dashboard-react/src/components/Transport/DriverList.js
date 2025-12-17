@@ -172,7 +172,7 @@ const getStatusStyles = (status) => {
             </div>
             
             {showAddModal && <AddDriverModal isOpen={showAddModal} onClose={closeAddModal} />}
-            {showEditModal && <EditDriverModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} driverData={driverData} setDriverData={setDriverData} />}
+            {showEditModal && <EditDriverModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} driverData={driverData} setDriverData={setDriverData}  />}
         </div>
     );
 };
