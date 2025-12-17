@@ -627,68 +627,6 @@ const TransportTab = () => {
         </div>
       </div>
 
-      {/* Add Vehicle GPS Modal */}
-
-      {/* Edit Driver Modal */}
-      {showEditModal && (
-        <div className="modal" style={{display: 'block'}} onClick={closeEditModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3><i className="fas fa-edit"></i> Modifier le Chauffeur</h3>
-              <button className="modal-close" onClick={closeEditModal}>
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-            <div className="modal-body">
-              <form id="editDriverForm" onSubmit={updateDriver}>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Nom du chauffeur</label>
-                    <input
-                      type="text"
-                      value={editDriverData.name}
-                      onChange={(e) => setEditDriverData({...editDriverData, name: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Type de véhicule</label>
-                    <select
-                      value={editDriverData.vehicleType}
-                      onChange={(e) => setEditDriverData({...editDriverData, vehicleType: e.target.value})}
-                      required
-                    >
-                      <option value="Camionnette">Camionnette</option>
-                      <option value="Voiture">Voiture</option>
-                      <option value="Camion">Camion</option>
-                      <option value="Utilitaire">Utilitaire</option>
-                      <option value="Moto">Moto</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Immatriculation</label>
-                    <input
-                      type="text"
-                      value={editDriverData.plate}
-                      onChange={(e) => setEditDriverData({...editDriverData, plate: e.target.value})}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="form-actions">
-                  <button type="button" className="btn-cancel-modal" onClick={closeEditModal}>
-                    <i className="fas fa-times"></i> Annuler
-                  </button>
-                  <button type="submit" className="btn-submit">
-                    <i className="fas fa-save"></i> Enregistrer
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Delete Driver Modal */}
       {showDeleteModal && (
         <div className="modal" style={{display: 'block'}} onClick={closeDeleteModal}>
