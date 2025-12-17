@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form'; // 1. Import Hook Form
 import userService from '../../services/userService';
 import transporService from '../../services/transporService';
+import useDriverStore from '../../State/useDriverStore';
 
 const VEHICLE_TYPES = [
     "Camionnette",
@@ -11,8 +12,9 @@ const VEHICLE_TYPES = [
     "Moto"
 ];
 
-const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
+const AddDriverModal = ({ isOpen, onClose }) => {
     const [users, setUsers] = useState([]);
+    const {addDriver } = useDriverStore();
 
     // 2. Destructure hook form methods
     const {
