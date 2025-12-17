@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form'; // 1. Import Hook Form
 import userService from '../../services/userService';
+import transporService from '../../services/transporService';
 
 const VEHICLE_TYPES = [
     "Camionnette",
@@ -14,11 +15,11 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
     const [users, setUsers] = useState([]);
 
     // 2. Destructure hook form methods
-    const { 
-        register, 
-        handleSubmit, 
-        reset, 
-        formState: { errors } 
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors }
     } = useForm();
 
     useEffect(() => {
@@ -31,7 +32,7 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
                 setUsers([]);
             }
         };
-        
+
         if (isOpen) {
             fetchUsers();
             reset(); // 3. Reset form when modal opens
@@ -41,18 +42,29 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
     if (!isOpen) return null;
 
     // 4. Wrapper for data submission
-    const onFormSubmit = (data) => {
+    const onFormSubmit = async (data) => {
         // data contains { driverId, vehicleType, plateNumber }
-        console.log(data);
+        try {
+            const vehiculeData = {
+            licensePlate: data.licensePlate,
+            model: data.model,
+            userId: data.userId,
+            longe: -7.589843,
+            lat: 6.7240
+        }
+        await transporService.addVehicle(vehiculeData);
+        } catch (error) {
+            console.log(error);
+        }
         onClose();
     };
 
     return (
-        <div 
+        <div
             className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
             onClick={onClose}
         >
-            <div 
+            <div
                 className="bg-gray-800 rounded-lg shadow-2xl border border-gray-700 w-full max-w-xl overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
@@ -61,7 +73,7 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
                         <i className="fas fa-car text-blue-400"></i> Ajouter un Véhicule
                     </h3>
-                    <button 
+                    <button
                         className="text-gray-400 hover:text-red-400 transition-colors"
                         onClick={onClose}
                     >
@@ -72,21 +84,21 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
                 {/* Body */}
                 <div className="p-6">
                     <form className="space-y-5" onSubmit={handleSubmit(onFormSubmit)}>
-                        
+
                         {/* Driver Name Select */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-semibold text-gray-300">
                                 Nom du chauffeur <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
-                                <select 
+                                <select
                                     className={`w-full px-4 py-2 bg-gray-900 border rounded-lg text-white focus:ring-2 outline-none appearance-none transition-colors
-                                        ${errors.driverId 
-                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                        ${errors.driverId
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
                                             : 'border-gray-600 focus:ring-blue-500 focus:border-blue-500'
                                         }`}
-                                    {...register("driverId", { 
-                                        required: "Veuillez sélectionner un chauffeur" 
+                                    {...register("userId", {
+                                        required: "Veuillez sélectionner un chauffeur"
                                     })}
                                 >
                                     <option value="">Sélectionner un chauffeur</option>
@@ -110,14 +122,14 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
                                 Type de véhicule <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
-                                <select 
+                                <select
                                     className={`w-full px-4 py-2 bg-gray-900 border rounded-lg text-white focus:ring-2 outline-none appearance-none transition-colors
-                                        ${errors.vehicleType 
-                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                        ${errors.vehicleType
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
                                             : 'border-gray-600 focus:ring-blue-500 focus:border-blue-500'
                                         }`}
-                                    {...register("vehicleType", { 
-                                        required: "Le type de véhicule est requis" 
+                                    {...register("model", {
+                                        required: "Le type de véhicule est requis"
                                     })}
                                 >
                                     <option value="">Sélectionner le type</option>
@@ -139,21 +151,21 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
                             <label className="text-sm font-semibold text-gray-300">
                                 Numéro d'immatriculation <span className="text-red-500">*</span>
                             </label>
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 className={`w-full px-4 py-2 bg-gray-900 border rounded-lg text-white focus:ring-2 outline-none placeholder-gray-600 uppercase transition-colors
-                                    ${errors.plateNumber 
-                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                    ${errors.plateNumber
+                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
                                         : 'border-gray-600 focus:ring-blue-500 focus:border-blue-500'
                                     }`}
-                                placeholder="Ex: MAR-1234" 
-                                {...register("plateNumber", { 
+                                placeholder="Ex: MAR-1234"
+                                {...register("licensePlate", {
                                     required: "L'immatriculation est requise",
                                     minLength: {
                                         value: 3,
                                         message: "Minimum 3 caractères"
                                     }
-                                })} 
+                                })}
                             />
                             {errors.plateNumber && (
                                 <p className="text-red-400 text-xs mt-0.5">{errors.plateNumber.message}</p>
@@ -162,15 +174,15 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
 
                         {/* Buttons */}
                         <div className="flex justify-end gap-3 pt-4 border-t border-gray-700 mt-6">
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 className="px-5 py-2.5 rounded-lg border border-gray-600 text-gray-300 font-medium hover:bg-gray-700 transition-colors"
                                 onClick={onClose}
                             >
                                 Annuler
                             </button>
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-500 shadow-lg"
                             >
                                 Ajouter

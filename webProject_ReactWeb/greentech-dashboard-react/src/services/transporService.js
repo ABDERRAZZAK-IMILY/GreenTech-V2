@@ -60,5 +60,6 @@ class TransportService {
             throw error;
         }
     }
-    
+
 }
+export default new TransportService();

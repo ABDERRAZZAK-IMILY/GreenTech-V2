@@ -31,7 +31,7 @@ public class VehicleMapper {
         vehicle.setLicensePlate(dto.getLicensePlate());
         vehicle.setModel(dto.getModel());
         vehicle.setLongitude(dto.getLonge());
-        vehicle.setLongitude(dto.getLat());
+        vehicle.setLatitude(dto.getLat());
 
 
         // User lookup is the responsibility of the Service layer

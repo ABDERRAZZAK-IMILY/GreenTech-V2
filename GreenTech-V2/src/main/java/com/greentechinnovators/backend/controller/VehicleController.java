@@ -4,6 +4,7 @@ import com.greentechinnovators.backend.dto.vehicle.request.VehicleRequestDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.VehicleResponseDTO;
 import com.greentechinnovators.backend.service.VehicleService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,8 +12,9 @@ import java.util.List;
 
 @RestController
 @RequestMapping("api/vehicle")
+@RequiredArgsConstructor
 public class VehicleController {
-    private VehicleService vehicleService;
+    private final VehicleService vehicleService;
 
     @PostMapping("/add")
     public ResponseEntity<VehicleResponseDTO> save(@Valid @RequestBody VehicleRequestDTO dto) {
