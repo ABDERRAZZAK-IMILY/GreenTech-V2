@@ -24,7 +24,8 @@
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "sockjs-client": "^1.6.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "zustand": "^5.0.9"
   },
   "scripts": {
     "start": "react-scripts start",
