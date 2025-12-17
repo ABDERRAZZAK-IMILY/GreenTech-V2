@@ -1,5 +1,7 @@
 
-const API_BASE_URL = 'http://localhost:8080/api/ai';
+// const API_BASE_URL = 'http://localhost:8080/api/ai';
+const API_BASE_URL = process.env.REACT_APP_API_URL + '/ai';
+
 
 export const streamChatResponse = async (userMessage, history, onChunk, onError) => {
     try {
