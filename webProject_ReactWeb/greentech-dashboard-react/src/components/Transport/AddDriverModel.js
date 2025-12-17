@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form'; // 1. Import Hook Form
+import userService from '../../services/userService';
 
-// 1. Data Array for the Select Loop
 const VEHICLE_TYPES = [
     "Camionnette",
     "Voiture",
@@ -10,9 +11,41 @@ const VEHICLE_TYPES = [
 ];
 
 const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
+    const [users, setUsers] = useState([]);
+
+    // 2. Destructure hook form methods
+    const { 
+        register, 
+        handleSubmit, 
+        reset, 
+        formState: { errors } 
+    } = useForm();
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const userData = await userService.getAllUsers();
+                setUsers(Array.isArray(userData) ? userData : []);
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+                setUsers([]);
+            }
+        };
+        
+        if (isOpen) {
+            fetchUsers();
+            reset(); // 3. Reset form when modal opens
+        }
+    }, [isOpen, reset]);
+
     if (!isOpen) return null;
 
-    // ... (submit logic) ...
+    // 4. Wrapper for data submission
+    const onFormSubmit = (data) => {
+        // data contains { driverId, vehicleType, plateNumber }
+        console.log(data);
+        onClose();
+    };
 
     return (
         <div 
@@ -38,27 +71,54 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
 
                 {/* Body */}
                 <div className="p-6">
-                    <form className="space-y-5">
+                    <form className="space-y-5" onSubmit={handleSubmit(onFormSubmit)}>
+                        
+                        {/* Driver Name Select */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-semibold text-gray-300">
                                 Nom du chauffeur <span className="text-red-500">*</span>
                             </label>
-                            <input 
-                                type="text" 
-                                className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder-gray-600"
-                                placeholder="Ex: Ahmed Benali" 
-                                required 
-                            />
+                            <div className="relative">
+                                <select 
+                                    className={`w-full px-4 py-2 bg-gray-900 border rounded-lg text-white focus:ring-2 outline-none appearance-none transition-colors
+                                        ${errors.driverId 
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                            : 'border-gray-600 focus:ring-blue-500 focus:border-blue-500'
+                                        }`}
+                                    {...register("driverId", { 
+                                        required: "Veuillez sélectionner un chauffeur" 
+                                    })}
+                                >
+                                    <option value="">Sélectionner un chauffeur</option>
+                                    {users.map((user) => (
+                                        <option key={user.id} value={user.id}>{user.name || `${user.firstName} ${user.lastName}`}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                                    <i className="fas fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                            {/* Error Message */}
+                            {errors.driverId && (
+                                <p className="text-red-400 text-xs mt-0.5">{errors.driverId.message}</p>
+                            )}
                         </div>
 
+                        {/* Vehicle Type Select */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-semibold text-gray-300">
                                 Type de véhicule <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <select 
-                                    className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none"
-                                    required
+                                    className={`w-full px-4 py-2 bg-gray-900 border rounded-lg text-white focus:ring-2 outline-none appearance-none transition-colors
+                                        ${errors.vehicleType 
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                            : 'border-gray-600 focus:ring-blue-500 focus:border-blue-500'
+                                        }`}
+                                    {...register("vehicleType", { 
+                                        required: "Le type de véhicule est requis" 
+                                    })}
                                 >
                                     <option value="">Sélectionner le type</option>
                                     {VEHICLE_TYPES.map((type, index) => (
@@ -69,20 +129,38 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
                                     <i className="fas fa-chevron-down text-xs"></i>
                                 </div>
                             </div>
+                            {errors.vehicleType && (
+                                <p className="text-red-400 text-xs mt-0.5">{errors.vehicleType.message}</p>
+                            )}
                         </div>
 
+                        {/* Plate Number Input */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-semibold text-gray-300">
                                 Numéro d'immatriculation <span className="text-red-500">*</span>
                             </label>
                             <input 
                                 type="text" 
-                                className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder-gray-600 uppercase"
+                                className={`w-full px-4 py-2 bg-gray-900 border rounded-lg text-white focus:ring-2 outline-none placeholder-gray-600 uppercase transition-colors
+                                    ${errors.plateNumber 
+                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                        : 'border-gray-600 focus:ring-blue-500 focus:border-blue-500'
+                                    }`}
                                 placeholder="Ex: MAR-1234" 
-                                required 
+                                {...register("plateNumber", { 
+                                    required: "L'immatriculation est requise",
+                                    minLength: {
+                                        value: 3,
+                                        message: "Minimum 3 caractères"
+                                    }
+                                })} 
                             />
+                            {errors.plateNumber && (
+                                <p className="text-red-400 text-xs mt-0.5">{errors.plateNumber.message}</p>
+                            )}
                         </div>
 
+                        {/* Buttons */}
                         <div className="flex justify-end gap-3 pt-4 border-t border-gray-700 mt-6">
                             <button 
                                 type="button" 

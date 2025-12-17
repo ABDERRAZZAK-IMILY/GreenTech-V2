@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import { useState } from 'react';
 import AddDriverModal from './AddDriverModel';
 import EditDriverModal from './EditDriverModal';
 import DeleteDriverModal from './DeleteDriverModal';
@@ -72,9 +72,9 @@ const DriverList = () => {
     const handleAddVehicleGPS = () => {
         setShowAddModal(true);
     };
-     const closeAddModal = () => {
-    setShowAddModal(false);
-  };
+    const closeAddModal = () => {
+        setShowAddModal(false);
+    };
     const handleTrackDriver = (id) => console.log("Track", id);
     const handleEditDriver = (id) => {
         const driver = driversData.find(d => d.id === id);
@@ -85,7 +85,7 @@ const DriverList = () => {
         console.log("Delete", id);
     }
 
-const getStatusStyles = (status) => {
+    const getStatusStyles = (status) => {
         return status === 'moving'
             ? "bg-green-900/30 text-green-400 border-green-800"
             : "bg-gray-700/50 text-gray-300 border-gray-600";
@@ -113,8 +113,8 @@ const getStatusStyles = (status) => {
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto max-h-[calc(100vh-150px)] pb-4">
                 {driversData.map((driver) => (
-                    <div 
-                        key={driver.id} 
+                    <div
+                        key={driver.id}
                         className={`bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-5 transition-all hover:bg-gray-750 ${driver.status === 'moving' ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-gray-600'}`}
                     >
                         {/* Card Header */}
@@ -129,7 +129,7 @@ const getStatusStyles = (status) => {
                                 </div>
                             </div>
                             <div className={`px-3 py-1 rounded-full text-xs font-semibold border flex items-center gap-1 ${getStatusStyles(driver.status)}`}>
-                                <i className={`fas fa-circle text-[8px] ${getStatusIconColor(driver.status)}`} /> 
+                                <i className={`fas fa-circle text-[8px] ${getStatusIconColor(driver.status)}`} />
                                 {driver.statusLabel}
                             </div>
                         </div>
@@ -140,7 +140,7 @@ const getStatusStyles = (status) => {
                             <StatItem icon="fa-gas-pump" label="Carburant" value={driver.stats.fuel} />
                             <StatItem icon="fa-leaf" label="CO2" value={driver.stats.co2} />
                             <StatItem icon="fa-clock" label="Durée" value={driver.stats.duration} />
-                            
+
                             <div className="col-span-2 flex items-center gap-2 pt-1 border-t border-gray-700 mt-1">
                                 <i className="fas fa-map-marker-alt text-red-500 w-5 text-center" />
                                 <div className="flex flex-col">
@@ -158,7 +158,7 @@ const getStatusStyles = (status) => {
                             >
                                 <i className="fas fa-crosshairs mr-1" /> Localiser
                             </button>
-                            <button 
+                            <button
                                 className="px-3 py-2 bg-gray-700 text-gray-300 hover:bg-gray-600 rounded text-sm transition-colors"
                                 onClick={() => handleEditDriver(driver.id)}
                             >
@@ -174,9 +174,9 @@ const getStatusStyles = (status) => {
                     </div>
                 ))}
             </div>
-            
+
             {showAddModal && <AddDriverModal isOpen={showAddModal} onClose={closeAddModal} />}
-            {showEditModal && <EditDriverModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} driverData={driverData} setDriverData={setDriverData}  />}
+            {showEditModal && <EditDriverModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} driverData={driverData} setDriverData={setDriverData} />}
             {showDeleteModal && <DeleteDriverModal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} driverName={driverData ? driverData.name : ''} onConfirm={() => {
                 handleDeleteDriver(driverData.id);
                 setShowDeleteModal(false);

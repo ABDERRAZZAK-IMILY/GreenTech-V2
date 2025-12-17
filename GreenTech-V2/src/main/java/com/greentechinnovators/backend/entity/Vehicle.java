@@ -24,6 +24,8 @@ public class Vehicle {
     private User user;
     @DBRef
     private List<VehicleLog>  vehicleLogs;
+    private Double longitude;
+    private Double latitude;
 
 
     private LocalDateTime lastSignalTime;

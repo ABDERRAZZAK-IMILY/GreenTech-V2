@@ -364,35 +364,6 @@ const TransportTab = () => {
         </div>
       </div>
 
-      {/* Delete Driver Modal */}
-      {showDeleteModal && (
-        <div className="modal" style={{display: 'block'}} onClick={closeDeleteModal}>
-          <div className="modal-content" style={{maxWidth: '500px'}} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3><i className="fas fa-exclamation-triangle" style={{color: '#ef4444'}}></i> Confirmer la suppression</h3>
-              <button className="modal-close" onClick={closeDeleteModal}>
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-            <div className="modal-body" style={{padding: '20px 30px'}}>
-              <p style={{color: 'var(--text-secondary)', fontSize: '1rem', lineHeight: '1.6', marginBottom: '25px'}}>
-                Êtes-vous sûr de vouloir supprimer le chauffeur <strong style={{color: 'var(--accent-color)'}}>{deleteDriverName}</strong> ?
-              </p>
-              <p style={{color: '#ef4444', fontSize: '0.9rem', marginBottom: '25px'}}>
-                <i className="fas fa-exclamation-circle"></i> Cette action est irréversible.
-              </p>
-              <div style={{display: 'flex', gap: '15px', justifyContent: 'center'}}>
-                <button className="btn-cancel-modal" onClick={closeDeleteModal}>
-                  <i className="fas fa-times"></i> Annuler
-                </button>
-                <button className="btn-delete" onClick={confirmDeleteDriver}>
-                  <i className="fas fa-trash"></i> Supprimer
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
