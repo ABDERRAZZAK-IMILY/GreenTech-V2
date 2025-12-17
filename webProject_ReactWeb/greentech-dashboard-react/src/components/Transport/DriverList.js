@@ -92,7 +92,7 @@ const getStatusStyles = (status) => {
     };
 
     return (
-        <div className="p-6 bg-gray-900 min-h-screen text-gray-100">
+        <div className="p-6 min-h-screen text-gray-100">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <h4 className="text-xl font-bold text-white flex items-center gap-2">

@@ -3,6 +3,7 @@ import { useTransportMap } from '../../../hooks/useTransportMap';
 import { showNotification } from '../../../utils/notifications';
 import { vehicleDataService } from '../../../services/smartDataService';
 import DriverList from '../../../components/Transport/DriverList';
+import ManualEntrySection from '../../../components/Transport/ManualEntrySection';
 
 const TransportTab = () => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
@@ -508,99 +509,7 @@ const TransportTab = () => {
       <DriverList/>
 
       {/* Manual Entry for Transport */}
-      <div className="manual-entry-section">
-        <h4>
-          <i className="fas fa-keyboard" /> Saisie Manuelle - Transport
-        </h4>
-        <form
-          className="manual-transport-form"
-          onSubmit={handleSubmitTransportData}
-        >
-          <div className="form-row">
-            <div className="form-group">
-              <label>Nom du chauffeur</label>
-              <input
-                type="text"
-                id="transportDriver"
-                placeholder="Ex: Ahmed Benali"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Type de véhicule</label>
-              <select id="transportVehicleType" required>
-                <option value="">Sélectionner le type</option>
-                <option value="Camionnette">Camionnette</option>
-                <option value="Voiture">Voiture</option>
-                <option value="Camion">Camion</option>
-                <option value="Utilitaire">Utilitaire</option>
-                <option value="Moto">Moto</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Immatriculation</label>
-              <input
-                type="text"
-                id="transportPlate"
-                placeholder="Ex: MAR-1234"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Carburant consommé (L)</label>
-              <input
-                type="number"
-                id="transportFuel"
-                placeholder="Ex: 5.2"
-                min={0}
-                step="0.1"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Position actuelle</label>
-              <input
-                type="text"
-                id="transportDestination"
-                placeholder="Ex: Zone Industrielle"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Latitude</label>
-              <input
-                type="number"
-                id="transportLatitude"
-                placeholder="Ex: 33.5731"
-                step="any"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Longitude</label>
-              <input
-                type="number"
-                id="transportLongitude"
-                placeholder="Ex: -7.5898"
-                step="any"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Statut</label>
-              <select id="transportStatus" required>
-                <option value="moving">En route</option>
-                <option value="parked">Stationné</option>
-              </select>
-            </div>
-          </div>
-          <div style={{ textAlign: "center", marginTop: 20 }}>
-            <button type="submit" className="btn-submit-manual">
-              <i className="fas fa-check" /> Enregistrer
-            </button>
-          </div>
-        </form>
-      </div>
+      <ManualEntrySection />
 
       {/* Transport Manual Entry History Table */}
       <div className="transport-history-section">
