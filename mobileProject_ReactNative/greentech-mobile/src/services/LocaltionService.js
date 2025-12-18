@@ -106,7 +106,7 @@ export const sendPositionToBackend = async (latitude, longitude,vid) => {
 
 export const findVehivle = async (id) => {
     try {
-        const response = await fetch(`${API_CONFIG.BASE_URL}/api/transport${id}`, {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/transport/${id}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
