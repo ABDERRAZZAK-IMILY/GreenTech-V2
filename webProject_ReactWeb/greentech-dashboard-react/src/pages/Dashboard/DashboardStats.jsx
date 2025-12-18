@@ -3,8 +3,7 @@ import React from 'react';
 // Chof hna: zedt "stats = {}" bach ila jat undefined, yعتbrha objet vide
 const DashboardStats = ({ lastUpdated, loading, onRefresh, stats = {} }) => {
 
-  // Hna kanjib les valeurs b sécurité (Optional Chaining)
-  // ? kaygol: ila kan stats kayn, jib critical. Ila makanx, dir 0.
+  
   const critical = stats?.critical || 0;
   const total = stats?.total || 0;
   const offline = stats?.offline || 0;

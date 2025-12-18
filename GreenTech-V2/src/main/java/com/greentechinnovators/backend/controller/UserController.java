@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -85,6 +86,18 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUserProfile(id, request));
     }
 
+    @PutMapping("/{userId}/password")
+    public ResponseEntity<?> updatePassword(
+            @PathVariable String userId,
+            @RequestBody Map<String, String> passwords) {
+
+        String oldPassword = passwords.get("oldPassword");
+        String newPassword = passwords.get("newPassword");
+
+        userService.updatePassword(userId, oldPassword, newPassword);
+
+        return ResponseEntity.ok().body(Map.of("message", "Mot de passe mis à jour avec succès"));
+    }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

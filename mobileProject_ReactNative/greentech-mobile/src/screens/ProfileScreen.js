@@ -58,9 +58,18 @@ const settingsOptions = [
       id: 1,
       section: 'Compte',
       items: [
-        { id: 'edit-profile', title: 'Modifier le profil', icon: 'person-outline', action: () => Alert.alert('Info', 'Fonctionnalité à venir') ,action: () => navigation.navigate('EditProfile', { user: user })},
-        { id: 'change-password', title: 'Changer le mot de passe', icon: 'key-outline', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
-        { id: 'email', title: 'Adresse email', icon: 'mail-outline', subtitle: 'm.alami@greentech.ma', action: () => Alert.alert('Info', 'Fonctionnalité à venir') },
+        { 
+          id: 'edit-profile', 
+          title: 'Modifier le profil', 
+          icon: 'person-outline', 
+          action: () => navigation.navigate('EditProfile', { user: user, mode: 'profile' })
+        },
+        { 
+          id: 'change-password', 
+          title: 'Changer le mot de passe', 
+          icon: 'key-outline', 
+          action: () => navigation.navigate('EditProfile', { user: user, mode: 'password' }) 
+        },
       ]
     },
     {

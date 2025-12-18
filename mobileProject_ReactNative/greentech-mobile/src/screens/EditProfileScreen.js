@@ -18,98 +18,142 @@ import UserService from '../services/userService';
 import colors from '../styles/colors';
 
 const EditProfileScreen = ({ navigation, route }) => {
-  const { user } = route.params;
+  const { user, mode } = route.params || { user: {}, mode: 'profile' };
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
   });
+
+  const [passwords, setPasswords] = useState({ oldPassword: '', newPassword: '' });
   const [loading, setLoading] = useState(false);
 
-  const handleUpdate = async () => {
-    // ... (Your update logic remains the same) ...
+  const handleUpdateProfile = async () => {
     if (!formData.name || !formData.email) {
-      Alert.alert("Erreur", "Veuillez remplir tous les champs");
+      Alert.alert("Erreur", "Veuillez remplir les champs du profil");
       return;
     }
-
     setLoading(true);
     try {
       const userId = await AsyncStorage.getItem('userId');
-      
-      await UserService.updateUser(userId, {
-        name: formData.name,
-        email: formData.email
-      });
+      await UserService.updateUser(userId, formData);
+      Alert.alert("Succès", "Informations mises à jour avec succès");
+      navigation.goBack(); // Nra3jou automatiqement
+    } catch (error) {
+      Alert.alert("Erreur", "Impossible de mettre à jour le profil");
+    } finally { setLoading(false); }
+  };
 
-      Alert.alert("Succès", "Profil mis à jour avec succès");
+  const handleUpdatePassword = async () => {
+    if (!passwords.oldPassword || !passwords.newPassword) {
+      Alert.alert("Erreur", "Veuillez remplir les champs de sécurité");
+      return;
+    }
+    setLoading(true);
+    try {
+      await UserService.updatePassword(passwords.oldPassword, passwords.newPassword);
+      Alert.alert("Succès", "Mot de passe modifié avec succès");
+      setPasswords({ oldPassword: '', newPassword: '' });
       navigation.goBack(); 
     } catch (error) {
-      console.error(error);
-      Alert.alert("Erreur", "Impossible de mettre à jour le profil");
-    } finally {
-      setLoading(false);
-    }
+      Alert.alert("Erreur", "Ancien mot de passe incorrect");
+    } finally { setLoading(false); }
   };
 
   return (
     <View style={styles.container}>
+      {/* Handle dyal Modal */}
+      <View style={styles.modalHandle} />
+      
       <SafeAreaView style={styles.headerContainer}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="close" size={26} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Modifier le profil</Text>
+          <Text style={styles.headerTitle}>
+            {mode === 'profile' ? 'Modifier le profil' : 'Sécurité'}
+          </Text>
           <View style={{ width: 24 }} />
         </View>
       </SafeAreaView>
 
+      {/* FIX: KeyboardAvoidingView bach l-clavier mayghatich l-inputs */}
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardContainer}
+        style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Nom complet</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                value={formData.name}
-                onChangeText={(text) => setFormData({ ...formData, name: text })}
-                placeholder="Votre nom"
-                placeholderTextColor={colors.textSecondary}
-              />
+          
+          {mode === 'profile' && (
+            <View>
+              <Text style={styles.sectionTitle}>Informations Personnelles</Text>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Nom complet</Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput 
+                    style={styles.input} 
+                    value={formData.name} 
+                    onChangeText={(t) => setFormData({...formData, name: t})} 
+                    placeholder="Votre nom"
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                </View>
+              </View>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Adresse Email</Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput 
+                    style={styles.input} 
+                    value={formData.email} 
+                    onChangeText={(t) => setFormData({...formData, email: t})} 
+                    placeholder="Votre email"
+                    placeholderTextColor={colors.textSecondary}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+              </View>
+              <TouchableOpacity style={styles.saveButton} onPress={handleUpdateProfile} disabled={loading}>
+                 {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Enregistrer</Text>}
+              </TouchableOpacity>
             </View>
-          </View>
+          )}
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Adresse Email</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                value={formData.email}
-                onChangeText={(text) => setFormData({ ...formData, email: text })}
-                placeholder="Votre email"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholderTextColor={colors.textSecondary}
-              />
+          {mode === 'password' && (
+            <View>
+              <Text style={styles.sectionTitle}>Sécurité</Text>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Ancien mot de passe</Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput 
+                    style={styles.input} 
+                    secureTextEntry 
+                    value={passwords.oldPassword} 
+                    onChangeText={(t) => setPasswords({...passwords, oldPassword: t})} 
+                    placeholder="••••••••"
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                </View>
+              </View>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Nouveau mot de passe</Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput 
+                    style={styles.input} 
+                    secureTextEntry 
+                    value={passwords.newPassword} 
+                    onChangeText={(t) => setPasswords({...passwords, newPassword: t})} 
+                    placeholder="••••••••"
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                </View>
+              </View>
+              <TouchableOpacity style={[styles.saveButton, {backgroundColor: colors.textSecondary}]} onPress={handleUpdatePassword} disabled={loading}>
+                 {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Changer le mot de passe</Text>}
+              </TouchableOpacity>
             </View>
-          </View>
+          )}
 
-          <TouchableOpacity 
-            style={styles.saveButton} 
-            onPress={handleUpdate}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.saveButtonText}>Enregistrer les modifications</Text>
-            )}
-          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -117,80 +161,48 @@ const EditProfileScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background, // 🟢 Style Profile
+  modalHandle: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#ccc',
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 5,
   },
-  keyboardContainer: {
-    flex: 1,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
   headerContainer: {
-    backgroundColor: colors.background, // 🟢 Style Profile
-    paddingTop: Platform.OS === 'android' ? 25 : 0, // Gérer la barre de statut Android
+    backgroundColor: colors.background,
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
     borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorder, // 🟢 Style Profile (bordure fine)
+    borderBottomColor: colors.cardBorder,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 15,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.textPrimary, // 🟢 Style Profile
-  },
-  content: {
-    padding: 20,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary, // 🟢 Style Profile
-    marginBottom: 8,
-    marginLeft: 4,
-  },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15 },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', color: colors.textPrimary },
+  content: { padding: 20 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.accent, marginBottom: 15, marginTop: 10 },
+  inputContainer: { marginBottom: 15 },
+  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 8, marginLeft: 4 },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.cardBackground, // 🟢 Style Profile
+    backgroundColor: colors.cardBackground,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.cardBorder, // 🟢 Style Profile
+    borderColor: colors.cardBorder,
     paddingHorizontal: 15,
     height: 50,
   },
-  icon: {
-    marginRight: 10,
-    color: colors.textSecondary, // 🟢 Style Profile
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: colors.textPrimary, // 🟢 Style Profile
-  },
+  input: { flex: 1, fontSize: 15, color: colors.textPrimary },
   saveButton: {
     backgroundColor: colors.accent,
-    padding: 16,
+    padding: 15,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 20,
-    // On garde l'ombre du bouton du EditProfileScreen car elle est simple et efficace
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 5,
+    marginTop: 10,
+    elevation: 3,
   },
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+  saveButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
 });
 
 export default EditProfileScreen;
