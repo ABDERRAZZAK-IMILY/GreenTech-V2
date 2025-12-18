@@ -4,6 +4,7 @@ import { showNotification } from '../../../utils/notifications';
 import { vehicleDataService } from '../../../services/smartDataService';
 import DriverList from '../../../components/Transport/DriverList';
 import ManualEntrySection from '../../../components/Transport/ManualEntrySection';
+import DriverMap from '../../../components/map/DriverMap';
 
 const TransportTab = () => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
@@ -289,14 +290,7 @@ const TransportTab = () => {
 
       {/* Map Container */}
       <div className="transport-map-container">
-        <div
-          id="transportMap"
-          style={{
-            height: 500,
-            width: "100%",
-            borderRadius: 15
-          }}
-        />
+        <DriverMap />
       </div>
 
       {/* Drivers List */}
