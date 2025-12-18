@@ -1,48 +1,94 @@
 pipeline {
-    agent any
-
-    tools {
-        maven 'Maven3'
-        jdk 'Java17'
-    }
+    agent none
 
     environment {
-        SPRING_DATA_MONGODB_URI = "mongodb://mongodbatlas:27017/greentech_db"
+        SPRING_DATA_MONGODB_URI = "mongodb+srv://admin:Axje10796%40@cluster0.6bacyth.mongodb.net/greentech_db"
+        REACT_APP_API_BASE_URL = "https://greentech-api-p5dm.onrender.com/api"
     }
 
     stages {
-        stage('Checkout') {
+
+        /* -------------------------
+         *  CHECKOUT
+         * ------------------------- */
+        stage('Checkout Code') {
+            agent any
             steps {
                 checkout scm
-                echo 'Checking out source code...'
+                echo 'Source code checked out.'
             }
         }
 
-        stage('Build') {
+        /* -------------------------
+         *  BACKEND (Spring Boot)
+         * ------------------------- */
+        stage('Backend - Build') {
+            agent {
+                docker {
+                    image 'maven:3.9.6-eclipse-temurin-17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
             steps {
                 dir('GreenTech-V2') {
-                    echo 'Building the application...'
                     sh 'mvn clean package -DskipTests'
                 }
             }
         }
 
-        stage('Test') {
+        stage('Backend - Test') {
+            agent {
+                docker {
+                    image 'maven:3.9.6-eclipse-temurin-17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
             steps {
                 dir('GreenTech-V2') {
-                    echo 'Running Unit Tests...'
                     sh 'mvn test'
                 }
+            }
+        }
+
+        /* -------------------------
+         *  FRONTEND (React) - Combined Stage
+         * ------------------------- */
+        stage('Frontend - Build & Test') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    args '-u $(id -u):$(id -g) -v $WORKSPACE:/workspace -w /workspace/webProject_ReactWeb/greentech-dashboard-react'
+                }
+            }
+            steps {
+                sh '''
+                    echo "Installing dependencies..."
+                    npm ci --legacy-peer-deps
+
+                    echo "Building frontend..."
+                    npm run build
+
+                    echo "Running frontend tests..."
+                    npm test -- --watchAll=false
+                '''
+            }
+        }
+
+        stage('Frontend - Archive Artifacts') {
+            agent any
+            steps {
+                archiveArtifacts artifacts: 'webProject_ReactWeb/greentech-dashboard-react/build/**',
+                        fingerprint: true
             }
         }
     }
 
     post {
         success {
-            echo 'Build and Test Succeeded!'
+            echo 'Backend and Frontend Build & Tests Succeeded!'
         }
         failure {
-            echo 'Build Failed :('
+            echo 'Pipeline Failed!'
         }
     }
 }
