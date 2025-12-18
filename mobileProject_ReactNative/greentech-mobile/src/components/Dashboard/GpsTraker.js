@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import TotaleTraveledDestance from '../TotaleTraveledDestance';
 
 const GpsTraker = () => {
     const [isTracking, setIsTracking] = useState(false);
@@ -122,6 +123,7 @@ const GpsTraker = () => {
 
     return (
         <View style={styles.trackingCard}>
+            <TotaleTraveledDestance/>
             <View style={styles.trackingHeader}>
                 <Ionicons name="car-sport" size={24} color={colors.accent} />
                 <Text style={styles.trackingTitle}>Mode Conducteur</Text>

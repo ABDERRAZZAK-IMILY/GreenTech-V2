@@ -2,6 +2,7 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { API_CONFIG } from '../config/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Nom de la tâche de background
 const LOCATION_TASK_NAME = 'background-location-task';
@@ -17,7 +18,8 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
         const location = locations[0];
         if (location) {
             try {
-                const vehicule  = await findVehivle(userId);
+                const userId = await AsyncStorage.getItem('userId');
+                const vehicule = await findVehivle(userId);
                 await sendPositionToBackend(location.coords.latitude, location.coords.longitude, vehicule.id);
             } catch (err) {
                 console.log('Erreur envoi position background:', err);
@@ -115,6 +117,26 @@ export const sendPositionToBackend = async (latitude, longitude, vid) => {
         return await response.json();
     } catch (error) {
         console.error('Erreur envoi position:', error);
+        throw error;
+    }
+};
+
+export const getVehiculeDestance = async () => {
+    try {
+        const userId = await AsyncStorage.getItem('userId');
+        const vehicule = await findVehivle(userId);
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/vehicle/log/${vehicule.id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Erreur récupération distance:', error);
         throw error;
     }
 };
