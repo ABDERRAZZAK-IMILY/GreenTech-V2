@@ -28,8 +28,9 @@ public class TransportController {
     public ResponseEntity<VehicleLogResponseDTO> crate(@RequestBody VehicleLogRequestDTO dto) {
         return ResponseEntity.ok(service.create(dto));
     }
+
     @GetMapping("/{id}")
-    public ResponseEntity<VehicleResponseDTO> findByUserId(@PathVariable String Id)  {
-        return ResponseEntity.ok(VLservice.findVehicleByUserId(Id));
+    public ResponseEntity<VehicleResponseDTO> findByUserId(@PathVariable String id)  {
+        return ResponseEntity.ok(VLservice.findVehicleByUserId(id));
     }
 }

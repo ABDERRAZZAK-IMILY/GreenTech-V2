@@ -81,10 +81,11 @@ export const sendPositionToBackend = async (latitude, longitude,vid) => {
     console.log(latitude,longitude);
     
     try {
-        const response = await fetch(`${API_CONFIG.BASE_URL}api/vehicle/log`, {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/vehicle/log`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+
             },
             body: JSON.stringify({
                 latitude,
@@ -99,6 +100,8 @@ export const sendPositionToBackend = async (latitude, longitude,vid) => {
 
         return await response.json();
     } catch (error) {
+        console.log(error);
+        
         console.error('Erreur envoi position:', error);
         throw error;
     }
