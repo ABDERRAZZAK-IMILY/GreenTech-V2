@@ -2,6 +2,7 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { API_CONFIG } from '../config/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Nom de la tâche de background
 const LOCATION_TASK_NAME = 'background-location-task';
@@ -17,9 +18,11 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
         const location = locations[0];
         if (location) {
             try {
-                await sendPositionToBackend(location.coords.latitude, location.coords.longitude);
+                const userId = await AsyncStorage.getItem('userId');
+                const vehicule = await findVehivle(userId);
+                await sendPositionToBackend(location.coords.latitude, location.coords.longitude, vehicule.id);
             } catch (err) {
-                console.error('Erreur envoi position background:', err);
+                console.log('Erreur envoi position background:', err);
             }
         }
     }
@@ -77,24 +80,38 @@ export const getCurrentPosition = async () => {
 };
 
 // Envoyer la position au backend
-export const sendPositionToBackend = async (latitude, longitude,vid) => {
-    console.log(latitude,longitude);
-    
+export const sendPositionToBackend = async (latitude, longitude, vid) => {
+    // 1. Debugging: Check exactly what is being received
+    console.log("SENDING DATA DEBUG:", { latitude, longitude, vid });
+
+    // 2. Safety Check: Stop if data is missing
+    if (!vid) {
+        console.log("❌ ABORTING: Vehicle ID is missing!");
+        return;
+    }
+    if (latitude === undefined || longitude === undefined) {
+        console.log("❌ ABORTING: Coordinates are missing!");
+        return;
+    }
+
     try {
-        const response = await fetch(`${API_CONFIG.BASE_URL}api/vehicle/log`, {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/vehicle/log`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                latitude,
-                longitude,
-                vehicleId:vid
+                latitude: Number(latitude), // Ensure it's a number
+                longitude: Number(longitude), // Ensure it's a number
+                vehicleId: vid
             }),
         });
 
+        // 3. Get the error details from the backend if it fails
         if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
+            const errorText = await response.text(); // Read backend error message
+            console.error("🔥 Backend Error Details:", errorText);
+            throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
         }
 
         return await response.json();
@@ -104,9 +121,29 @@ export const sendPositionToBackend = async (latitude, longitude,vid) => {
     }
 };
 
+export const getVehiculeDestance = async () => {
+    try {
+        const userId = await AsyncStorage.getItem('userId');
+        const vehicule = await findVehivle(userId);
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/vehicle/log/${vehicule.id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Erreur récupération distance:', error);
+        throw error;
+    }
+};
+
 export const findVehivle = async (id) => {
     try {
-        const response = await fetch(`${API_CONFIG.BASE_URL}/api/transport${id}`, {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/transport/${id}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

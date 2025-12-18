@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -28,7 +29,7 @@ public class EnergyMonitor {
     private Double co2Impact;
     private Status status;
     @DBRef
-    private List<Energy> energy;
+    private List<Energy> energy = new ArrayList<>();
 
     private LocalDateTime timestamp;
 }
