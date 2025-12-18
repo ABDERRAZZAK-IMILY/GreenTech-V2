@@ -14,7 +14,6 @@ const VEHICLE_TYPES = [
 
 const AddDriverModal = ({ isOpen, onClose }) => {
     const [users, setUsers] = useState([]);
-    const {addDriver } = useDriverStore();
 
     // 2. Destructure hook form methods
     const {
@@ -48,13 +47,13 @@ const AddDriverModal = ({ isOpen, onClose }) => {
         // data contains { driverId, vehicleType, plateNumber }
         try {
             const vehiculeData = {
-            licensePlate: data.licensePlate,
-            model: data.model,
-            userId: data.userId,
-            longe: -7.589843,
-            lat: 6.7240
-        }
-        await transporService.addVehicle(vehiculeData);
+                licensePlate: data.licensePlate,
+                model: data.model,
+                userId: data.userId,
+                longe: -6.722442,
+                lat: 33.987165
+            }
+            await transporService.addVehicle(vehiculeData);
         } catch (error) {
             console.log(error);
         }
