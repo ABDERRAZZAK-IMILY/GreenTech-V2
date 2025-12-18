@@ -228,7 +228,6 @@ export default function ActionsScreen() {
           <Text style={styles.headerSubtitle}>Suivez vos actions écologiques et votre trajet du jour</Text>
         </View>
 
-        {/* Checklist Section with Progress */}
         <View style={styles.checklistWrapper}>
           {/* Checklist Section */}
           <View style={styles.checklistSection}>
@@ -273,7 +272,6 @@ export default function ActionsScreen() {
                       <Text 
                         style={[
                             styles.actionTitle,
-                            // Strike through text if submitted
                             action.submitted && { textDecorationLine: 'line-through', color: colors.textSecondary }
                         ]} 
                         numberOfLines={2}
@@ -298,7 +296,6 @@ export default function ActionsScreen() {
             )}
           </View>
 
-          {/* Progress Circle Card */}
           <View style={styles.progressCard}>
             <View style={styles.progressCircleContainer}>
               <View style={styles.progressCircle}>
@@ -325,7 +322,6 @@ export default function ActionsScreen() {
           </View>
         </View>
 
-        {/* ✅ SECTION NOUVELLE: Historique & Statut */}
         {historyActions.length > 0 && (
           <View style={styles.checklistWrapper}>
             <View style={styles.sectionHeader}>
@@ -377,7 +373,6 @@ export default function ActionsScreen() {
       </View>
     </View>
 
-    {/* ✅ زيادة: سبب الرفض (إلا كان REJECTED) */}
     {action.status === 'REJECTED' && action.adminComment && (
       <View style={{marginTop: 10, padding: 8, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, flexDirection: 'row', gap: 8}}>
          <Ionicons name="alert-circle" size={16} color="#ef4444" />
@@ -392,7 +387,6 @@ export default function ActionsScreen() {
           </View>
         )}
 
-        {/* Transport Tracking Section */}
         <View style={styles.transportSection}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitle}>
@@ -405,7 +399,6 @@ export default function ActionsScreen() {
             </View>
           </View>
 
-          {/* Current Position Card */}
           <View style={styles.trackingCard}>
             <View style={styles.cardHeader}>
               <Ionicons name="location" size={18} color={colors.accent} />
@@ -440,7 +433,6 @@ export default function ActionsScreen() {
             </View>
           </View>
 
-          {/* Trip Summary Card */}
           <View style={[styles.trackingCard, styles.marginTop]}>
             <View style={styles.cardHeader}>
               <Ionicons name="map" size={18} color={colors.accent} />
@@ -500,7 +492,6 @@ export default function ActionsScreen() {
         <View style={{ height: 20 }} />
       </ScrollView>
 
-      {/* Upload Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -1112,7 +1103,6 @@ const styles = StyleSheet.create({
      color: '#fff',
   },
   
-  // ✅ History specific styles added
   historyList: { 
     backgroundColor: 'rgba(255,255,255,0.05)', 
     borderRadius: 12, 
