@@ -53,44 +53,47 @@ pipeline {
        /* -------------------------
         *  FRONTEND (React)
         * ------------------------- */
-       stage('Frontend - Install Dependencies') {
-           agent {
-               docker {
-                   image 'node:22-alpine'
-               }
-           }
-           steps {
-               dir('webProject_ReactWeb/greentech-dashboard-react') {
-                   sh 'npm install --cache $WORKSPACE/.npm'
-               }
-           }
-       }
+        stage('Frontend - Install Dependencies') {
+         agent {
+             docker {
+                 image 'node:18-alpine'
+             }
+         }
+         steps {
+             dir('webProject_ReactWeb/greentech-dashboard-react') {
+                 sh '''
+                     rm -rf node_modules $WORKSPACE/.npm
+                     npm ci --legacy-peer-deps
+                 '''
+             }
+         }
+         }
 
-       stage('Frontend - Build') {
-           agent {
-               docker {
-                   image 'node:22-alpine'
-               }
-           }
-           steps {
-               dir('webProject_ReactWeb/greentech-dashboard-react') {
-                   sh 'npm run build --cache $WORKSPACE/.npm'
-               }
-           }
-       }
+     stage('Frontend - Build') {
+         agent {
+             docker {
+                 image 'node:18-alpine'
+             }
+         }
+         steps {
+             dir('webProject_ReactWeb/greentech-dashboard-react') {
+                 sh 'npm run build'
+             }
+         }
+     }
 
-       stage('Frontend - Test') {
-           agent {
-               docker {
-                   image 'node:22-alpine'
-               }
-           }
-           steps {
-               dir('webProject_ReactWeb/greentech-dashboard-react') {
-                   sh 'npm test -- --watchAll=false'
-               }
-           }
-       }
+     stage('Frontend - Test') {
+         agent {
+             docker {
+                 image 'node:18-alpine'
+             }
+         }
+         steps {
+             dir('webProject_ReactWeb/greentech-dashboard-react') {
+                 sh 'npm test -- --watchAll=false'
+             }
+         }
+     }
 
         stage('Frontend - Archive Artifacts') {
             agent any
