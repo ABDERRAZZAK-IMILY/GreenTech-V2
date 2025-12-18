@@ -1,5 +1,6 @@
 package com.greentechinnovators.backend.service;
 
+import com.greentechinnovators.backend.dto.vehicle.TotalDistanceResponseDTO;
 import com.greentechinnovators.backend.dto.vehicle.request.VehicleLogRequestDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.VehicleLogResponseDTO;
 import com.greentechinnovators.backend.entity.Vehicle;
@@ -21,7 +22,7 @@ public class VehicleLogService {
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper mapper;
     private final VehicleLogRepository vehicleLogRepository;
-    private final CarbonFootprintService carbonFootprintService;
+    private final VehicleService vehicleService;
 
     public VehicleLogResponseDTO create(VehicleLogRequestDTO dto) {
         Vehicle vehicle = vehicleRepository.findById(dto.getVehicleId()).orElseThrow(() -> {
@@ -62,6 +63,19 @@ public class VehicleLogService {
 
     public void deleteById(String id) {
         vehicleLogRepository.deleteById(id);
+    }
+
+    public TotalDistanceResponseDTO calculateDistance(String id) {
+        Vehicle vehicle = vehicleRepository.findById(id).orElseThrow(()->{
+            throw new RuntimeException("vehicle not found");
+        });
+
+        double totalDist = vehicleService.calculateSingleCarDistance(vehicle.getVehicleLogs()); // example result
+
+        return TotalDistanceResponseDTO.builder()
+                .id(id)
+                .distance(totalDist)
+                .build();
     }
 
 }
