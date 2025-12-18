@@ -4,7 +4,7 @@ pipeline {
     environment {
         SPRING_DATA_MONGODB_URI = "mongodb+srv://admin:Axje10796%40@cluster0.6bacyth.mongodb.net/greentech_db"
         REACT_APP_API_BASE_URL = "https://greentech-api-p5dm.onrender.com/api"
-        NPM_CACHE = "$WORKSPACE/.npm"  // Cache خاص بالـ pipeline
+        NPM_CACHE = "$WORKSPACE/.npm" 
     }
 
     stages {
