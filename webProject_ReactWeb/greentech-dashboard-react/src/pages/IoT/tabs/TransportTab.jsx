@@ -1,50 +1,18 @@
-import React, { useState } from 'react';
-import { useTransportMap } from '../../../hooks/useTransportMap';
-import { showNotification } from '../../../utils/notifications';
-import { vehicleDataService } from '../../../services/smartDataService';
+import React, { useEffect, useState } from 'react';
 import DriverList from '../../../components/Transport/DriverList';
 import ManualEntrySection from '../../../components/Transport/ManualEntrySection';
+import DriverMap from '../../../components/map/DriverMap';
+import useDriverStore from '../../../State/useDriverStore';
 
 const TransportTab = () => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [currentDriverId, setCurrentDriverId] = useState(null);
-  const [deleteDriverName, setDeleteDriverName] = useState('');
-
-  const { mapRef, markersRef, vehicleCounterRef, addDriverMarker } = useTransportMap();
+  const {drivers,fetchDrivers} = useDriverStore();
+  useEffect(() => {
+    fetchDrivers();
+  }, []);
 
   const toggleTransportOverview = () => {
     setIsOverviewOpen(!isOverviewOpen);
-  };
-
-
-  const closeDeleteModal = () => {
-    setShowDeleteModal(false);
-    setCurrentDriverId(null);
-  };
-
-  const confirmDeleteDriver = () => {
-    const driverCard = document.querySelector(`[data-driver-id="${currentDriverId}"]`);
-    const driverName = driverCard ? driverCard.querySelector('.driver-info h5').textContent : '';
-
-    if (driverCard) {
-      driverCard.style.opacity = '0';
-      driverCard.style.transform = 'scale(0.8)';
-      driverCard.style.transition = 'all 0.3s ease';
-      setTimeout(() => {
-        driverCard.remove();
-      }, 300);
-    }
-
-    // Remove marker from map
-    if (markersRef.current[currentDriverId]) {
-      mapRef.current.removeLayer(markersRef.current[currentDriverId]);
-      delete markersRef.current[currentDriverId];
-      console.log(`Marker ${currentDriverId} removed from map`);
-    }
-
-    closeDeleteModal();
-    showNotification(`Chauffeur ${driverName} supprimé avec succès`, 'success');
   };
 
   return (
@@ -323,14 +291,7 @@ const TransportTab = () => {
 
       {/* Map Container */}
       <div className="transport-map-container">
-        <div
-          id="transportMap"
-          style={{
-            height: 500,
-            width: "100%",
-            borderRadius: 15
-          }}
-        />
+        <DriverMap drivers={drivers} />
       </div>
 
       {/* Drivers List */}
