@@ -82,24 +82,24 @@ pipeline {
          }
      }
 
-     stage('Frontend - Test') {
-         agent {
-             docker {
-                 image 'node:18-alpine'
-             }
-         }
-         steps {
-             dir('webProject_ReactWeb/greentech-dashboard-react') {
-                 sh 'npm test -- --watchAll=false'
-             }
-         }
-     }
+    stage('Frontend - Test') {
+        agent {
+            docker {
+                image 'node:18-alpine'
+            }
+        }
+        steps {
+            dir('webProject_ReactWeb/greentech-dashboard-react') {
+                sh 'npm test -- --watchAll=false'
+            }
+        }
+    }
 
         stage('Frontend - Archive Artifacts') {
             agent any
             steps {
                 archiveArtifacts artifacts: 'webProject_ReactWeb/greentech-dashboard-react/build/**',
-                                  fingerprint: true
+                        fingerprint: true
             }
         }
     }
