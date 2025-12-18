@@ -7,44 +7,10 @@ import ManualEntrySection from '../../../components/Transport/ManualEntrySection
 
 const TransportTab = () => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentDriverId, setCurrentDriverId] = useState(null);
-  const [deleteDriverName, setDeleteDriverName] = useState('');
-
-  const { mapRef, markersRef, vehicleCounterRef, addDriverMarker } = useTransportMap();
 
   const toggleTransportOverview = () => {
     setIsOverviewOpen(!isOverviewOpen);
-  };
-
-
-  const closeDeleteModal = () => {
-    setShowDeleteModal(false);
-    setCurrentDriverId(null);
-  };
-
-  const confirmDeleteDriver = () => {
-    const driverCard = document.querySelector(`[data-driver-id="${currentDriverId}"]`);
-    const driverName = driverCard ? driverCard.querySelector('.driver-info h5').textContent : '';
-
-    if (driverCard) {
-      driverCard.style.opacity = '0';
-      driverCard.style.transform = 'scale(0.8)';
-      driverCard.style.transition = 'all 0.3s ease';
-      setTimeout(() => {
-        driverCard.remove();
-      }, 300);
-    }
-
-    // Remove marker from map
-    if (markersRef.current[currentDriverId]) {
-      mapRef.current.removeLayer(markersRef.current[currentDriverId]);
-      delete markersRef.current[currentDriverId];
-      console.log(`Marker ${currentDriverId} removed from map`);
-    }
-
-    closeDeleteModal();
-    showNotification(`Chauffeur ${driverName} supprimé avec succès`, 'success');
   };
 
   return (
