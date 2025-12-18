@@ -47,8 +47,28 @@ const updateUser = async (id, userData) => {
   return await response.json();
 };
 
+const updatePassword = async (oldPassword, newPassword) => {
+  const headers = await getAuthHeaders();
+  const id = await AsyncStorage.getItem('userId');
+  
+  const response = await fetch(`${API_URL}/${id}/password`, {
+    method: 'PUT',
+    headers: headers,
+    body: JSON.stringify({ oldPassword, newPassword }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.message || 'Échec de la mise à jour du mot de passe';
+    
+    throw new Error(errorMessage);
+  }
+
+  return await response.json();
+};
 export default {
   getUserById,
   getUserProfile,
   updateUser,
+  updatePassword,
 };

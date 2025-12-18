@@ -1,29 +1,26 @@
-import axios from 'axios';
 import React, { useState, useEffect } from 'react';
-
-// Imports
 import DashboardStats from '../../Dashboard/DashboardStats'; 
 import AlertsFeed from './AlertsFeed';
-import AlertDetailsModal from '../../../utils/AlertDetailsModal'; // <-- IMPORT JDID
+import AlertDetailsModal from '../../../utils/AlertDetailsModal';
+import { fetchAiAlertsFromApi } from '../../../services/alertService';
 
 const AlertsTab = () => {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
-
-  // STATE JDID POUR LE MODAL
   const [selectedAlert, setSelectedAlert] = useState(null); 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // --- LOGIQUE FETCH (Rien ne change ici) ---
+  // LOGIQUE FETCH - Nqiya daba
   const fetchAiAlerts = async (isBackgroundUpdate = false) => {
     if (!isBackgroundUpdate) setLoading(true);
     setError(null);
+    
     try {
-      const response = await axios.get('http://localhost:8080/api/ai/alerts');
-      setAlerts(response.data);
-      localStorage.setItem('cachedAiAlerts', JSON.stringify(response.data));
+      const data = await fetchAiAlertsFromApi(); 
+      setAlerts(data);
+      localStorage.setItem('cachedAiAlerts', JSON.stringify(data));
       localStorage.setItem('lastAiUpdate', new Date().toLocaleTimeString());
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (err) {
@@ -43,6 +40,7 @@ const AlertsTab = () => {
     } else {
       fetchAiAlerts(false);
     }
+
     const interval = setInterval(() => fetchAiAlerts(true), 30000);
     return () => clearInterval(interval);
   }, []);
@@ -52,14 +50,14 @@ const AlertsTab = () => {
     const newAlerts = alerts.filter(alert => alert.id !== alertId);
     setAlerts(newAlerts);
     localStorage.setItem('cachedAiAlerts', JSON.stringify(newAlerts));
+    // Optionnel: t-qdar t-zid hna call l-API bach t-dir ack f-database
   };
 
-  // NOUVELLE FONCTION viewAlertDetails
   const viewAlertDetails = (alertId) => {
     const alertData = alerts.find(a => a.id === alertId);
     if (alertData) {
-      setSelectedAlert(alertData); // On stocke l'alerte cliquée
-      setIsModalOpen(true);        // On ouvre le modal
+      setSelectedAlert(alertData);
+      setIsModalOpen(true);
     }
   };
 
@@ -83,7 +81,6 @@ const AlertsTab = () => {
         onAck={acknowledgeAlert} onDetails={viewAlertDetails} 
       />
 
-      {/* 3. LE MODAL (Invisible tant que isModalOpen est false) */}
       <AlertDetailsModal 
         isOpen={isModalOpen}
         alert={selectedAlert}

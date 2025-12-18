@@ -7,8 +7,6 @@ import com.greentechinnovators.backend.dto.department.DepartmentResponseDTO;
 import com.greentechinnovators.backend.dto.gas.responce.GasResponseDTO;
 import com.greentechinnovators.backend.dto.trash.response.DailyTrashDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.DailyDistanceDTO;
-import com.greentechinnovators.backend.entity.Department;
-import com.greentechinnovators.backend.entity.User;
 import com.greentechinnovators.backend.service.*;
 import com.greentechinnovators.backend.utils.AiDataHelper;
 import com.greentechinnovators.backend.utils.CarbonFootprintService;
@@ -34,26 +32,22 @@ public class AiContextManager {
     private final CarbonFootprintService carbonService;
     private final DepartmentService departmentService;
 
-    /**
-     * Hada howa "le cerveau" li kayjma3 data mn ga3 les services.
-     * Kayraja3 JSON String clean bach DeepSeek yfhamha.
-     */
     public String getGlobalContextJson() {
         LocalDate today = LocalDate.now();
 
         LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
         LocalDateTime now = LocalDateTime.now();
-
         LocalDateTime startOfLastMonth = startOfMonth.minusMonths(1);
         LocalDateTime endOfLastMonth = startOfMonth.minusSeconds(1);
 
         Map<String, Object> context = new LinkedHashMap<>();
 
-        context.put("TRANSPORT", getTransportData(startOfMonth, now, startOfLastMonth, endOfLastMonth));
-        context.put("TRASH", getTrashData(startOfMonth, now, startOfLastMonth, endOfLastMonth));
-        context.put("ENERGY", getEnergyData(startOfMonth, now, startOfLastMonth, endOfLastMonth));
         context.put("GAS", getGasData(startOfMonth, now, startOfLastMonth, endOfLastMonth));
+        context.put("ENERGY", getEnergyData(startOfMonth, now, startOfLastMonth, endOfLastMonth));
+        context.put("TRASH", getTrashData(startOfMonth, now, startOfLastMonth, endOfLastMonth));
+        context.put("TRANSPORT", getTransportData(startOfMonth, now, startOfLastMonth, endOfLastMonth));
         context.put("DEPARTMENTS", getDepartmentOverview());
+
         try {
             return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(context);
         } catch (JsonProcessingException e) {
@@ -62,73 +56,6 @@ public class AiContextManager {
         }
     }
 
-
-    private Map<String, Object> getTransportData(LocalDateTime start, LocalDateTime end, LocalDateTime lastStart, LocalDateTime lastEnd) {
-        try {
-            List<DailyDistanceDTO> currentLogs = vehicleService.getDistanceHistory(start, end);
-            List<DailyDistanceDTO> lastLogs = vehicleService.getDistanceHistory(lastStart, lastEnd);
-
-            double currentDist = helper.calculateVehicleDistance(currentLogs);
-            double lastDist = helper.calculateVehicleDistance(lastLogs);
-            double currentCo2 = helper.calculateVehicleCarbon(currentLogs);
-            double lastCo2 = helper.calculateVehicleCarbon(lastLogs);
-
-            return Map.of(
-                    "Distance_Current", String.format(Locale.US, "%.2f km", currentDist),
-                    "Distance_LastMonth", String.format(Locale.US, "%.2f km", lastDist),
-                    "CO2_Current", String.format(Locale.US, "%.2f kg", currentCo2),
-                    "CO2_LastMonth", String.format(Locale.US, "%.2f kg", lastCo2),
-                    "Trend_CO2", helper.getTrend(lastCo2, currentCo2)
-            );
-        } catch (Exception e) {
-            log.error("Erreur Transport Data", e);
-            return Map.of("Status", "Données indisponibles");
-        }
-    }
-    private Map<String, Object> getTrashData(LocalDateTime start, LocalDateTime end, LocalDateTime lastStart, LocalDateTime lastEnd) {
-        try {
-            List<DailyTrashDTO> currentWaste = trashService.TrashCarbonFootprint(start, end);
-            List<DailyTrashDTO> lastWaste = trashService.TrashCarbonFootprint(lastStart, lastEnd);
-
-            double currentWeight = helper.calculateTrashWeight(currentWaste);
-            double currentCo2 = helper.calculateTrashCarbon(currentWaste);
-            double lastCo2 = helper.calculateTrashCarbon(lastWaste);
-
-            return Map.of(
-                    "Total_Weight_Current", String.format(Locale.US, "%.2f kg", currentWeight),
-                    "CO2_Current", String.format(Locale.US, "%.2f kg", currentCo2),
-                    "CO2_LastMonth", String.format(Locale.US, "%.2f kg", lastCo2),
-                    "Trend_CO2", helper.getTrend(lastCo2, currentCo2)
-            );
-        } catch (Exception e) {
-            log.error("Erreur Trash Data", e);
-            return Map.of("Status", "Données indisponibles");
-        }
-    }
-    private Map<String, Object> getEnergyData(LocalDateTime start, LocalDateTime end, LocalDateTime lastStart, LocalDateTime lastEnd) {
-        try {
-            List<EnergyResponseDTO> currentList = energyService.getConsumedKwhBetweenDates(start, end);
-            List<EnergyResponseDTO> lastList = energyService.getConsumedKwhBetweenDates(lastStart, lastEnd);
-
-            double currentKwh = helper.calculateTotalEnergy(currentList);
-            double lastKwh = helper.calculateTotalEnergy(lastList);
-
-            double currentCo2 = carbonService.calculateEnergyFootprint(currentKwh);
-            double lastCo2 = carbonService.calculateEnergyFootprint(lastKwh);
-
-            return Map.of(
-                    "Consumption_Current", String.format(Locale.US, "%.2f kWh", currentKwh),
-                    "Consumption_LastMonth", String.format(Locale.US, "%.2f kWh", lastKwh),
-                    "Trend_Consumption", helper.getTrend(lastKwh, currentKwh),
-                    "CO2_Current", String.format(Locale.US, "%.2f kg", currentCo2),
-                    "CO2_LastMonth", String.format(Locale.US, "%.2f kg", lastCo2),
-                    "Trend_CO2", helper.getTrend(lastCo2, currentCo2)
-            );
-        } catch (Exception e) {
-            log.warn("Erreur Energy Data: {}", e.getMessage());
-            return Map.of("Status", "Données indisponibles");
-        }
-    }
     private Map<String, Object> getGasData(LocalDateTime start, LocalDateTime end, LocalDateTime lastStart, LocalDateTime lastEnd) {
         try {
             List<GasResponseDTO> currentList = gasService.getConsumedGasBetweenDates(start, end);
@@ -136,49 +63,100 @@ public class AiContextManager {
 
             double currentVal = helper.calculateTotalGas(currentList);
             double lastVal = helper.calculateTotalGas(lastList);
-
             double currentCo2 = carbonService.calculateGasFootprint(currentVal);
             double lastCo2 = carbonService.calculateGasFootprint(lastVal);
 
-            return Map.of(
-                    "Consumption_Current", String.format(Locale.US, "%.2f kg", currentVal),
-                    "Consumption_LastMonth", String.format(Locale.US, "%.2f kg", lastVal),
-                    "Trend_Gas", helper.getTrend(lastVal, currentVal),
-                    "CO2_Current", String.format(Locale.US, "%.2f kg", currentCo2),
-                    "CO2_LastMonth", String.format(Locale.US, "%.2f kg", lastCo2),
-                    "Trend_CO2", helper.getTrend(lastCo2, currentCo2)
-            );
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("Consumption_Current", String.format(Locale.US, "%.2f kg", currentVal));
+            data.put("Consumption_LastMonth", String.format(Locale.US, "%.2f kg", lastVal));
+            data.put("Trend_Gas", helper.getTrend(lastVal, currentVal));
+            data.put("CO2_Current", String.format(Locale.US, "%.2f kg", currentCo2));
+
+            data.put("DETAILS_LOGS", currentList);
+
+            return data;
         } catch (Exception e) {
             log.error("Erreur Gas Data", e);
-            return Map.of("Status", "Non configurer");
+            return Map.of("Status", "Non configuré");
+        }
+    }
+
+    private Map<String, Object> getEnergyData(LocalDateTime start, LocalDateTime end, LocalDateTime lastStart, LocalDateTime lastEnd) {
+        try {
+            List<EnergyResponseDTO> currentList = energyService.getConsumedKwhBetweenDates(start, end);
+            List<EnergyResponseDTO> lastList = energyService.getConsumedKwhBetweenDates(lastStart, lastEnd);
+
+            double currentKwh = helper.calculateTotalEnergy(currentList);
+            double lastKwh = helper.calculateTotalEnergy(lastList);
+            double currentCo2 = carbonService.calculateEnergyFootprint(currentKwh);
+
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("Consumption_Current", String.format(Locale.US, "%.2f kWh", currentKwh));
+            data.put("Consumption_LastMonth", String.format(Locale.US, "%.2f kWh", lastKwh));
+            data.put("Trend", helper.getTrend(lastKwh, currentKwh));
+            data.put("CO2_Current", String.format(Locale.US, "%.2f kg", currentCo2));
+
+            data.put("DETAILS_LOGS", currentList);
+
+            return data;
+        } catch (Exception e) {
+            log.warn("Erreur Energy Data: {}", e.getMessage());
+            return Map.of("Status", "Données indisponibles");
+        }
+    }
+
+    private Map<String, Object> getTrashData(LocalDateTime start, LocalDateTime end, LocalDateTime lastStart, LocalDateTime lastEnd) {
+        try {
+            List<DailyTrashDTO> currentWaste = trashService.TrashCarbonFootprint(start, end);
+            List<DailyTrashDTO> lastWaste = trashService.TrashCarbonFootprint(lastStart, lastEnd);
+
+            double currentWeight = helper.calculateTrashWeight(currentWaste);
+
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("Total_Weight_Current", String.format(Locale.US, "%.2f kg", currentWeight));
+
+            // 🔥 IMPORTANT
+            data.put("DETAILS_LOGS", currentWaste);
+
+            return data;
+        } catch (Exception e) {
+            log.error("Erreur Trash Data", e);
+            return Map.of("Status", "Données indisponibles");
+        }
+    }
+
+    private Map<String, Object> getTransportData(LocalDateTime start, LocalDateTime end, LocalDateTime lastStart, LocalDateTime lastEnd) {
+        try {
+            List<DailyDistanceDTO> currentLogs = vehicleService.getDistanceHistory(start, end);
+            List<DailyDistanceDTO> lastLogs = vehicleService.getDistanceHistory(lastStart, lastEnd);
+            double currentDist = helper.calculateVehicleDistance(currentLogs);
+
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("Distance_Current", String.format(Locale.US, "%.2f km", currentDist));
+
+            data.put("DETAILS_LOGS", currentLogs);
+
+            return data;
+        } catch (Exception e) {
+            log.error("Erreur Transport Data", e);
+            return Map.of("Status", "Données indisponibles");
         }
     }
 
     private Map<String, Object> getDepartmentOverview() {
         try {
             List<DepartmentResponseDTO> departments = departmentService.getAllDepartments();
-
             List<Map<String, Object>> deptList = new ArrayList<>();
-
             for (DepartmentResponseDTO dept : departments) {
                 int userCount = (dept.getUsers() != null) ? dept.getUsers().size() : 0;
-
                 Map<String, Object> info = new HashMap<>();
                 info.put("Name", dept.getName());
                 info.put("Employee_Count", userCount);
-
                 deptList.add(info);
             }
-
-
-            return Map.of(
-                    "Total_Departments", departments.size(),
-                    "List", deptList
-            );
-
+            return Map.of("Total_Departments", departments.size(), "List", deptList);
         } catch (Exception e) {
-            log.error("Erreur Department Data", e);
             return Map.of("Status", "Données indisponibles");
         }
     }
-    }
+}

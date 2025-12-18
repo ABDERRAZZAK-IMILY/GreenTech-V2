@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack'; // Zidna hadi
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { EmployeeProvider } from './src/contexts/EmployeeContext';
@@ -13,10 +13,11 @@ import MarketplaceScreen from './src/screens/MarketplaceScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
-const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator(); // Stack jdid
 
-// Hada Component khass b les Tabs bo7dhom
+const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+// 1. Hada howa MainTabs (N9I BLA MCHAKIL)
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -33,14 +34,6 @@ function MainTabs() {
           fontWeight: '700',
           fontSize: 18,
         },
-        tabBarStyle: {
-          backgroundColor: '#1e272e',
-          borderTopWidth: 1,
-          borderTopColor: 'rgba(255, 255, 255, 0.1)',
-          paddingBottom: 5,
-          paddingTop: 5,
-          height: 60,
-        },
         tabBarActiveTintColor: '#2a9d6f',
         tabBarInactiveTintColor: '#808e9b',
         tabBarLabelStyle: {
@@ -48,29 +41,26 @@ function MainTabs() {
           fontWeight: '600',
         },
         tabBarStyle: {
-      position: 'absolute',     // Takes it out of the normal layout flow
-      bottom: 25,               // Distance from the bottom of the screen
-      left: 20,                 // Distance from left
-      right: 20,                // Distance from right
-      elevation: 5,             // Shadow for Android
-      backgroundColor: '#1e272e',
-      borderRadius: 15,         // Rounded corners
-      height: 70,               // Slightly taller to accommodate the float look
-      borderTopWidth: 0,        // Remove standard top border
-      borderWidth: 1,           // Add border around the whole shape
-      borderColor: 'rgba(255, 255, 255, 0.1)',
-      
-      // Shadow for iOS
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.5,
-      paddingBottom: 10,       // Adjust inner padding
-      paddingTop: 10,
-    },
+          position: 'absolute',
+          bottom: 25,
+          left: 20,
+          right: 20,
+          elevation: 5,
+          backgroundColor: '#1e272e',
+          borderRadius: 15,
+          height: 70,
+          borderTopWidth: 0,
+          borderWidth: 1,
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.5,
+          paddingBottom: 10,
+          paddingTop: 10,
+        },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
-
           if (route.name === 'Tableau de Bord') {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Actions') {
@@ -80,7 +70,6 @@ function MainTabs() {
           } else if (route.name === 'Profil') {
             iconName = focused ? 'person' : 'person-outline';
           }
-
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
@@ -100,16 +89,19 @@ function MainTabs() {
         component={MarketplaceScreen}
         options={{ title: 'Boutique' }}
       />
+      
       <Tab.Screen
         name="Profil"
         component={ProfileScreen}
-        options={{ title: 'Mon Profil' }}
+        options={{ 
+          title: 'Mon Profil',
+          headerShown: false,
+        }}
       />
     </Tab.Navigator>
   );
 }
 
-// Hada App principal
 export default function App() {
   return (
     <EmployeeProvider>
@@ -128,10 +120,16 @@ export default function App() {
             component={MainTabs} 
             options={{ headerShown: false }}
           />
+
+          {/* HNA ZIDNA L-MODAL ANIMATION */}
           <Stack.Screen 
             name="EditProfile" 
             component={EditProfileScreen} 
-            options={{ headerShown: false }}
+            options={{ 
+              headerShown: false,
+              presentation: 'modal',       // <-- HADI LI KATHAKEM
+              animation: 'slide_from_bottom' // <-- HADI LI KATDIR SLIDE
+            }} 
           />
 
         </Stack.Navigator>
