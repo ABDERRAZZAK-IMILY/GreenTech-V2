@@ -4,6 +4,7 @@ pipeline {
     environment {
         SPRING_DATA_MONGODB_URI = "mongodb+srv://admin:Axje10796%40@cluster0.6bacyth.mongodb.net/greentech_db"
         REACT_APP_API_BASE_URL = "https://greentech-api-p5dm.onrender.com/api"
+        NPM_CACHE = "$WORKSPACE/.npm"  // Cache خاص بالـ pipeline
     }
 
     stages {
@@ -50,56 +51,60 @@ pipeline {
             }
         }
 
-       /* -------------------------
-        *  FRONTEND (React)
-        * ------------------------- */
+        /* -------------------------
+         *  FRONTEND (React)
+         * ------------------------- */
         stage('Frontend - Install Dependencies') {
-         agent {
-             docker {
-                 image 'node:18-alpine'
-             }
-         }
-         steps {
-             dir('webProject_ReactWeb/greentech-dashboard-react') {
-                 sh '''
-                     rm -rf node_modules $WORKSPACE/.npm
-                     npm ci --legacy-peer-deps
-                 '''
-             }
-         }
-         }
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    args '-u 1000:1000'
+                }
+            }
+            steps {
+                dir('webProject_ReactWeb/greentech-dashboard-react') {
+                    sh '''
+                        echo "Cleaning node_modules and npm cache..."
+                        rm -rf node_modules $NPM_CACHE
+                        npm ci --legacy-peer-deps --cache $NPM_CACHE
+                    '''
+                }
+            }
+        }
 
-     stage('Frontend - Build') {
-         agent {
-             docker {
-                 image 'node:18-alpine'
-             }
-         }
-         steps {
-             dir('webProject_ReactWeb/greentech-dashboard-react') {
-                 sh 'npm run build'
-             }
-         }
-     }
+        stage('Frontend - Build') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    args '-u 1000:1000'
+                }
+            }
+            steps {
+                dir('webProject_ReactWeb/greentech-dashboard-react') {
+                    sh 'npm run build --cache $NPM_CACHE'
+                }
+            }
+        }
 
-     stage('Frontend - Test') {
-         agent {
-             docker {
-                 image 'node:18-alpine'
-             }
-         }
-         steps {
-             dir('webProject_ReactWeb/greentech-dashboard-react') {
-                 sh 'npm test -- --watchAll=false'
-             }
-         }
-     }
+        stage('Frontend - Test') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    args '-u 1000:1000'
+                }
+            }
+            steps {
+                dir('webProject_ReactWeb/greentech-dashboard-react') {
+                    sh 'npm test -- --watchAll=false'
+                }
+            }
+        }
 
         stage('Frontend - Archive Artifacts') {
             agent any
             steps {
                 archiveArtifacts artifacts: 'webProject_ReactWeb/greentech-dashboard-react/build/**',
-                                  fingerprint: true
+                                 fingerprint: true
             }
         }
     }
