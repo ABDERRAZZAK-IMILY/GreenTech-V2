@@ -77,31 +77,42 @@ export const getCurrentPosition = async () => {
 };
 
 // Envoyer la position au backend
-export const sendPositionToBackend = async (latitude, longitude,vid) => {
-    console.log(latitude,longitude);
-    
+export const sendPositionToBackend = async (latitude, longitude, vid) => {
+    // 1. Debugging: Check exactly what is being received
+    console.log("SENDING DATA DEBUG:", { latitude, longitude, vid });
+
+    // 2. Safety Check: Stop if data is missing
+    if (!vid) {
+        console.error("❌ ABORTING: Vehicle ID is missing!");
+        return;
+    }
+    if (latitude === undefined || longitude === undefined) {
+        console.error("❌ ABORTING: Coordinates are missing!");
+        return;
+    }
+
     try {
         const response = await fetch(`${API_CONFIG.BASE_URL}/api/vehicle/log`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-
             },
             body: JSON.stringify({
-                latitude,
-                longitude,
-                vehicleId:vid
+                latitude: Number(latitude), // Ensure it's a number
+                longitude: Number(longitude), // Ensure it's a number
+                vehicleId: vid
             }),
         });
 
+        // 3. Get the error details from the backend if it fails
         if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
+            const errorText = await response.text(); // Read backend error message
+            console.error("🔥 Backend Error Details:", errorText);
+            throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
         }
 
         return await response.json();
     } catch (error) {
-        console.log(error);
-        
         console.error('Erreur envoi position:', error);
         throw error;
     }

@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -28,7 +29,15 @@ public class VehicleLogService {
         });
         VehicleLog vehicleLog = vehicleLogRepository.save(mapper.toVehicleLog(dto));
         vehicleLog = vehicleLogRepository.save(vehicleLog);
+
+        vehicle.setLatitude(dto.getLatitude());
+        vehicle.setLongitude(dto.getLongitude());
+
+        if (vehicle.getVehicleLogs() == null) {
+            vehicle.setVehicleLogs(new ArrayList<>());
+        }
         vehicle.getVehicleLogs().add(vehicleLog);
+        vehicleRepository.save(vehicle);
         vehicleRepository.save(vehicle);
         return mapper.toVehicleLogResponse(vehicleLog);
     }
