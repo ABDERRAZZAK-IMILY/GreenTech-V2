@@ -1,11 +1,9 @@
 package com.greentechinnovators.backend.repository;
 
-import com.greentechinnovators.backend.dto.AI.DailyStat;
+import com.greentechinnovators.backend.dto.ai.DailyStat;
 import com.greentechinnovators.backend.entity.Gas;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.mongodb.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;

@@ -1,6 +1,6 @@
 package com.greentechinnovators.backend.controller;
 
-import com.greentechinnovators.backend.service.SmsService;
+import com.greentechinnovators.backend.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,14 +9,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AlertController {
 
-    private final SmsService smsService;
+    private final EmailService emailService;
 
 
-    @PostMapping
-    public String sendAlert(@RequestParam double co2) {
-        if (co2 > 1000) {
-            smsService.sendSms("+212659763229", "⚠️ CO2 élevé détecté !");
-        }
-        return "Check completed, SMS sent if needed";
-    }
 }

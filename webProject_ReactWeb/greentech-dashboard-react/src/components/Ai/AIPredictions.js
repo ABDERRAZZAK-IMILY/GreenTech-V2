@@ -120,13 +120,11 @@ const AIPredictions = () => {
   };
 
   useEffect(() => {
-    // 🛑 SECURITÉ : On vérifie si predictionData ET ses propriétés existent
     if (isPredictionsGenerated && predictionData) {
       
       Object.values(chartsRef.current).forEach(chart => { if (chart) chart.destroy(); });
 
       requestAnimationFrame(() => {
-        // Utilisation de ?. pour éviter le crash si une catégorie manque
         if (predictionData?.electricite) {
             chartsRef.current.electricity = createChart('electricityPredictionChart', predictionData.electricite.history, '#feca57', 'rgba(254, 202, 87, 0.1)');
         }
@@ -163,7 +161,6 @@ const AIPredictions = () => {
         </button>
       </div>
 
-      {/* 🛑 SECURITÉ : On vérifie (predictionData === null) ici */}
       {!isPredictionsGenerated || !predictionData ? (
         <div style={{ textAlign: 'center', padding: '80px 20px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '16px', border: '2px dashed rgba(255, 255, 255, 0.1)' }}>
           <i className="fas fa-chart-line" style={{ fontSize: '64px', color: 'var(--accent-color)', opacity: 0.3, marginBottom: '20px' }}></i>
@@ -175,7 +172,6 @@ const AIPredictions = () => {
       ) : (
         <div className="predictions-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
           
-          {/* 🛑 SECURITÉ : On utilise ?. pour l'accès aux propriétés */}
           {predictionData?.electricite && (
               <PredictionCard 
                 title="Électricité" 
@@ -184,10 +180,9 @@ const AIPredictions = () => {
                 gradient="linear-gradient(135deg, #feca57 0%, #ff9ff3 100%)"
                 data={predictionData.electricite}
                 chartId="electricityPredictionChart"
-                distribution={[
-                    {label: "🏭 Production", value: "45%"},
-                    {label: "🏢 Bureaux", value: "25%"}
-                ]}
+                distribution={predictionData.electricite.distribution || [
+                  {label: "Données indisponibles", value: "-"}
+              ]}
               />
           )}
 
@@ -199,10 +194,7 @@ const AIPredictions = () => {
                 gradient="linear-gradient(135deg, #ff6348 0%, #ffb142 100%)"
                 data={predictionData.gaz}
                 chartId="gasPredictionChart"
-                distribution={[
-                    {label: "🍳 Cuisine", value: "35%"},
-                    {label: "🌡️ Chauffage", value: "30%"}
-                ]}
+                distribution={predictionData.gaz.distribution || []}
               />
           )}
 
@@ -214,10 +206,7 @@ const AIPredictions = () => {
                 gradient="linear-gradient(135deg, #48dbfb 0%, #0abde3 100%)"
                 data={predictionData.transport}
                 chartId="transportPredictionChart"
-                distribution={[
-                    {label: "🚚 Camion", value: "32%"},
-                    {label: "🚗 Voitures", value: "24%"}
-                ]}
+                distribution={predictionData.transport.distribution || []}
               />
           )}
 
@@ -229,10 +218,7 @@ const AIPredictions = () => {
                 gradient="linear-gradient(135deg, #1dd1a1 0%, #10ac84 100%)"
                 data={predictionData.dechets}
                 chartId="wastePredictionChart"
-                distribution={[
-                    {label: "♻️ Recyclable", value: "42%"},
-                    {label: "🗑️ Non-recyclable", value: "23%"}
-                ]}
+                distribution={predictionData.dechets.distribution || []}
               />
           )}
 

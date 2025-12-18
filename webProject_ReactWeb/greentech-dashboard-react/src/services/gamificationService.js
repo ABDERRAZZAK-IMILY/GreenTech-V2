@@ -3,6 +3,8 @@ import authService from './authService';
 
 const API_URL = 'http://localhost:8080/api/v1/gamification';
 
+// const API_URL = process.env.REACT_APP_API_URL + '/v1/gamification';
+
 class GamificationService {
   
   // Get authorization header with token

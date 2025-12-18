@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/ai/predictions/**").permitAll()
                         .requestMatchers("/api/ai/recommendations/**").permitAll()
                         .requestMatchers("/api/reports/**").permitAll()
-                        .requestMatchers("/api/alerts/**").permitAll()
+                        .requestMatchers("/api/ai/alerts/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/notifications/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")

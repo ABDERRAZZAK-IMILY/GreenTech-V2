@@ -1,4 +1,4 @@
-package com.greentechinnovators.backend.dto.AI;
+package com.greentechinnovators.backend.dto.ai;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
