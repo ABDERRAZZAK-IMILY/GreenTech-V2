@@ -3,11 +3,13 @@ package com.greentechinnovators.backend.service;
 import com.greentechinnovators.backend.dto.vehicle.request.VehicleRequestDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.DailyDistanceDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.VehicleResponseDTO;
+import com.greentechinnovators.backend.entity.User;
 import com.greentechinnovators.backend.entity.Vehicle;
 import com.greentechinnovators.backend.entity.VehicleLog;
 import com.greentechinnovators.backend.exeptions.ResourceNotFoundException;
 import com.greentechinnovators.backend.mapper.VehicleMapper;
 import com.greentechinnovators.backend.repository.EnergyRepository;
+import com.greentechinnovators.backend.repository.UserRepository;
 import com.greentechinnovators.backend.repository.VehicleLogRepository;
 import com.greentechinnovators.backend.repository.VehicleRepository;
 import com.greentechinnovators.backend.utils.CarbonFootprintService;
@@ -29,16 +31,21 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper mapper;
     private final VehicleLogRepository vehicleLogRepository;
+    private final UserRepository  userRepository;
+
     private final CarbonFootprintService carbonService;
 
     public VehicleResponseDTO create(VehicleRequestDTO dto) {
+        User user = userRepository.findById(dto.getUserId()).orElseThrow(()->{throw new ResourceNotFoundException("User not found");});
         Vehicle vehicle = mapper.toVehicle(dto);
+        vehicle.setUser(user);
         Vehicle vehicle1 = vehicleRepository.save(vehicle);
         return mapper.toVehicleResponse(vehicle1);
     }
-
     public List<VehicleResponseDTO> all() {
         List<Vehicle> vehicles = vehicleRepository.findAll();
+
+
         return vehicles.stream().map(mapper::toVehicleResponse).toList();
     }
     public VehicleResponseDTO findVehicleByUserId(String id) {

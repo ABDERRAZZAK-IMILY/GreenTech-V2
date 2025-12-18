@@ -1,5 +1,6 @@
 package com.greentechinnovators.backend.dto.vehicle.responce;
 
+import com.greentechinnovators.backend.dto.UserResponseDTO;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -10,7 +11,10 @@ public class VehicleResponseDTO {
     private String licensePlate;
     private String model;
     private LocalDateTime lastSignalTime;
+    private Double longe;
+    private Double lat;
+
 
     // You can return the full UserDTO here, or just the ID depending on your UI needs
-    private String userId;
+    private UserResponseDTO user;
 }

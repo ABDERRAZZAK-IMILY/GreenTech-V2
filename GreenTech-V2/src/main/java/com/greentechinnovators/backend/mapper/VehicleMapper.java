@@ -1,17 +1,21 @@
 package com.greentechinnovators.backend.mapper;
 
+import com.greentechinnovators.backend.dto.UserResponseDTO;
 import com.greentechinnovators.backend.dto.vehicle.request.VehicleLogRequestDTO;
 import com.greentechinnovators.backend.dto.vehicle.request.VehicleRequestDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.VehicleLogResponseDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.VehicleResponseDTO;
 import com.greentechinnovators.backend.entity.Vehicle;
 import com.greentechinnovators.backend.entity.VehicleLog;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
 @Component
+@RequiredArgsConstructor
 public class VehicleMapper {
+    private final UserMapper userMapper;
 
     // ========================================================================
     // 1. Vehicle Mappings
@@ -30,6 +34,10 @@ public class VehicleMapper {
         Vehicle vehicle = new Vehicle();
         vehicle.setLicensePlate(dto.getLicensePlate());
         vehicle.setModel(dto.getModel());
+        vehicle.setLongitude(dto.getLonge());
+        vehicle.setLatitude(dto.getLat());
+
+
         // User lookup is the responsibility of the Service layer
         return vehicle;
     }
@@ -44,10 +52,13 @@ public class VehicleMapper {
         dto.setLicensePlate(entity.getLicensePlate());
         dto.setModel(entity.getModel());
         dto.setLastSignalTime(entity.getLastSignalTime());
+        dto.setLat(entity.getLatitude());
+        dto.setLonge(entity.getLongitude());
 
         // Extract User ID safely
         if (entity.getUser() != null) {
-            dto.setUserId(entity.getUser().getId());
+            UserResponseDTO userDTO = new UserResponseDTO( entity.getUser().getId(),entity.getUser().getName(),entity.getUser().getEmail() );
+            dto.setUser(userDTO);
         }
 
         return dto;
