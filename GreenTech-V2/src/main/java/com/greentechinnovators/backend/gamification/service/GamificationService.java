@@ -60,7 +60,6 @@ public class GamificationService {
         List<UserGamificationStats> topStats = statsRepository.findTop10ByOrderByTotalPointsDesc();
 
         return topStats.stream().map(stats -> {
-            // Populate user info if not already set
             if (stats.getUserName() == null) {
                 User user = userRepository.findById(stats.getUserId()).orElse(null);
                 if (user != null) {

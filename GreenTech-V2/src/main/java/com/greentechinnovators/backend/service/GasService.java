@@ -82,8 +82,8 @@ public class GasService {
                     if (g.getCreatedAt() == null)
                         return false;
 
-                    boolean isAfterStart = !g.getCreatedAt().isBefore(start); // >= start
-                    boolean isBeforeEnd = !g.getCreatedAt().isAfter(end); // <= end
+                    boolean isAfterStart = !g.getCreatedAt().isBefore(start);
+                    boolean isBeforeEnd = !g.getCreatedAt().isAfter(end);
 
                     return isAfterStart && isBeforeEnd;
                 })

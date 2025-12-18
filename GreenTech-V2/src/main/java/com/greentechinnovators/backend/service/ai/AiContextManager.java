@@ -115,7 +115,6 @@ public class AiContextManager {
             Map<String, Object> data = new LinkedHashMap<>();
             data.put("Total_Weight_Current", String.format(Locale.US, "%.2f kg", currentWeight));
 
-            // 🔥 IMPORTANT
             data.put("DETAILS_LOGS", currentWaste);
 
             return data;

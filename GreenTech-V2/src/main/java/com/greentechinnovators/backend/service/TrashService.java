@@ -43,14 +43,12 @@ public class TrashService {
             macAddress = "UNKNOWN-" + System.currentTimeMillis();
         }
 
-        // Check if this is a manual entry - save directly without creating a monitor
         if ("MANUAL_ENTRY".equals(macAddress)) {
             return saveManualEntry(dto);
         }
 
         final String finalMacAddress = macAddress;
 
-        // Find or create TrashMonitor by MAC address
         TrashMonitor monitor = trashMonitorRepository.findByMacAddress(finalMacAddress)
                 .orElseGet(() -> {
                     log.info("Creating new TrashMonitor for MAC address: {}", finalMacAddress);
@@ -73,10 +71,7 @@ public class TrashService {
         return mapper.toResponse(savedEntity);
     }
 
-    /**
-     * Save manual entry directly to Trash collection without linking to a monitor.
-     * This keeps manual entries separate from IoT sensor data.
-     */
+
     public TrashResponseDTO saveManualEntry(TrashRequestDTO dto) {
         log.info("Saving manual trash entry: {} kg", dto.getWeight());
 
@@ -131,27 +126,22 @@ public class TrashService {
 
         while (!current.isAfter(end)) {
 
-            // N7eddo bdaya w nihaya dyal had nhar (current)
             LocalDateTime startOfDay = current.toLocalDate().atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1);
 
-            // 2. N-filtriw mn la liste li déjà 3ndna (Bla ma nmchiw l DB)
             Double totalWeight = allTrash.stream()
                     .filter(t -> {
                         if (t.getCreatedAt() == null || t.getWight() == null)
                             return false;
 
-                        // Wach Trash dial had nhar b ddbet?
                         return !t.getCreatedAt().isBefore(startOfDay) &&
                                 t.getCreatedAt().isBefore(endOfDay);
                     })
                     .mapToDouble(Trash::getWight)
                     .sum();
 
-            // 3. Calcul Carbon
             Double dailyCarbon = calculateDailyFootPrint(totalWeight);
 
-            // 4. Add to report
             report.add(DailyTrashDTO.builder()
                     .date(current)
                     .totalWeightKg(totalWeight)

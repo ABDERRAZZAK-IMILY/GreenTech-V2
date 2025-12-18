@@ -19,7 +19,6 @@ public class EnergyMonitorService {
     private final EnergyMapper energyMapper;
 
     public EnergyMonitorResponseDTO create(EnergyMonitorRequestDTO dto) {
-        // Check if a monitor with the same MAC address already exists
         if (dto.getMacAddress() != null && !dto.getMacAddress().isEmpty()) {
             if (energyMonitorRepository.findByMacAddress(dto.getMacAddress()).isPresent()) {
                 throw new IllegalArgumentException(
