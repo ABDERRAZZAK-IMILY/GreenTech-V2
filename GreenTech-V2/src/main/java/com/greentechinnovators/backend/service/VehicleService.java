@@ -107,7 +107,6 @@ public class VehicleService {
         return report;
     }
 
-    // Helper Method
     private Double calculateSingleCarDistance(List<VehicleLog> logs) {
         if (logs.size() < 2) return 0.0;
 

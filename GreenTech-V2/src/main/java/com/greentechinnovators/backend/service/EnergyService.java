@@ -67,15 +67,11 @@ public class EnergyService {
         return mapper.toResponse(res);
     }
 
-    /**
-     * Save manual entry directly to Energy collection without linking to a monitor.
-     * This keeps manual entries separate from IoT sensor data.
-     */
+
     public EnergyResponseDTO saveManualEntry(EnergyRequestDTO dto) {
         log.info("Saving manual energy entry: {} kWh", dto.getEnergyConsumed());
 
         Energy energy = mapper.toEntity(dto);
-        // Ensure manual entries have a created date
         if (energy.getCreatedAt() == null) {
             energy.setCreatedAt(LocalDateTime.now());
         }
