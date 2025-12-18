@@ -17,9 +17,10 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
         const location = locations[0];
         if (location) {
             try {
-                await sendPositionToBackend(location.coords.latitude, location.coords.longitude);
+                const vehicule  = await findVehivle(userId);
+                await sendPositionToBackend(location.coords.latitude, location.coords.longitude, vehicule.id);
             } catch (err) {
-                console.error('Erreur envoi position background:', err);
+                console.log('Erreur envoi position background:', err);
             }
         }
     }
@@ -83,11 +84,11 @@ export const sendPositionToBackend = async (latitude, longitude, vid) => {
 
     // 2. Safety Check: Stop if data is missing
     if (!vid) {
-        console.error("❌ ABORTING: Vehicle ID is missing!");
+        console.log("❌ ABORTING: Vehicle ID is missing!");
         return;
     }
     if (latitude === undefined || longitude === undefined) {
-        console.error("❌ ABORTING: Coordinates are missing!");
+        console.log("❌ ABORTING: Coordinates are missing!");
         return;
     }
 
