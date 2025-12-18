@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
-import { useTransportMap } from '../../../hooks/useTransportMap';
-import { showNotification } from '../../../utils/notifications';
-import { vehicleDataService } from '../../../services/smartDataService';
+import React, { useEffect, useState } from 'react';
 import DriverList from '../../../components/Transport/DriverList';
 import ManualEntrySection from '../../../components/Transport/ManualEntrySection';
 import DriverMap from '../../../components/map/DriverMap';
+import useDriverStore from '../../../State/useDriverStore';
 
 const TransportTab = () => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
-  const [currentDriverId, setCurrentDriverId] = useState(null);
+  const {drivers,fetchDrivers} = useDriverStore();
+  useEffect(() => {
+    fetchDrivers();
+  }, []);
 
   const toggleTransportOverview = () => {
     setIsOverviewOpen(!isOverviewOpen);
@@ -290,7 +291,7 @@ const TransportTab = () => {
 
       {/* Map Container */}
       <div className="transport-map-container">
-        <DriverMap />
+        <DriverMap drivers={drivers} />
       </div>
 
       {/* Drivers List */}
