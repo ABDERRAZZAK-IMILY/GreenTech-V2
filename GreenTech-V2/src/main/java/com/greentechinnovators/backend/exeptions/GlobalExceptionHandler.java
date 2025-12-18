@@ -1,12 +1,9 @@
-package com.greentechinnovators.backend.config;
+package com.greentechinnovators.backend.exeptions;
 
 import com.greentechinnovators.backend.dto.ErrorResponseDTO;
-import com.greentechinnovators.backend.exeptions.BusinessRuleViolationException;
-import com.greentechinnovators.backend.exeptions.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
