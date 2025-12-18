@@ -5,8 +5,8 @@ import com.greentechinnovators.backend.dto.user.UpdateProfileRequestDTO;
 import com.greentechinnovators.backend.dto.user.UserProfileDTO;
 import com.greentechinnovators.backend.entity.Department;
 import com.greentechinnovators.backend.entity.User;
-import com.greentechinnovators.backend.gamification.domain.UserGamificationStats;
-import com.greentechinnovators.backend.gamification.repository.GamificationStatsRepository;
+import com.greentechinnovators.backend.entity.gamification.UserGamificationStats;
+import com.greentechinnovators.backend.repository.gamification.GamificationStatsRepository;
 import com.greentechinnovators.backend.repository.DepartmentRepository;
 import com.greentechinnovators.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -81,7 +81,6 @@ public class UserService {
                 request.getName(),
                 password
         );
-        // Create initial gamification stats
         UserGamificationStats stats = UserGamificationStats.builder()
                 .userId(savedUser.getId())
                 .totalPoints(0)
@@ -125,13 +124,11 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        // Update fields if provided
         if (request.getName() != null && !request.getName().isBlank()) {
             user.setName(request.getName());
         }
         
         if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            // Check if email is already taken by another user
             userRepository.findByEmail(request.getEmail())
                     .ifPresent(existingUser -> {
                         if (!existingUser.getId().equals(userId)) {
@@ -173,7 +170,6 @@ public class UserService {
 
 
     private UserProfileDTO mapToProfileDTO(User user) {
-        // Get gamification stats if available
         UserGamificationStats stats = gamificationStatsRepository.findByUserId(user.getId())
                 .orElse(null);
 

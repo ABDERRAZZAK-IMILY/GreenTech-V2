@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,25 +8,104 @@ import {
   Modal,
   Image,
   Alert,
+  ActivityIndicator,
+  RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { dailyActions as initialActions, currentPosition, tripData } from '../data/dailyActions';
-import { useEmployee } from '../contexts/EmployeeContext';
+import { currentPosition, tripData } from '../data/dailyActions'; 
+import gamificationService from '../services/GamificationService'; 
 import colors from '../styles/colors';
 
-
 export default function ActionsScreen() {
-  const [dailyActions, setDailyActions] = useState(initialActions);
+  const [dailyActions, setDailyActions] = useState([]);
+  const [historyActions, setHistoryActions] = useState([]); 
+  const [userStats, setUserStats] = useState({ points: 0, streak: 0 });
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  
   const [selectedAction, setSelectedAction] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [proofImage, setProofImage] = useState(null);
-
-  const { submitActionForApproval } = useEmployee();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const completedActions = dailyActions.filter(a => a.submitted).length;
-  const totalPoints = dailyActions.filter(a => a.submitted).reduce((sum, a) => sum + a.points, 0);
-  const completionPercentage = (completedActions / dailyActions.length) * 100;
+  const totalPoints = dailyActions.filter(a => a.submitted).reduce((sum, a) => sum + a.points, 0); 
+  const completionPercentage = dailyActions.length > 0 ? (completedActions / dailyActions.length) * 100 : 0;
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const [challenges, submissions, stats] = await Promise.all([
+        gamificationService.getActiveChallenges(),
+        gamificationService.getMySubmissions(),
+        gamificationService.getMyStats()
+      ]);
+
+     
+
+      const allActionsList = [];
+      const historyList = [];
+
+      challenges.forEach(challenge => {
+        const submission = submissions.find(sub => {
+            if (sub.challengeId !== challenge.id) return false;
+            
+            const dateString = sub.submissionDate || sub.submittedAt;
+            if (!dateString) return false;
+
+            const subDate = new Date(dateString);
+            const today = new Date();
+
+            return subDate.getDate() === today.getDate() &&
+                   subDate.getMonth() === today.getMonth() &&
+                   subDate.getFullYear() === today.getFullYear();
+        });
+
+        const isSubmitted = !!submission;
+
+        const actionObj = {
+          id: challenge.id,
+          title: challenge.title || challenge.name,
+          points: challenge.points,
+          requiresProof: challenge.requiresProof !== false,
+          proofDescription: challenge.description || "Prenez une photo pour valider l'action",
+          submitted: isSubmitted,
+          completed: isSubmitted
+        };
+
+        allActionsList.push(actionObj);
+
+        if (isSubmitted) {
+          historyList.push({
+            ...actionObj,
+            status: submission.status || 'PENDING',
+            submissionDate: submission.submissionDate 
+          });
+        }
+      });
+
+      setDailyActions(allActionsList);
+      setHistoryActions(historyList);
+      setUserStats(stats || { points: 0, streak: 0 });
+
+    } catch (error) {
+      console.error("Failed to load gamification data", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
 
   const handleActionClick = (action) => {
     if (action.submitted) return;
@@ -35,6 +114,24 @@ export default function ActionsScreen() {
       setSelectedAction(action);
       setShowUploadModal(true);
       setProofImage(null);
+    } else {
+      Alert.alert(
+        "Confirmer",
+        `Valider "${action.title}" ?`,
+        [
+          { text: "Annuler", style: "cancel" },
+          { text: "Valider", onPress: () => submitSimpleAction(action) }
+        ]
+      );
+    }
+  };
+
+  const submitSimpleAction = async (action) => {
+    try {
+      await gamificationService.submitChallenge(action.id, null);
+      updateLocalActionState(action.id);
+    } catch (error) {
+      Alert.alert("Erreur", "Échec de la validation de l'action.");
     }
   };
 
@@ -50,56 +147,87 @@ export default function ActionsScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.8,
+      quality: 0.5,
+      base64: true,
     });
 
     if (!result.canceled) {
-      setProofImage(result.assets[0].uri);
+      setProofImage(result.assets[0]);
     }
   };
 
-  const submitActionWithProof = () => {
+  const submitActionWithProof = async () => {
     if (!selectedAction || !proofImage) {
       Alert.alert('Photo requise', 'Veuillez ajouter une photo comme preuve');
       return;
     }
 
-    // Submit to pending actions
-    submitActionForApproval({
-      employeeName: "Mohammed Alami",
-      actionName: selectedAction.title,
-      points: selectedAction.points,
-      proofImage: proofImage
-    });
+    setIsSubmitting(true);
 
-    // Mark as submitted
-    setDailyActions(dailyActions.map(action =>
-      action.id === selectedAction.id
-        ? { ...action, submitted: true, completed: true }
-        : action
-    ));
+    try {
+      const proofData = proofImage.base64 ? `data:image/jpeg;base64,${proofImage.base64}` : proofImage.uri;
 
-    Alert.alert(
-      'Demande envoyée!',
-      'Votre action a été envoyée pour validation par un administrateur',
-      [{ text: 'OK' }]
-    );
+      await gamificationService.submitChallenge(selectedAction.id, proofData);
 
-    setShowUploadModal(false);
-    setSelectedAction(null);
-    setProofImage(null);
+      updateLocalActionState(selectedAction.id);
+
+      Alert.alert(
+        'Succès!',
+        'Action validée et points ajoutés.',
+        [{ text: 'OK' }]
+      );
+
+      setShowUploadModal(false);
+      setSelectedAction(null);
+      setProofImage(null);
+
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erreur", "Impossible d'envoyer la preuve. Veuillez réessayer.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const updateLocalActionState = (actionId) => {
+    setDailyActions(prevActions => prevActions.map(action => {
+      if (action.id === actionId) {
+          // Update status locally
+          const updatedAction = { ...action, submitted: true, completed: true };
+          // Add to local history instantly
+          setHistoryActions(prev => [{...updatedAction, status: 'PENDING'}, ...prev]);
+          return updatedAction;
+      }
+      return action;
+    }));
+    
+    gamificationService.getMyStats().then(stats => setUserStats(prev => ({...prev, ...stats})));
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={{color: colors.textSecondary, marginTop: 10}}>Chargement des défis...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }} 
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+        }
+      >
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Mes Actions Quotidiennes</Text>
           <Text style={styles.headerSubtitle}>Suivez vos actions écologiques et votre trajet du jour</Text>
         </View>
 
-        {/* Checklist Section with Progress */}
         <View style={styles.checklistWrapper}>
           {/* Checklist Section */}
           <View style={styles.checklistSection}>
@@ -110,49 +238,66 @@ export default function ActionsScreen() {
               </View>
               <View style={styles.streakBadge}>
                 <Ionicons name="flame" size={14} color="#fb923c" />
-                <Text style={styles.streakText}>7 jours consécutifs</Text>
+                <Text style={styles.streakText}>
+                   {userStats.streak || 0} jours consécutifs
+                </Text>
               </View>
             </View>
 
-            <View style={styles.actionsGrid}>
-              {dailyActions.map((action, index) => (
-                <TouchableOpacity
-                  key={action.id}
-                  style={[
-                    styles.actionItem,
-                    action.submitted && styles.actionItemSubmitted
-                  ]}
-                  onPress={() => handleActionClick(action)}
-                  disabled={action.submitted}
-                >
-                  <View style={styles.actionCheckbox}>
-                    <Ionicons
-                      name={action.submitted ? 'checkmark-circle' : 'ellipse-outline'}
-                      size={20}
-                      color={action.submitted ? colors.accent : 'rgba(255,255,255,0.3)'}
-                    />
-                  </View>
-                  <View style={styles.actionContent}>
-                    <Text style={styles.actionTitle} numberOfLines={2}>{action.title}</Text>
-                    <View style={styles.actionPoints}>
-                      <Ionicons name="wallet" size={11} color="#feca57" />
-                      <Text style={styles.actionPointsText}>+{action.points}</Text>
+            {dailyActions.length === 0 ? (
+               <View style={{padding: 20, alignItems: 'center'}}>
+                 <Text style={{color: colors.textSecondary}}>Aucun défi disponible pour aujourd'hui.</Text>
+               </View>
+            ) : (
+              <View style={styles.actionsGrid}>
+                {dailyActions.map((action, index) => (
+                  <TouchableOpacity
+                    key={action.id}
+                    // ✅ BLOCK CLICK if submitted
+                    disabled={action.submitted}
+                    style={[
+                      styles.actionItem,
+                      action.submitted && styles.actionItemSubmitted
+                    ]}
+                    onPress={() => handleActionClick(action)}
+                  >
+                    <View style={styles.actionCheckbox}>
+                      <Ionicons
+                        name={action.submitted ? 'checkmark-circle' : 'ellipse-outline'}
+                        size={20}
+                        color={action.submitted ? colors.accent : 'rgba(255,255,255,0.3)'}
+                      />
                     </View>
-                  </View>
-                  {action.submitted && (
-                    <View style={styles.validationBadge}>
-                      <Ionicons name="time" size={10} color="#f59e0b" />
+                    <View style={styles.actionContent}>
+                      <Text 
+                        style={[
+                            styles.actionTitle,
+                            action.submitted && { textDecorationLine: 'line-through', color: colors.textSecondary }
+                        ]} 
+                        numberOfLines={2}
+                      >
+                          {action.title}
+                      </Text>
+                      {!action.submitted && (
+                          <View style={styles.actionPoints}>
+                            <Ionicons name="wallet" size={11} color="#feca57" />
+                            <Text style={styles.actionPointsText}>+{action.points}</Text>
+                          </View>
+                      )}
                     </View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
+                    {action.submitted && (
+                      <View style={styles.validationBadge}>
+                         <Text style={{fontSize: 10, fontWeight: 'bold', color: colors.accent}}>Fait</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
 
-          {/* Progress Circle Card */}
           <View style={styles.progressCard}>
             <View style={styles.progressCircleContainer}>
-              {/* Simple circular progress representation */}
               <View style={styles.progressCircle}>
                 <Text style={styles.progressPercentage}>{Math.round(completionPercentage)}%</Text>
                 <Text style={styles.progressLabel}>Complété</Text>
@@ -169,15 +314,79 @@ export default function ActionsScreen() {
               <View style={styles.progressStat}>
                 <Ionicons name="wallet" size={24} color={colors.accent} />
                 <View>
-                  <Text style={styles.statValue}>+{totalPoints}</Text>
-                  <Text style={styles.statLabel}>Points</Text>
+                  <Text style={styles.statValue}>{userStats.points || 0}</Text>
+                  <Text style={styles.statLabel}>Total Points</Text>
                 </View>
               </View>
             </View>
           </View>
         </View>
 
-        {/* Transport Tracking Section */}
+        {historyActions.length > 0 && (
+          <View style={styles.checklistWrapper}>
+            <View style={styles.sectionHeader}>
+                <View style={styles.sectionTitle}>
+                    <Ionicons name="time" size={20} color={colors.accent} />
+                    <Text style={styles.sectionTitleText}>Historique & Statut</Text>
+                </View>
+            </View>
+            
+            <View style={styles.historyList}>
+              {historyActions.map((action) => (
+  <View key={action.id} style={styles.historyItem}>
+    <View style={styles.historyContent}>
+      <View style={{flex: 1, marginRight: 10}}>
+        <Text style={[styles.actionTitle, {color: colors.textSecondary, textDecorationLine: 'line-through'}]}>
+          {action.title}
+        </Text>
+        
+        <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 10}}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+            <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.4)" />
+            <Text style={{color: 'rgba(255,255,255,0.4)', fontSize: 11}}>
+              {action.submissionDate ? new Date(action.submissionDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--'}
+            </Text>
+          </View>
+
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+            <Ionicons name="wallet" size={12} color="#feca57" />
+            <Text style={{color: '#feca57', fontSize: 11, fontWeight: 'bold'}}>
+              +{action.pointsAwarded} pts
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.statusBadge}>
+        {action.status === 'APPROVED' ? (
+          <Ionicons name="checkmark-done" size={14} color="#4ade80" />
+        ) : action.status === 'REJECTED' ? (
+          <Ionicons name="close-circle" size={14} color="#ef4444" />
+        ) : (
+          <Ionicons name="time" size={14} color="#facc15" />
+        )}
+        <Text style={[styles.statusText, 
+          { color: action.status === 'APPROVED' ? '#4ade80' : action.status === 'REJECTED' ? '#ef4444' : '#facc15' }
+        ]}>
+          {action.status === 'APPROVED' ? 'Validé' : action.status === 'REJECTED' ? 'Refusé' : 'En attente'}
+        </Text>
+      </View>
+    </View>
+
+    {action.status === 'REJECTED' && action.adminComment && (
+      <View style={{marginTop: 10, padding: 8, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, flexDirection: 'row', gap: 8}}>
+         <Ionicons name="alert-circle" size={16} color="#ef4444" />
+         <Text style={{color: '#ef4444', fontSize: 11, flex: 1}}>
+           Raison: {action.adminComment}
+         </Text>
+      </View>
+    )}
+  </View>
+))}
+            </View>
+          </View>
+        )}
+
         <View style={styles.transportSection}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitle}>
@@ -190,7 +399,6 @@ export default function ActionsScreen() {
             </View>
           </View>
 
-          {/* Current Position Card */}
           <View style={styles.trackingCard}>
             <View style={styles.cardHeader}>
               <Ionicons name="location" size={18} color={colors.accent} />
@@ -225,7 +433,6 @@ export default function ActionsScreen() {
             </View>
           </View>
 
-          {/* Trip Summary Card */}
           <View style={[styles.trackingCard, styles.marginTop]}>
             <View style={styles.cardHeader}>
               <Ionicons name="map" size={18} color={colors.accent} />
@@ -280,14 +487,11 @@ export default function ActionsScreen() {
               </View>
             </View>
           </View>
-
-          
         </View>
 
         <View style={{ height: 20 }} />
       </ScrollView>
 
-      {/* Upload Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -306,7 +510,11 @@ export default function ActionsScreen() {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.modalBody}>
+            <ScrollView 
+                style={styles.modalBody}
+                contentContainerStyle={{ paddingBottom: 20 }}
+                showsVerticalScrollIndicator={false}
+            >
               <View style={styles.actionInfo}>
                 <Text style={styles.actionInfoTitle}>{selectedAction?.title}</Text>
                 <View style={styles.actionInfoPoints}>
@@ -323,7 +531,7 @@ export default function ActionsScreen() {
               <TouchableOpacity style={styles.uploadArea} onPress={pickImage}>
                 {proofImage ? (
                   <View style={styles.previewContainer}>
-                    <Image source={{ uri: proofImage }} style={styles.proofPreview} />
+                    <Image source={{ uri: proofImage.uri }} style={styles.proofPreview} />
                     <TouchableOpacity style={styles.changePhotoBtn} onPress={pickImage}>
                       <Ionicons name="sync" size={16} color={colors.textPrimary} />
                       <Text style={styles.changePhotoText}>Changer la photo</Text>
@@ -344,7 +552,7 @@ export default function ActionsScreen() {
                   Votre demande sera vérifiée par un administrateur avant validation
                 </Text>
               </View>
-            </View>
+            </ScrollView>
 
             <View style={styles.modalFooter}>
               <TouchableOpacity
@@ -354,12 +562,18 @@ export default function ActionsScreen() {
                 <Text style={styles.cancelBtnText}>Annuler</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.submitBtn, !proofImage && styles.submitBtnDisabled]}
+                style={[styles.submitBtn, (!proofImage || isSubmitting) && styles.submitBtnDisabled]}
                 onPress={submitActionWithProof}
-                disabled={!proofImage}
+                disabled={!proofImage || isSubmitting}
               >
-                <Ionicons name="paper-plane" size={16} color="#fff" />
-                <Text style={styles.submitBtnText}>Soumettre</Text>
+                {isSubmitting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="paper-plane" size={16} color="#fff" />
+                    <Text style={styles.submitBtnText}>Soumettre</Text>
+                  </>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -374,521 +588,546 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   header: {
-    padding: 20,
-    paddingTop: 10,
+     padding: 20,
+     paddingTop: 10,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 4,
+     fontSize: 28,
+     fontWeight: '700',
+     color: colors.textPrimary,
+     marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
+     fontSize: 14,
+     color: colors.textSecondary,
   },
   checklistWrapper: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
+     paddingHorizontal: 20,
+     marginBottom: 20,
   },
   checklistSection: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    marginBottom: 16,
+     backgroundColor: colors.cardBackground,
+     borderRadius: 16,
+     padding: 20,
+     borderWidth: 1,
+     borderColor: colors.cardBorder,
+     marginBottom: 16,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+     flexDirection: 'row',
+     justifyContent: 'space-between',
+     alignItems: 'center',
+     marginBottom: 16,
   },
   sectionTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 8,
   },
   sectionTitleText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
+     fontSize: 18,
+     fontWeight: '700',
+     color: colors.textPrimary,
   },
   streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(251, 146, 60, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(251, 146, 60, 0.4)',
-    borderRadius: 12,
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 6,
+     paddingHorizontal: 12,
+     paddingVertical: 6,
+     backgroundColor: 'rgba(251, 146, 60, 0.2)',
+     borderWidth: 1,
+     borderColor: 'rgba(251, 146, 60, 0.4)',
+     borderRadius: 12,
   },
   streakText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fb923c',
+     fontSize: 12,
+     fontWeight: '600',
+     color: '#fb923c',
   },
   actionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+     flexDirection: 'row',
+     flexWrap: 'wrap',
+     justifyContent: 'space-between',
   },
   actionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderWidth: 2,
-    borderColor: colors.cardBorder,
-    borderRadius: 12,
-    padding: 12,
-    gap: 8,
-    width: '48%',
-    marginBottom: 10,
-  },
-  actionItemLeft: {
+     flexDirection: 'row',
+     alignItems: 'center',
+     backgroundColor: 'rgba(255, 255, 255, 0.03)',
+     borderWidth: 2,
+     borderColor: colors.cardBorder,
+     borderRadius: 12,
+     padding: 12,
+     gap: 8,
+     width: '48%',
+     marginBottom: 10,
   },
   actionItemSubmitted: {
-    borderColor: colors.accent,
-    backgroundColor: 'rgba(42, 157, 111, 0.1)',
+     borderColor: colors.accent,
+     backgroundColor: 'rgba(42, 157, 111, 0.1)',
   },
   actionCheckbox: {
-    marginRight: 0,
+     marginRight: 0,
   },
   actionContent: {
-    flex: 1,
+     flex: 1,
   },
   actionTitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 4,
-    lineHeight: 14,
+     fontSize: 11,
+     fontWeight: '600',
+     color: colors.textPrimary,
+     marginBottom: 4,
+     lineHeight: 14,
   },
   actionPoints: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 3,
   },
   actionPointsText: {
-    fontSize: 10,
-    color: colors.textSecondary,
+     fontSize: 10,
+     color: colors.textSecondary,
   },
   validationBadge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(245, 158, 11, 0.2)',
-    width: 24,
-    height: 24,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#f59e0b',
-  },
-  validationText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#f59e0b',
+     alignItems: 'center',
+     justifyContent: 'center',
+     backgroundColor: 'rgba(42, 157, 111, 0.2)', // Green badge
+     paddingHorizontal: 6,
+     paddingVertical: 2,
+     borderRadius: 8,
+     borderWidth: 1,
+     borderColor: colors.accent,
   },
   progressCard: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    alignItems: 'center',
+     backgroundColor: colors.cardBackground,
+     borderRadius: 16,
+     padding: 20,
+     borderWidth: 1,
+     borderColor: colors.cardBorder,
+     alignItems: 'center',
   },
   progressCircleContainer: {
-    marginBottom: 20,
+     marginBottom: 20,
   },
   progressCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    borderWidth: 8,
-    borderColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(42, 157, 111, 0.1)',
+     width: 140,
+     height: 140,
+     borderRadius: 70,
+     borderWidth: 8,
+     borderColor: colors.accent,
+     alignItems: 'center',
+     justifyContent: 'center',
+     backgroundColor: 'rgba(42, 157, 111, 0.1)',
   },
   progressPercentage: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: colors.accent,
+     fontSize: 32,
+     fontWeight: '700',
+     color: colors.accent,
   },
   progressLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 2,
+     fontSize: 11,
+     color: colors.textSecondary,
+     marginTop: 2,
   },
   progressDetails: {
-    flexDirection: 'row',
-    gap: 40,
+     flexDirection: 'row',
+     gap: 40,
   },
   progressStat: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 8,
   },
   statValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
+     fontSize: 18,
+     fontWeight: '700',
+     color: colors.textPrimary,
   },
   statLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
+     fontSize: 11,
+     color: colors.textSecondary,
   },
   transportSection: {
-    backgroundColor: colors.cardBackground,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+     backgroundColor: colors.cardBackground,
+     marginHorizontal: 20,
+     marginBottom: 20,
+     padding: 20,
+     borderRadius: 16,
+     borderWidth: 1,
+     borderColor: colors.cardBorder,
   },
   liveIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.4)',
-    borderRadius: 12,
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 6,
+     paddingHorizontal: 10,
+     paddingVertical: 5,
+     backgroundColor: 'rgba(239, 68, 68, 0.2)',
+     borderWidth: 1,
+     borderColor: 'rgba(239, 68, 68, 0.4)',
+     borderRadius: 12,
   },
   pulseDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#ef4444',
+     width: 6,
+     height: 6,
+     borderRadius: 3,
+     backgroundColor: '#ef4444',
   },
   liveText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#ef4444',
+     fontSize: 11,
+     fontWeight: '600',
+     color: '#ef4444',
   },
   trackingCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 12,
-    padding: 16,
+     backgroundColor: 'rgba(255, 255, 255, 0.03)',
+     borderWidth: 1,
+     borderColor: colors.cardBorder,
+     borderRadius: 12,
+     padding: 16,
   },
   marginTop: {
-    marginTop: 16,
+     marginTop: 16,
   },
   cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 8,
+     marginBottom: 16,
   },
   cardHeaderText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.textPrimary,
+     fontSize: 15,
+     fontWeight: '700',
+     color: colors.textPrimary,
   },
   locationInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 12,
+     marginBottom: 16,
   },
   locationIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+     width: 44,
+     height: 44,
+     borderRadius: 12,
+     backgroundColor: colors.accent,
+     alignItems: 'center',
+     justifyContent: 'center',
   },
   locationDetails: {
-    flex: 1,
+     flex: 1,
   },
   locationAddress: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 2,
+     fontSize: 14,
+     fontWeight: '600',
+     color: colors.textPrimary,
+     marginBottom: 2,
   },
   locationCoords: {
-    fontSize: 11,
-    color: colors.textSecondary,
+     fontSize: 11,
+     color: colors.textSecondary,
   },
   positionStats: {
-    flexDirection: 'row',
-    gap: 12,
+     flexDirection: 'row',
+     gap: 12,
   },
   positionStat: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    padding: 12,
-    borderRadius: 8,
+     flex: 1,
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 8,
+     backgroundColor: 'rgba(255, 255, 255, 0.03)',
+     padding: 12,
+     borderRadius: 8,
   },
   positionValue: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.textPrimary,
+     fontSize: 13,
+     fontWeight: '700',
+     color: colors.textPrimary,
   },
   positionLabel: {
-    fontSize: 10,
-    color: colors.textSecondary,
+     fontSize: 10,
+     color: colors.textSecondary,
   },
   tripStatsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 16,
+     flexDirection: 'row',
+     flexWrap: 'wrap',
+     gap: 12,
+     marginBottom: 16,
   },
   tripStat: {
-    width: '48%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+     width: '48%',
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 10,
   },
   tripStatIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+     width: 36,
+     height: 36,
+     borderRadius: 10,
+     alignItems: 'center',
+     justifyContent: 'center',
   },
   tripStatValue: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.textPrimary,
+     fontSize: 15,
+     fontWeight: '700',
+     color: colors.textPrimary,
   },
   tripStatLabel: {
-    fontSize: 10,
-    color: colors.textSecondary,
+     fontSize: 10,
+     color: colors.textSecondary,
   },
   ecoSavings: {
-    gap: 8,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: colors.cardBorder,
+     gap: 8,
+     paddingTop: 16,
+     borderTopWidth: 1,
+     borderTopColor: colors.cardBorder,
   },
   savingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 6,
   },
   savingText: {
-    fontSize: 12,
-    color: colors.textSecondary,
+     fontSize: 12,
+     color: colors.textSecondary,
   },
   modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    justifyContent: 'flex-end',
+     flex: 1,
+     backgroundColor: 'rgba(0, 0, 0, 0.85)',
+     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#1a2332',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderWidth: 2,
-    borderColor: 'rgba(42, 157, 111, 0.3)',
-    maxHeight: '90%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 10,
+     backgroundColor: '#1a2332',
+     borderTopLeftRadius: 20,
+     borderTopRightRadius: 20,
+     borderWidth: 2,
+     borderColor: 'rgba(42, 157, 111, 0.3)',
+     maxHeight: '90%',
+     shadowColor: '#000',
+     shadowOffset: { width: 0, height: -4 },
+     shadowOpacity: 0.5,
+     shadowRadius: 12,
+     elevation: 10,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.15)',
-    backgroundColor: 'rgba(42, 157, 111, 0.08)',
+     flexDirection: 'row',
+     justifyContent: 'space-between',
+     alignItems: 'center',
+     padding: 20,
+     borderBottomWidth: 1,
+     borderBottomColor: 'rgba(255, 255, 255, 0.15)',
+     backgroundColor: 'rgba(42, 157, 111, 0.08)',
   },
   modalTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 10,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
+     fontSize: 18,
+     fontWeight: '700',
+     color: colors.textPrimary,
   },
   closeBtn: {
-    width: 36,
-    height: 36,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+     width: 36,
+     height: 36,
+     backgroundColor: 'rgba(255, 255, 255, 0.1)',
+     borderWidth: 1,
+     borderColor: 'rgba(255, 255, 255, 0.15)',
+     borderRadius: 8,
+     alignItems: 'center',
+     justifyContent: 'center',
   },
   modalBody: {
-    padding: 20,
+     padding: 20,
   },
   actionInfo: {
-    backgroundColor: 'rgba(42, 157, 111, 0.12)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(42, 157, 111, 0.25)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+     backgroundColor: 'rgba(42, 157, 111, 0.12)',
+     borderWidth: 1.5,
+     borderColor: 'rgba(42, 157, 111, 0.25)',
+     borderRadius: 12,
+     padding: 16,
+     marginBottom: 16,
   },
   actionInfoTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 6,
+     fontSize: 15,
+     fontWeight: '600',
+     color: colors.textPrimary,
+     marginBottom: 6,
   },
   actionInfoPoints: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 4,
   },
   actionInfoPointsText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.accent,
+     fontSize: 13,
+     fontWeight: '600',
+     color: colors.accent,
   },
   proofInstructions: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(59, 130, 246, 0.4)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+     flexDirection: 'row',
+     alignItems: 'flex-start',
+     gap: 10,
+     backgroundColor: 'rgba(59, 130, 246, 0.15)',
+     borderWidth: 1.5,
+     borderColor: 'rgba(59, 130, 246, 0.4)',
+     borderRadius: 12,
+     padding: 16,
+     marginBottom: 16,
   },
   instructionsText: {
-    flex: 1,
-    fontSize: 13,
-    color: colors.textPrimary,
-    lineHeight: 18,
+     flex: 1,
+     fontSize: 13,
+     color: colors.textPrimary,
+     lineHeight: 18,
   },
   uploadArea: {
-    minHeight: 200,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: 'rgba(42, 157, 111, 0.4)',
-    borderRadius: 12,
-    backgroundColor: 'rgba(42, 157, 111, 0.05)',
-    marginBottom: 16,
-    overflow: 'hidden',
+     minHeight: 200,
+     borderWidth: 2,
+     borderStyle: 'dashed',
+     borderColor: 'rgba(42, 157, 111, 0.4)',
+     borderRadius: 12,
+     backgroundColor: 'rgba(42, 157, 111, 0.05)',
+     marginBottom: 16,
+     overflow: 'hidden',
   },
   uploadPlaceholder: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 30,
+     flex: 1,
+     alignItems: 'center',
+     justifyContent: 'center',
+     padding: 30,
   },
   uploadPlaceholderText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginTop: 12,
+     fontSize: 15,
+     fontWeight: '600',
+     color: colors.textPrimary,
+     marginTop: 12,
   },
   uploadPlaceholderSubtext: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 4,
+     fontSize: 12,
+     color: colors.textSecondary,
+     marginTop: 4,
   },
   previewContainer: {
-    alignItems: 'center',
-    padding: 16,
-    gap: 12,
+     alignItems: 'center',
+     padding: 16,
+     gap: 12,
   },
   proofPreview: {
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
+     width: '100%',
+     height: 200,
+     borderRadius: 12,
   },
   changePhotoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 10,
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 6,
+     paddingHorizontal: 16,
+     paddingVertical: 8,
+     backgroundColor: 'rgba(255, 255, 255, 0.05)',
+     borderWidth: 1,
+     borderColor: colors.cardBorder,
+     borderRadius: 10,
   },
   changePhotoText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textPrimary,
+     fontSize: 13,
+     fontWeight: '600',
+     color: colors.textPrimary,
   },
   modalInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 14,
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(245, 158, 11, 0.4)',
-    borderRadius: 10,
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: 8,
+     padding: 14,
+     backgroundColor: 'rgba(245, 158, 11, 0.15)',
+     borderWidth: 1.5,
+     borderColor: 'rgba(245, 158, 11, 0.4)',
+     borderRadius: 10,
   },
   modalInfoText: {
-    flex: 1,
-    fontSize: 12,
-    color: colors.textSecondary,
+     flex: 1,
+     fontSize: 12,
+     color: colors.textSecondary,
   },
   modalFooter: {
-    flexDirection: 'row',
-    gap: 12,
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.15)',
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+     flexDirection: 'row',
+     gap: 12,
+     padding: 20,
+     borderTopWidth: 1,
+     borderTopColor: 'rgba(255, 255, 255, 0.15)',
+     backgroundColor: 'rgba(0, 0, 0, 0.15)',
   },
   cancelBtn: {
-    flex: 1,
-    paddingVertical: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 10,
-    alignItems: 'center',
+     flex: 1,
+     paddingVertical: 15,
+     backgroundColor: 'rgba(255, 255, 255, 0.08)',
+     borderWidth: 1.5,
+     borderColor: 'rgba(255, 255, 255, 0.2)',
+     borderRadius: 10,
+     alignItems: 'center',
   },
   cancelBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
+     fontSize: 15,
+     fontWeight: '600',
+     color: colors.textPrimary,
   },
   submitBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 15,
-    backgroundColor: colors.accent,
-    borderWidth: 1,
-    borderColor: 'rgba(42, 157, 111, 0.5)',
-    borderRadius: 10,
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
+     flex: 1,
+     flexDirection: 'row',
+     alignItems: 'center',
+     justifyContent: 'center',
+     gap: 8,
+     paddingVertical: 15,
+     backgroundColor: colors.accent,
+     borderWidth: 1,
+     borderColor: 'rgba(42, 157, 111, 0.5)',
+     borderRadius: 10,
+     shadowColor: colors.accent,
+     shadowOffset: { width: 0, height: 2 },
+     shadowOpacity: 0.3,
+     shadowRadius: 4,
+     elevation: 3,
   },
   submitBtnDisabled: {
-    opacity: 0.5,
+     opacity: 0.5,
   },
   submitBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+     fontSize: 14,
+     fontWeight: '600',
+     color: '#fff',
+  },
+  
+  historyList: { 
+    backgroundColor: 'rgba(255,255,255,0.05)', 
+    borderRadius: 12, 
+    padding: 10 
+  },
+  historyItem: { 
+    paddingVertical: 12, 
+    borderBottomWidth: 1, 
+    borderBottomColor: 'rgba(255,255,255,0.05)' 
+  },
+  historyContent: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center' 
+  },
+  statusBadge: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 5, 
+    backgroundColor: 'rgba(0,0,0,0.2)', 
+    padding: 5, 
+    borderRadius: 8 
+  },
+  statusText: { 
+    fontSize: 12, 
+    fontWeight: 'bold' 
   },
 });

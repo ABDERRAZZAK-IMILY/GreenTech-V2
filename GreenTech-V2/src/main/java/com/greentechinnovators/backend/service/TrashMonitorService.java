@@ -24,7 +24,6 @@ public class TrashMonitorService {
     private final TrashMapper trashMapper;
 
     public TrashMonitorResponseDTO create(TrashMonitorRequestDTO dto) {
-        // Check if a monitor with the same MAC address already exists
         if (dto.getMacAddress() != null && !dto.getMacAddress().isEmpty()) {
             if (trashMonitorRepository.findByMacAddress(dto.getMacAddress()).isPresent()) {
                 throw new IllegalArgumentException(
