@@ -23,7 +23,7 @@ public class EmailService {
     private String fromEmail;
     private final AiPromptStore aiPromptStore;
 
-    private static final String LOGIN_URL = "https://greentechinnovators.me/login";
+    private static final String LOGIN_URL = "http://localhost:3000/login";
 
     @Async
     public void sendAccountCreatedEmail(String toEmail, String name, String rawPassword) {
