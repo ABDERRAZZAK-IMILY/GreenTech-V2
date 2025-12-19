@@ -2,33 +2,28 @@ spring:
   application:
     name: backend
 
-
   server:
-    port: 8080
-
+    port: ${PORT:8080}
 
   data:
     mongodb:
-      uri: mongodb://localhost:27017/greentech_db
-
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/greentech_db}
 
   ai:
     deepseek:
-      api-key: sk-435906190b884e668ac1e16c72634c17
+      api-key: ${DEEPSEEK_API_KEY:sk-435906190b884e668ac1e16c72634c17}
       base-url: https://api.deepseek.com/chat/completions
       model: deepseek-chat
-
 
   docker:
     compose:
       enabled: false
 
-
   mail:
     host: smtp.gmail.com
     port: 587
-    username: itsmoustir@gmail.com
-    password: zesm lbav korz iiec
+    username: ${SPRING_MAIL_USERNAME:itsmoustir@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:zesm lbav korz iiec}
     properties:
       mail:
         smtp:
@@ -39,7 +34,6 @@ spring:
           ssl:
             trust: "*"
 
-
 springdoc:
   swagger-ui:
     enabled: true
@@ -47,8 +41,7 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
-
 app:
-  jwtSecret: sqbddsjvqfhjskhlfdskjlhfdlskqgfsldbfhkdskflhsdhklfsqdhkfgqhsdklfhk
-  jwtExpirationMs: 36000
+  jwtSecret: ${APP_JWT_SECRET:sqbddsjvqfhjskhlfdskjlhfdlskqgfsldbfhkdskflhsdhklfsqdhkfgqhsdklfhk}
+  jwtExpirationMs: 86400000
 
