@@ -107,7 +107,7 @@ public class VehicleService {
         return report;
     }
 
-    private Double calculateSingleCarDistance(List<VehicleLog> logs) {
+    public Double calculateSingleCarDistance(List<VehicleLog> logs) {
         if (logs.size() < 2) return 0.0;
 
         double dist = 0.0;

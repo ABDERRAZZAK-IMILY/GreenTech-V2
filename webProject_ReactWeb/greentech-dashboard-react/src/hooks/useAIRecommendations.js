@@ -31,7 +31,7 @@ const useAIRecommendations = () => {
             setTimeout(() => { setRecommendationProgress(40); setRecommendationStep("Identification des gaspillages..."); }, 1000);
             setTimeout(() => { setRecommendationProgress(70); setRecommendationStep("Calcul des ROI et impact carbone..."); }, 2500);
 
-            const response = await axios.get('http://localhost:8080/api/ai/recommendations');
+            const response = await axios.get( process.env.REACT_APP_API_URL + '/ai/recommendations');
             
             setRecommendationProgress(100);
             setRecommendationStep("Finalisation...");
