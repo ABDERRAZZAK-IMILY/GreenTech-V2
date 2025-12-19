@@ -29,17 +29,14 @@ public class DeepSeekClient {
     @Value("${spring.ai.deepseek.model}")
     private String model;
 
-    /**
-     * Méthode SYNCHRONE (Bloquante) pour générer du JSON complet.
-     * Utilise "stream": false
-     */
+
     public String generate(String prompt) {
         WebClient webClient = webClientBuilder.baseUrl(apiUrl).build();
 
         Map<String, Object> body = Map.of(
                 "model", model,
-                "stream", false, // Important pour recevoir tout le JSON d'un coup
-                "temperature", 0.1, // Faible température pour garantir un JSON valide
+                "stream", false,
+                "temperature", 0.1,
                 "messages", List.of(Map.of("role", "user", "content", prompt))
         );
 
@@ -50,7 +47,7 @@ public class DeepSeekClient {
                     .bodyValue(body)
                     .retrieve()
                     .bodyToMono(JsonNode.class)
-                    .block(); // On bloque pour attendre la réponse complète
+                    .block();
 
             if (response != null && response.has("choices")) {
                 return response.path("choices").get(0).path("message").path("content").asText();
@@ -61,9 +58,7 @@ public class DeepSeekClient {
         return "{}";
     }
 
-    /**
-     * Méthode ASYNCHRONE (Streaming) pour le Chat UI (effet machine à écrire).
-     */
+
     public Flux<String> streamChat(List<Map<String, String>> messages) {
         WebClient webClient = webClientBuilder.baseUrl(apiUrl).build();
 

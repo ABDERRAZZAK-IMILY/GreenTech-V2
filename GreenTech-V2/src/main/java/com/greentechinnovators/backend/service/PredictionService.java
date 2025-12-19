@@ -43,10 +43,10 @@ public class PredictionService {
     private final DeepSeekClient callDeepSeek;
     private final DashboardController dashboardController;
 
-    private static final double PRIX_ELEC = 1.20;       // MAD/kWh
-    private static final double PRIX_GAZ = 12.50;       // MAD/kg
-    private static final double PRIX_TRANSPORT = 14.00; // MAD/100km
-    private static final double PRIX_DECHETS = 0.80;    // MAD/kg
+    private static final double PRIX_ELEC = 1.20;
+    private static final double PRIX_GAZ = 12.50;
+    private static final double PRIX_TRANSPORT = 14.00;
+    private static final double PRIX_DECHETS = 0.80;
 
     public PredictionResponse generatePredictions() {
         String contextJson = aiContextManager.getGlobalContextJson();

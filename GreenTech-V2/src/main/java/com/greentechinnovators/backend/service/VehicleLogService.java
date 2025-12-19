@@ -1,5 +1,6 @@
 package com.greentechinnovators.backend.service;
 
+import com.greentechinnovators.backend.dto.vehicle.TotalDistanceResponseDTO;
 import com.greentechinnovators.backend.dto.vehicle.request.VehicleLogRequestDTO;
 import com.greentechinnovators.backend.dto.vehicle.responce.VehicleLogResponseDTO;
 import com.greentechinnovators.backend.entity.Vehicle;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -20,7 +22,7 @@ public class VehicleLogService {
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper mapper;
     private final VehicleLogRepository vehicleLogRepository;
-    private final CarbonFootprintService carbonFootprintService;
+    private final VehicleService vehicleService;
 
     public VehicleLogResponseDTO create(VehicleLogRequestDTO dto) {
         Vehicle vehicle = vehicleRepository.findById(dto.getVehicleId()).orElseThrow(() -> {
@@ -28,7 +30,15 @@ public class VehicleLogService {
         });
         VehicleLog vehicleLog = vehicleLogRepository.save(mapper.toVehicleLog(dto));
         vehicleLog = vehicleLogRepository.save(vehicleLog);
+
+        vehicle.setLatitude(dto.getLatitude());
+        vehicle.setLongitude(dto.getLongitude());
+
+        if (vehicle.getVehicleLogs() == null) {
+            vehicle.setVehicleLogs(new ArrayList<>());
+        }
         vehicle.getVehicleLogs().add(vehicleLog);
+        vehicleRepository.save(vehicle);
         vehicleRepository.save(vehicle);
         return mapper.toVehicleLogResponse(vehicleLog);
     }
@@ -53,6 +63,19 @@ public class VehicleLogService {
 
     public void deleteById(String id) {
         vehicleLogRepository.deleteById(id);
+    }
+
+    public TotalDistanceResponseDTO calculateDistance(String id) {
+        Vehicle vehicle = vehicleRepository.findById(id).orElseThrow(()->{
+            throw new RuntimeException("vehicle not found");
+        });
+
+        double totalDist = vehicleService.calculateSingleCarDistance(vehicle.getVehicleLogs()); // example result
+
+        return TotalDistanceResponseDTO.builder()
+                .id(id)
+                .distance(totalDist)
+                .build();
     }
 
 }

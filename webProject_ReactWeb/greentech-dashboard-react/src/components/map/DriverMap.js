@@ -2,6 +2,7 @@ import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import MapController from './MapController';
 
 // Fix for default marker icons in React Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -36,6 +37,7 @@ const DriverMap = ({ drivers = [] }) => {
                 zoom={6} // Zoomed out a bit to see multiple markers
                 style={{ height: '100%', width: '100%' }}
             >
+            <MapController />
                 {/* Dark Mode Tiles */}
                 <TileLayer
                     attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'

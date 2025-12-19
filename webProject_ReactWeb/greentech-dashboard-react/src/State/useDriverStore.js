@@ -5,8 +5,12 @@ const useDriverStore = create((set) => ({
     drivers: [],
     isLoading: false,
     error: null,
+    focusedLocation: null,
 
     // Action to fetch drivers
+    setFocusedLocation: (lat, lng) => set({ 
+        focusedLocation: { lat, lng } 
+    }),
     fetchDrivers: async () => {
         set({ isLoading: true, error: null });
         try {
