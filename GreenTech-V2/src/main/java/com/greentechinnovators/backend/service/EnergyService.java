@@ -40,7 +40,6 @@ public class EnergyService {
             macAddress = "UNKNOWN-" + System.currentTimeMillis();
         }
 
-
         if ("MANUAL_ENTRY".equals(macAddress)) {
             return saveManualEntry(dto);
         }
@@ -49,16 +48,14 @@ public class EnergyService {
         Energy energy = mapper.toEntity(dto);
 
         EnergyMonitor monitor = monitorRepository.findByMacAddress(finalMacAddress)
-                .orElseGet(() -> {
-                    log.info("Creating new EnergyMonitor for MAC address: {}", finalMacAddress);
-                    EnergyMonitor newMonitor = new EnergyMonitor();
-                    newMonitor.setMacAddress(finalMacAddress);
-                    newMonitor.setLocation("Auto-registered");
-                    newMonitor.setSensorId("SENSOR-" + finalMacAddress.replace(":", ""));
-                    newMonitor.setStatus(Status.ONLINE);
-                    newMonitor.setTimestamp(LocalDateTime.now());
-                    newMonitor.setEnergy(new ArrayList<>());
-                    return monitorRepository.save(newMonitor);
+                .orElseThrow(() -> {
+                    log.warn(
+                            "Received data from unregistered device with MAC address: {}. Device must be registered manually first.",
+                            finalMacAddress);
+                    return new IllegalArgumentException(
+                            "Capteur non enregistré. L'adresse MAC '" + finalMacAddress
+                                    + "' n'existe pas dans le système. " +
+                                    "Veuillez d'abord créer le capteur manuellement dans le tableau de bord.");
                 });
 
         Energy res = repository.save(energy);
@@ -66,7 +63,6 @@ public class EnergyService {
         monitorRepository.save(monitor);
         return mapper.toResponse(res);
     }
-
 
     public EnergyResponseDTO saveManualEntry(EnergyRequestDTO dto) {
         log.info("Saving manual energy entry: {} kWh", dto.getEnergyConsumed());
@@ -150,6 +146,5 @@ public class EnergyService {
         }
         return report;
     }
-
 
 }
