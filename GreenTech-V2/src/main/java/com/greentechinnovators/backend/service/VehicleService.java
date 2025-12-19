@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -32,6 +29,7 @@ public class VehicleService {
     private final VehicleMapper mapper;
     private final VehicleLogRepository vehicleLogRepository;
     private final UserRepository  userRepository;
+    private final CarbonFootprintService  carbonFootprintService;
 
     private final CarbonFootprintService carbonService;
 
@@ -118,5 +116,24 @@ public class VehicleService {
             );
         }
         return dist;
+    }
+
+    public Double totalDistanceTraveledToday() {
+        List<Vehicle> vehicles = vehicleRepository.findAll();
+        return vehicles.stream()
+                .map(vehicle -> {
+                    List<VehicleLog> logs = vehicle.getVehicleLogs();
+                    if (logs == null) return Collections.<VehicleLog>emptyList();
+
+                    return logs.stream()
+                            .filter(log -> log.getCreatedAt() != null &&
+                                    log.getCreatedAt().toLocalDate().isEqual(LocalDate.now()))
+                            .toList();
+                })
+                .mapToDouble(this::calculateSingleCarDistance)
+                .sum();
+    }
+    public Double dailyCarbonFootPrint() {
+        return carbonFootprintService.calculateTransportFootprint(totalDistanceTraveledToday()) ;
     }
 }

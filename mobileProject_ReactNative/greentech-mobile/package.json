@@ -8,6 +8,21 @@
     "ios": "expo start --ios",
     "web": "expo start --web"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "expo": {
+    "name": "greentech",
+    "slug": "greentech",
+    "version": "0.1.0",
+    "android": {
+      "package": "com.username.myapp",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/GreenTheck.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "^2.2.0",
