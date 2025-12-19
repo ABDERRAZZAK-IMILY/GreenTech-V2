@@ -12,8 +12,8 @@
 
 // ==================== CONFIGURATION WIFI ====================
 // Modifiez ces valeurs selon votre réseau
-#define WIFI_SSID "Cafe ryad gzoula_2.4G"
-#define WIFI_PASSWORD "90807060"
+#define WIFI_SSID "Youcode"
+#define WIFI_PASSWORD "Youcode@2024"
 
 // ==================== CONFIGURATION WEBSOCKET ====================
 // Adresse IP du serveur Spring Boot
