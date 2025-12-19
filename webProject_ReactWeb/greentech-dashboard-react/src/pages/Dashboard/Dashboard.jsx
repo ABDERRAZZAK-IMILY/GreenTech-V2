@@ -316,7 +316,7 @@ const Dashboard = () => {
 
     // Setup WebSocket for real-time trash updates
     const connectTrashWs = () => {
-      const trashWs = new WebSocket(process.env.REACT_APP_API_URL_WS + '/iot/trash/');
+      const trashWs = new WebSocket(process.env.REACT_APP_API_URL_WS + '/iot/trash');
       trashWsRef.current = trashWs;
 
       trashWs.onopen = () => {

@@ -9,7 +9,7 @@
 #include "config.h"
 #include "oledDetector.h"
 
-#define SIMULATION_MODE false
+#define SIMULATION_MODE true
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
