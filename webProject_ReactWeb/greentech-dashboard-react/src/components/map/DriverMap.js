@@ -76,7 +76,7 @@ const DriverMap = ({ drivers = [] }) => {
                         // 2. Use the dynamic icon function here
                         icon={getVehicleIcon(driver.model)}
                     >
-                        {console.log(driver)}
+                        
                         <Popup className="custom-leaflet-popup">
                             <div className="text-center min-w-[150px]">
                                 <h4 className="font-bold text-gray-800 text-sm mb-1">
