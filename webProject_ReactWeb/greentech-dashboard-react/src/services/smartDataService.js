@@ -8,7 +8,7 @@ const API_URL = process.env.REACT_APP_API_URL + '/v1';
 
 // const TRASH_API_URL = 'http://localhost:8080/api';
 
-const TRASH_API_URL = process.env.REACT_APP_API_URL + '/api';
+const TRASH_API_URL = process.env.REACT_APP_API_URL;
 
 
 const axiosInstance = axios.create({
