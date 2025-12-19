@@ -6,10 +6,17 @@ import useDriverStore from '../../../State/useDriverStore';
 
 const TransportTab = () => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
-  const {drivers,fetchDrivers} = useDriverStore();
+  const { drivers, fetchDrivers } = useDriverStore();
   useEffect(() => {
+
     fetchDrivers();
-  }, []);
+
+    const intervalId = setInterval(() => {
+      fetchDrivers();
+    }, 2000);
+
+    return () => clearInterval(intervalId);
+  }, [fetchDrivers]);
 
   const toggleTransportOverview = () => {
     setIsOverviewOpen(!isOverviewOpen);
@@ -291,11 +298,12 @@ const TransportTab = () => {
 
       {/* Map Container */}
       <div className="transport-map-container">
+
         <DriverMap drivers={drivers} />
       </div>
 
       {/* Drivers List */}
-      <DriverList/>
+      <DriverList />
 
       {/* Manual Entry for Transport */}
       <ManualEntrySection />

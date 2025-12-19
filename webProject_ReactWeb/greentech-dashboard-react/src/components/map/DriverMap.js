@@ -4,28 +4,52 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import MapController from './MapController';
 
-// Fix for default marker icons in React Leaflet
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+// --- 1. Define your Icons Mapping Here ---
+const getVehicleIcon = (model) => {
+    // Default styling for the icon container
+    const iconBaseClass = "flex items-center justify-center bg-white rounded-full border-2 border-white shadow-md";
+    const iconSize = [32, 32]; // Width, Height in pixels
 
-let DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-});
+    let iconHtml = '';
 
-L.Marker.prototype.options.icon = DefaultIcon;
+    // Switch based on your VEHICLE_TYPES array
+    switch (model) {
+        case "Voiture":
+            // Blue Car
+            iconHtml = `<div class="${iconBaseClass} w-8 h-8"><i class="fas fa-car text-blue-600 text-sm"></i></div>`;
+            break;
+        case "Camion":
+            // Red Truck
+            iconHtml = `<div class="${iconBaseClass} w-8 h-8"><i class="fas fa-truck text-red-600 text-sm"></i></div>`;
+            break;
+        case "Camionnette":
+        case "Utilitaire":
+            // Orange Van
+            iconHtml = `<div class="${iconBaseClass} w-8 h-8"><i class="fas fa-shuttle-van text-orange-500 text-sm"></i></div>`;
+            break;
+        case "Moto":
+            // Green Motorcycle
+            iconHtml = `<div class="${iconBaseClass} w-8 h-8"><i class="fas fa-motorcycle text-green-600 text-sm"></i></div>`;
+            break;
+        default:
+            // Grey Default
+            iconHtml = `<div class="${iconBaseClass} w-8 h-8"><i class="fas fa-map-marker-alt text-gray-600 text-base"></i></div>`;
+    }
+
+    return L.divIcon({
+        className: 'custom-vehicle-icon', // Leave this empty to rely on Tailwind inside html
+        html: iconHtml,
+        iconSize: iconSize,
+        iconAnchor: [16, 16], // Center the icon (half of width/height)
+        popupAnchor: [0, -16], // Popup appears above icon
+    });
+};
 
 const DriverMap = ({ drivers = [] }) => {
-    // 1. Filter out drivers with missing coordinates (null lat or longe)
     const validDrivers = drivers.filter(d => d.lat !== null && d.longe !== null);
-
-    // Default center (Casablanca) if no drivers exist
     const defaultCenter = [33.5731, -7.5898];
-    
-    // Center the map on the first valid driver, or use default
+
+    // Calculate center
     const mapCenter = validDrivers.length > 0 
         ? [validDrivers[0].lat, validDrivers[0].longe] 
         : defaultCenter;
@@ -34,36 +58,39 @@ const DriverMap = ({ drivers = [] }) => {
         <div className="h-[500px] w-full rounded-xl overflow-hidden shadow-lg border border-gray-700 relative z-0">
             <MapContainer 
                 center={mapCenter} 
-                zoom={6} // Zoomed out a bit to see multiple markers
+                zoom={6} 
                 style={{ height: '100%', width: '100%' }}
             >
-            <MapController />
-                {/* Dark Mode Tiles */}
+                <MapController />
+                
+                {/* Colorful Map Style */}
                 <TileLayer
-                    attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
-                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
-                {/* 2. Map through the valid drivers */}
                 {validDrivers.map((driver) => (
                     <Marker 
                         key={driver.id} 
                         position={[driver.lat, driver.longe]}
+                        // 2. Use the dynamic icon function here
+                        icon={getVehicleIcon(driver.model)}
                     >
+                        {console.log(driver)}
                         <Popup className="custom-leaflet-popup">
                             <div className="text-center min-w-[150px]">
                                 <h4 className="font-bold text-gray-800 text-sm mb-1">
                                     {driver.user?.username || "Inconnu"}
                                 </h4>
                                 <div className="text-xs text-gray-600 space-y-1">
-                                    <p className="font-semibold">{driver.model}</p>
+                                    <p className="font-semibold flex items-center justify-center gap-1">
+                                        {/* Optional: Show small icon in popup too */}
+                                        {driver.model === 'Moto' ? <i className="fas fa-motorcycle"/> : <i className="fas fa-car"/>}
+                                        {driver.model}
+                                    </p>
                                     <p className="bg-gray-100 rounded px-1 py-0.5 inline-block border border-gray-200">
                                         {driver.licensePlate}
                                     </p>
-                                </div>
-                                <div className="mt-2 pt-2 border-t border-gray-200 text-[10px] text-gray-400">
-                                    Lat: {driver.lat.toFixed(4)} <br/> 
-                                    Lon: {driver.longe.toFixed(4)}
                                 </div>
                             </div>
                         </Popup>
@@ -71,9 +98,8 @@ const DriverMap = ({ drivers = [] }) => {
                 ))}
             </MapContainer>
 
-            {/* Optional: Legend or Count Overlay */}
-            <div className="absolute top-4 right-4 z-[1000] bg-gray-800/90 backdrop-blur text-white px-3 py-1.5 rounded-lg border border-gray-600 text-xs shadow-xl">
-                <i className="fas fa-car text-blue-400 mr-2"></i>
+            <div className="absolute top-4 right-4 z-[1000] bg-white/90 backdrop-blur text-gray-800 px-3 py-1.5 rounded-lg border border-gray-200 text-xs shadow-xl font-medium">
+                <i className="fas fa-car text-blue-500 mr-2"></i>
                 Active Vehicles: <strong>{validDrivers.length}</strong>
             </div>
         </div>

@@ -16,10 +16,13 @@ class TransportService {
     }
     // Add a new vehicle
     async addVehicle(vehicleData) {
+        console.log(API_URL);
+        
         try {
             const response = await axios.post(`${API_URL}/add`, vehicleData, {
                 headers: this.getAuthHeader()
             });
+            
             return response.data;
         } catch (error) {
             console.error('Error adding vehicle:', error);
