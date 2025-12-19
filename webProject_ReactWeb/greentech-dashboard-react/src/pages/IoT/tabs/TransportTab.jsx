@@ -8,7 +8,9 @@ import transporService from '../../../services/transporService';
 const TransportTab = () => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
   const [totaleDistanceToday, settotaleDistanceToday] = useState(1)
+  const [carbonPrint, setCarbonPrint] = useState(1);
   const { drivers, fetchDrivers } = useDriverStore();
+
 
   useEffect(() => {
     fetchDrivers();
@@ -16,6 +18,12 @@ const TransportTab = () => {
       const data = await transporService.totaleDistanceToday();
       settotaleDistanceToday(data.totalDistance);
     }
+    const fetchCarboonFootPrint = async () => {
+      const data = await transporService.totaleFootPrintToday();
+      setCarbonPrint(data.totalFootPrint);
+    }
+
+    fetchCarboonFootPrint();
 
     fecthtotaleDistance();
     const intervalId = setInterval(fetchDrivers, 2000);
@@ -112,7 +120,7 @@ const TransportTab = () => {
           </div>
           <div>
             <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wide">Véhicules Actifs</h4>
-            <div className="text-2xl font-bold text-white">3/5</div>
+            <div className="text-2xl font-bold text-white">{drivers.length}</div>
             <div className="text-xs text-green-400 font-medium">En déplacement</div>
           </div>
         </div>
@@ -136,7 +144,7 @@ const TransportTab = () => {
           </div>
           <div>
             <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wide">Carburant</h4>
-            <div className="text-2xl font-bold text-white">24.7 L</div>
+            <div className="text-2xl font-bold text-white">{(totaleDistanceToday.toFixed(2) * 8.0) / 100  }</div>
             <div className="text-xs text-orange-400 font-medium">Consommé</div>
           </div>
         </div>
@@ -148,7 +156,7 @@ const TransportTab = () => {
           </div>
           <div>
             <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wide">Émissions CO2</h4>
-            <div className="text-2xl font-bold text-white">58.2 kg</div>
+            <div className="text-2xl font-bold text-white">{carbonPrint.toFixed(3)} kg</div>
             <div className="text-xs text-rose-400 font-medium">Rejeté</div>
           </div>
         </div>
