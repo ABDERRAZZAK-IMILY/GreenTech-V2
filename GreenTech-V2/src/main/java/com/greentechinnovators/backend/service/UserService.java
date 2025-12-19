@@ -32,7 +32,7 @@ public class UserService {
 
     public List<UserProfileDTO> getAllUsers() {
         return userRepository.findAll().stream()
-                .filter(user -> user.getRole() != Role.ADMIN)
+                .filter(user -> user.getRole() != Role.ADMIN && user.getDepartment().equals("General"))
                 .map(this::mapToProfileDTO)
                 .collect(Collectors.toList());
     }
