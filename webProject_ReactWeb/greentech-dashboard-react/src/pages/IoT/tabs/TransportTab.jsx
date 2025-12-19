@@ -3,328 +3,208 @@ import DriverList from '../../../components/Transport/DriverList';
 import ManualEntrySection from '../../../components/Transport/ManualEntrySection';
 import DriverMap from '../../../components/map/DriverMap';
 import useDriverStore from '../../../State/useDriverStore';
+import transporService from '../../../services/transporService';
 
 const TransportTab = () => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
-  const {drivers,fetchDrivers} = useDriverStore();
+  const [totaleDistanceToday, settotaleDistanceToday] = useState(1)
+  const [carbonPrint, setCarbonPrint] = useState(1);
+  const { drivers, fetchDrivers } = useDriverStore();
+
+
   useEffect(() => {
     fetchDrivers();
-  }, []);
+    const fecthtotaleDistance = async () => {
+      const data = await transporService.totaleDistanceToday();
+      settotaleDistanceToday(data.totalDistance);
+    }
+    const fetchCarboonFootPrint = async () => {
+      const data = await transporService.totaleFootPrintToday();
+      setCarbonPrint(data.totalFootPrint);
+    }
+
+    fetchCarboonFootPrint();
+
+    fecthtotaleDistance();
+    const intervalId = setInterval(fetchDrivers, 2000);
+    return () => clearInterval(intervalId);
+  }, [fetchDrivers]);
 
   const toggleTransportOverview = () => {
     setIsOverviewOpen(!isOverviewOpen);
   };
 
   return (
-    <div id="sensor-transport-content">
-      <h3>
-        <i className="fas fa-map-marked-alt" /> Suivi en Temps Réel des Véhicules
+    <div className="p-6 space-y-8  min-h-screen">
+
+      {/* Page Title */}
+      <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+        <div className="p-2 bg-blue-600/20 rounded-lg text-blue-500">
+          <i className="fas fa-map-marked-alt" />
+        </div>
+        Suivi en Temps Réel des Véhicules
       </h3>
 
-      {/* Transport Overview by Vehicle Type (Collapsible) */}
-      <div className="gas-overview-collapsible">
-        <div className={`collapsible-header ${isOverviewOpen ? 'active' : ''}`} onClick={toggleTransportOverview}>
-          <h4>
-            <i className="fas fa-chart-pie" /> Vue d'ensemble par type de véhicule
+      {/* 1. Collapsible Overview Section */}
+      <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-lg transition-all duration-300">
+        <div
+          className={`flex justify-between items-center p-4 cursor-pointer hover:bg-gray-750 transition-colors ${isOverviewOpen ? 'bg-gray-750 border-b border-gray-700' : ''}`}
+          onClick={toggleTransportOverview}
+        >
+          <h4 className="font-semibold text-lg flex items-center gap-2 text-gray-200">
+            <i className="fas fa-chart-pie text-purple-400" /> Vue d'ensemble par type de véhicule
           </h4>
-          <i className={`fas fa-chevron-${isOverviewOpen ? 'up' : 'down'}`} id="transportOverviewChevron" />
+          <i className={`fas fa-chevron-${isOverviewOpen ? 'up' : 'down'} text-gray-400 transition-transform duration-300`} />
         </div>
-        <div className={`collapsible-content ${isOverviewOpen ? 'active' : ''}`} id="transportOverviewContent">
-          <div className="gas-overview-table-container">
-            <table className="gas-overview-table">
-              <thead>
+
+        {/* Collapsible Content */}
+        <div className={`transition-all duration-300 ease-in-out ${isOverviewOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-gray-300">
+              <thead className="bg-blue-900/40 text-blue-100 uppercase text-xs font-semibold tracking-wider">
                 <tr>
-                  <th style={{
-                    background: 'rgba(30, 58, 138, 0.6)',
-                    color: 'white',
-                    padding: '16px',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    fontSize: '11px',
-                    letterSpacing: '1px'
-                  }}>
-                    <i className="fas fa-car" style={{ marginRight: '8px' }} />
-                    Type de véhicule
-                  </th>
-                  <th style={{
-                    background: 'rgba(30, 58, 138, 0.6)',
-                    color: 'white',
-                    padding: '16px',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    fontSize: '11px',
-                    letterSpacing: '1px'
-                  }}>
-                    <i className="fas fa-users" style={{ marginRight: '8px' }} />
-                    Nombre actifs
-                  </th>
-                  <th style={{
-                    background: 'rgba(30, 58, 138, 0.6)',
-                    color: 'white',
-                    padding: '16px',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    fontSize: '11px',
-                    letterSpacing: '1px'
-                  }}>
-                    <i className="fas fa-road" style={{ marginRight: '8px' }} />
-                    Distance totale
-                  </th>
-                  <th style={{
-                    background: 'rgba(30, 58, 138, 0.6)',
-                    color: 'white',
-                    padding: '16px',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    fontSize: '11px',
-                    letterSpacing: '1px'
-                  }}>
-                    <i className="fas fa-gas-pump" style={{ marginRight: '8px' }} />
-                    Carburant total
-                  </th>
-                  <th style={{
-                    background: 'rgba(30, 58, 138, 0.6)',
-                    color: 'white',
-                    padding: '16px',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    fontSize: '11px',
-                    letterSpacing: '1px'
-                  }}>
-                    <i className="fas fa-leaf" style={{ marginRight: '8px' }} />
-                    Émissions CO2 totales
-                  </th>
-                  <th style={{
-                    background: 'rgba(30, 58, 138, 0.6)',
-                    color: 'white',
-                    padding: '16px',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    fontSize: '11px',
-                    letterSpacing: '1px'
-                  }}>
-                    <i className="fas fa-clock" style={{ marginRight: '8px' }} />
-                    Temps total
-                  </th>
+                  <th className="px-6 py-4 rounded-tl-lg"><i className="fas fa-car mr-2" /> Type</th>
+                  <th className="px-6 py-4"><i className="fas fa-users mr-2" /> Actifs</th>
+                  <th className="px-6 py-4"><i className="fas fa-road mr-2" /> Distance</th>
+                  <th className="px-6 py-4"><i className="fas fa-gas-pump mr-2" /> Carburant</th>
+                  <th className="px-6 py-4"><i className="fas fa-leaf mr-2" /> CO2</th>
+                  <th className="px-6 py-4 rounded-tr-lg"><i className="fas fa-clock mr-2" /> Temps</th>
                 </tr>
               </thead>
-              <tbody id="transportOverviewTableBody">
-                <tr>
-                  <td>
-                    <span style={{ marginRight: '8px', fontSize: '18px', filter: 'hue-rotate(200deg)' }}>🚐</span>
-                    <strong>Camionnette</strong>
+              <tbody className="divide-y divide-gray-700">
+                {/* Example Row 1: Camionnette */}
+                <tr className="hover:bg-gray-700/50 transition-colors">
+                  <td className="px-6 py-4 font-medium text-white flex items-center gap-2">
+                    <span className="text-xl hue-rotate-[200deg]">🚐</span> Camionnette
                   </td>
-                  <td>0 véhicules</td>
-                  <td>0.0 km</td>
-                  <td>0.0 L</td>
-                  <td>
-                    <span style={{
-                      background: 'rgba(202, 138, 4, 0.2)',
-                      color: '#ca8a04',
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 'bold'
-                    }}>
+                  <td className="px-6 py-4">0 véhicules</td>
+                  <td className="px-6 py-4">0.0 km</td>
+                  <td className="px-6 py-4">0.0 L</td>
+                  <td className="px-6 py-4">
+                    <span className="bg-yellow-900/30 text-yellow-500 px-3 py-1 rounded-full text-xs font-bold border border-yellow-900/50">
                       0.0 kg CO2
                     </span>
                   </td>
-                  <td>0min</td>
+                  <td className="px-6 py-4">0min</td>
                 </tr>
-                <tr>
-                  <td>
-                    <span style={{ marginRight: '8px', fontSize: '18px', filter: 'hue-rotate(80deg)' }}>🚗</span>
-                    <strong>Voiture</strong>
+
+                {/* Example Row 2: Voiture */}
+                <tr className="hover:bg-gray-700/50 transition-colors">
+                  <td className="px-6 py-4 font-medium text-white flex items-center gap-2">
+                    <span className="text-xl hue-rotate-[80deg]">🚗</span> Voiture
                   </td>
-                  <td>2 véhicules</td>
-                  <td>68.0 km</td>
-                  <td>6.8 L</td>
-                  <td>
-                    <span style={{
-                      background: 'rgba(202, 138, 4, 0.2)',
-                      color: '#ca8a04',
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 'bold'
-                    }}>
+                  <td className="px-6 py-4">2 véhicules</td>
+                  <td className="px-6 py-4">68.0 km</td>
+                  <td className="px-6 py-4">6.8 L</td>
+                  <td className="px-6 py-4">
+                    <span className="bg-yellow-900/30 text-yellow-500 px-3 py-1 rounded-full text-xs font-bold border border-yellow-900/50">
                       16.0 kg CO2
                     </span>
                   </td>
-                  <td>3h 00min</td>
+                  <td className="px-6 py-4">3h 00min</td>
                 </tr>
-                <tr>
-                  <td>
-                    <span style={{ marginRight: '8px', fontSize: '18px' }}>🚚</span>
-                    <strong>Camion</strong>
-                  </td>
-                  <td>1 véhicules</td>
-                  <td>89.0 km</td>
-                  <td>8.9 L</td>
-                  <td>
-                    <span style={{
-                      background: 'rgba(202, 138, 4, 0.2)',
-                      color: '#ca8a04',
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 'bold'
-                    }}>
-                      21.0 kg CO2
-                    </span>
-                  </td>
-                  <td>4h 20min</td>
-                </tr>
-                <tr>
-                  <td>
-                    <span style={{ marginRight: '8px', fontSize: '18px', filter: 'hue-rotate(260deg)' }}>🚙</span>
-                    <strong>Utilitaire</strong>
-                  </td>
-                  <td>1 véhicules</td>
-                  <td>23.0 km</td>
-                  <td>2.3 L</td>
-                  <td>
-                    <span style={{
-                      background: 'rgba(202, 138, 4, 0.2)',
-                      color: '#ca8a04',
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 'bold'
-                    }}>
-                      5.4 kg CO2
-                    </span>
-                  </td>
-                  <td>1h 10min</td>
-                </tr>
-                <tr>
-                  <td>
-                    <span style={{ marginRight: '8px', fontSize: '18px', filter: 'hue-rotate(320deg)' }}>🏍️</span>
-                    <strong>Moto</strong>
-                  </td>
-                  <td>0 véhicules</td>
-                  <td>0.0 km</td>
-                  <td>0.0 L</td>
-                  <td>
-                    <span style={{
-                      background: 'rgba(202, 138, 4, 0.2)',
-                      color: '#ca8a04',
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 'bold'
-                    }}>
-                      0.0 kg CO2
-                    </span>
-                  </td>
-                  <td>0min</td>
-                </tr>
+
+                {/* Add other static rows here similarly... */}
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      {/* Transport Stats */}
-      <div className="transport-stats-grid">
-        <div className="transport-stat-card">
-          <div
-            className="stat-icon"
-            style={{
-              background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
-            }}
-          >
-            <i className="fas fa-car" />
+      {/* 2. Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Card 1 */}
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg flex items-center gap-4 transition-transform hover:-translate-y-1">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg bg-gradient-to-br from-green-400 to-emerald-500">
+            <i className="fas fa-car text-xl" />
           </div>
-          <div className="stat-content">
-            <h4>Véhicules Actifs</h4>
-            <div className="stat-value">3/5</div>
-            <div className="stat-label">En déplacement</div>
+          <div>
+            <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wide">Véhicules Actifs</h4>
+            <div className="text-2xl font-bold text-white">{drivers.length}</div>
+            <div className="text-xs text-green-400 font-medium">En déplacement</div>
           </div>
         </div>
-        <div className="transport-stat-card">
-          <div
-            className="stat-icon"
-            style={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-            }}
-          >
-            <i className="fas fa-road" />
+
+        {/* Card 2 */}
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg flex items-center gap-4 transition-transform hover:-translate-y-1">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg bg-gradient-to-br from-indigo-500 to-purple-600">
+            <i className="fas fa-road text-xl" />
           </div>
-          <div className="stat-content">
-            <h4>Distance total Aujourd'hui</h4>
-            <div className="stat-value">247 km</div>
-            <div className="stat-label">Tous véhicules</div>
+          <div>
+            <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wide">Distance Totale</h4>
+            <div className="text-2xl font-bold text-white">{totaleDistanceToday.toFixed(2)} km</div>
+            <div className="text-xs text-indigo-400 font-medium">Aujourd'hui</div>
           </div>
         </div>
-        <div className="transport-stat-card">
-          <div
-            className="stat-icon"
-            style={{
-              background: "linear-gradient(135deg, #feca57 0%, #ff9ff3 100%)"
-            }}
-          >
-            <i className="fas fa-gas-pump" />
+
+        {/* Card 3 */}
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg flex items-center gap-4 transition-transform hover:-translate-y-1">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg bg-gradient-to-br from-amber-400 to-orange-500">
+            <i className="fas fa-gas-pump text-xl" />
           </div>
-          <div className="stat-content">
-            <h4>Carburant total</h4>
-            <div className="stat-value">24.7 L</div>
-            <div className="stat-label">Consommé aujourd'hui</div>
+          <div>
+            <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wide">Carburant</h4>
+            <div className="text-2xl font-bold text-white">{(totaleDistanceToday.toFixed(2) * 8.0) / 100  }</div>
+            <div className="text-xs text-orange-400 font-medium">Consommé</div>
           </div>
         </div>
-        <div className="transport-stat-card">
-          <div
-            className="stat-icon"
-            style={{
-              background: "linear-gradient(135deg, #f5576c 0%, #f093fb 100%)"
-            }}
-          >
-            <i className="fas fa-leaf" />
+
+        {/* Card 4 */}
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg flex items-center gap-4 transition-transform hover:-translate-y-1">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg bg-gradient-to-br from-pink-500 to-rose-500">
+            <i className="fas fa-leaf text-xl" />
           </div>
-          <div className="stat-content">
-            <h4>Émissions totales CO2</h4>
-            <div className="stat-value">58.2 kg</div>
-            <div className="stat-label">Aujourd'hui</div>
+          <div>
+            <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wide">Émissions CO2</h4>
+            <div className="text-2xl font-bold text-white">{carbonPrint.toFixed(3)} kg</div>
+            <div className="text-xs text-rose-400 font-medium">Rejeté</div>
           </div>
         </div>
       </div>
 
-      {/* Map Container */}
-      <div className="transport-map-container">
+      {/* 3. Map Section */}
+      <div className="w-full">
         <DriverMap drivers={drivers} />
       </div>
 
-      {/* Drivers List */}
-      <DriverList/>
+      {/* 4. Driver List Component */}
+      <DriverList />
 
-      {/* Manual Entry for Transport */}
+      {/* 5. Manual Entry Form */}
       <ManualEntrySection />
 
-      {/* Transport Manual Entry History Table */}
-      <div className="transport-history-section">
-        <h4>
-          <i className="fas fa-history" /> Historique des Trajets
-        </h4>
-        <div className="history-table-container">
-          <table className="history-table">
-            <thead>
+      {/* 6. History Table */}
+      <div className="bg-gray-800 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-700 bg-gray-800/50">
+          <h4 className="text-lg font-bold text-white flex items-center gap-2">
+            <i className="fas fa-history text-gray-400" /> Historique des Trajets
+          </h4>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-gray-300">
+            <thead className="bg-gray-700/50 text-gray-400 uppercase text-xs font-bold tracking-wider">
               <tr>
-                <th>Date &amp; Heure</th>
-                <th>Chauffeur</th>
-                <th>Véhicule</th>
-                <th>Immatriculation</th>
-                <th>Carburant (L)</th>
-                <th>Position actuelle</th>
-                <th>Statut</th>
+                <th className="px-6 py-3">Date & Heure</th>
+                <th className="px-6 py-3">Chauffeur</th>
+                <th className="px-6 py-3">Véhicule</th>
+                <th className="px-6 py-3">Immatriculation</th>
+                <th className="px-6 py-3">Carburant (L)</th>
+                <th className="px-6 py-3">Position</th>
+                <th className="px-6 py-3">Statut</th>
               </tr>
             </thead>
-            <tbody id="transportHistoryTableBody">
-              {/* Rows will be added dynamically */}
+            <tbody id="transportHistoryTableBody" className="divide-y divide-gray-700">
+              {/* Dynamic rows would go here. Empty state example: */}
+              <tr>
+                <td colSpan="7" className="px-6 py-8 text-center text-gray-500 italic">
+                  Aucun historique récent disponible
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
-
 
     </div>
   );

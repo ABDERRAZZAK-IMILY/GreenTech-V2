@@ -36,7 +36,6 @@ const DriverList = () => {
     };
     const handleEditDriver = (id) => {
         const driver = drivers.find(d => d.id === id);
-        console.log(driver);
         setDriverData(driver);
         setShowEditModal(true);
     };
