@@ -272,8 +272,8 @@ void setup() {
   // Initialiser NTP
   initTime();
 
-  // Initialiser WebSocket
-  webSocket.begin(WS_SERVER, WS_PORT, WS_PATH);
+  // Initialiser WebSocket avec SSL pour Render
+  webSocket.beginSSL(WS_SERVER, WS_PORT, WS_PATH);
   webSocket.onEvent(webSocketEvent);
   webSocket.setReconnectInterval(5000);
 

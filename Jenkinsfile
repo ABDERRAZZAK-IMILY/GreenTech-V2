@@ -50,29 +50,50 @@ pipeline {
             }
         }
 
-        /* -------------------------
-         *  FRONTEND (React) - Combined Stage
-         * ------------------------- */
-        stage('Frontend - Build & Test') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    args '-u $(id -u):$(id -g) -v $WORKSPACE:/workspace -w /workspace/webProject_ReactWeb/greentech-dashboard-react'
-                }
-            }
-            steps {
-                sh '''
-                    echo "Installing dependencies..."
-                    npm ci --legacy-peer-deps
+       /* -------------------------
+        *  FRONTEND (React)
+        * ------------------------- */
+        stage('Frontend - Install Dependencies') {
+         agent {
+             docker {
+                 image 'node:18-alpine'
+             }
+         }
+         steps {
+             dir('webProject_ReactWeb/greentech-dashboard-react') {
+                 sh '''
+                     rm -rf node_modules $WORKSPACE/.npm
+                     npm ci --legacy-peer-deps
+                 '''
+             }
+         }
+         }
 
-                    echo "Building frontend..."
-                    npm run build
+     stage('Frontend - Build') {
+         agent {
+             docker {
+                 image 'node:18-alpine'
+             }
+         }
+         steps {
+             dir('webProject_ReactWeb/greentech-dashboard-react') {
+                 sh 'npm run build'
+             }
+         }
+     }
 
-                    echo "Running frontend tests..."
-                    npm test -- --watchAll=false
-                '''
+    stage('Frontend - Test') {
+        agent {
+            docker {
+                image 'node:18-alpine'
             }
         }
+        steps {
+            dir('webProject_ReactWeb/greentech-dashboard-react') {
+                sh 'npm test -- --watchAll=false'
+            }
+        }
+    }
 
         stage('Frontend - Archive Artifacts') {
             agent any

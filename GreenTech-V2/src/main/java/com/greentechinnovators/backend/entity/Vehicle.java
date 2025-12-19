@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -23,7 +24,7 @@ public class Vehicle {
     private String model;
     private User user;
     @DBRef
-    private List<VehicleLog>  vehicleLogs;
+    private List<VehicleLog>  vehicleLogs = new ArrayList<>();
     private Double longitude;
     private Double latitude;
 

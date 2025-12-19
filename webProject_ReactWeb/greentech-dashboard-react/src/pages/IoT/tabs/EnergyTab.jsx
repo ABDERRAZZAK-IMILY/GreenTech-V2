@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { showNotification } from '../../../utils/notifications';
 import { energyDataService } from '../../../services/smartDataService';
+import { getAllDepartments } from '../../../services/departmentSerice';
 
 
 const EnergyTab = () => {
@@ -80,8 +81,12 @@ const EnergyTab = () => {
     sensorId: '',
     macAddress: '',
     status: 'ONLINE',
-    co2Impact: 0
+    co2Impact: 0,
+    departmentId: ''
   });
+
+  // Departments state
+  const [departments, setDepartments] = useState([]);
 
   // Equipment types configuration for each department
   const equipmentTypesConfig = {
@@ -139,9 +144,22 @@ const EnergyTab = () => {
   // Initialize filter and equipments on component mount
   useEffect(() => {
     fetchEnergyData(); // Initial fetch
+    fetchDepartments(); // Fetch departments for the form
     const interval = setInterval(fetchEnergyData, 5000); // Update every 5 seconds
     return () => clearInterval(interval);
   }, []);
+
+  // Fetch departments from backend
+  const fetchDepartments = async () => {
+    try {
+      const response = await getAllDepartments();
+      if (response && response.data) {
+        setDepartments(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    }
+  };
 
   // Initialize filter and equipments on component mount
   useEffect(() => {
@@ -326,7 +344,8 @@ const EnergyTab = () => {
       sensorId: newSensorId,
       macAddress: '',
       status: 'ONLINE',
-      co2Impact: 0
+      co2Impact: 0,
+      departmentId: ''
     });
     setShowAddModal(true);
   };
@@ -354,8 +373,14 @@ const EnergyTab = () => {
 
     try {
       // Prepare data for backend
+      // Build location string with department name
+      const selectedDept = departments.find(d => d.id === newSensorForm.departmentId);
+      const locationWithDept = selectedDept
+        ? `${newSensorForm.location} - ${selectedDept.name}`
+        : newSensorForm.location;
+
       const monitorData = {
-        location: newSensorForm.location,
+        location: locationWithDept,
         sensorId: newSensorForm.sensorId,
         macAddress: newSensorForm.macAddress,
         status: newSensorForm.status,
@@ -1092,6 +1117,36 @@ const EnergyTab = () => {
                     <option value="entrepot">Entrepôt</option>
                     <option value="cafeteria">Cafétéria</option>
                   </select>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="departmentId">
+                    <i className="fas fa-building" /> Département
+                  </label>
+                  <select
+                    id="departmentId"
+                    value={newSensorForm.departmentId}
+                    onChange={(e) => setNewSensorForm({ ...newSensorForm, departmentId: e.target.value })}
+                    style={{
+                      padding: '10px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      color: 'white',
+                      width: '100%'
+                    }}
+                    required
+                  >
+                    <option value="">-- Sélectionner un département --</option>
+                    {departments.map(dept => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </option>
+                    ))}
+                  </select>
+                  <small style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>
+                    Le capteur sera lié à ce département
+                  </small>
                 </div>
 
                 <div className="form-group">

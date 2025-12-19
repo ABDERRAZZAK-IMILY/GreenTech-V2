@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -29,7 +30,7 @@ public class TrashMonitor {
     private Double co2Impact;
     private TrashType  trashType;
     @DBRef
-    private List<Trash> trash;
+    private List<Trash> trash = new ArrayList<>();
 
     private LocalDateTime timestamp;
 }

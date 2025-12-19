@@ -9,7 +9,7 @@
 #include "config.h"
 #include "oledDetector.h"
 
-#define SIMULATION_MODE true 
+#define SIMULATION_MODE false
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
@@ -119,6 +119,7 @@ void initScale() {
   Serial.printf("[SCALE] DOUT=GPIO%d, SCK=GPIO%d\n", HX711_DOUT_PIN, HX711_SCK_PIN);
 
   scale.begin(HX711_DOUT_PIN, HX711_SCK_PIN);
+  
 
   // Attendre que le capteur soit pret
   Serial.println("[SCALE] Attente du capteur...");
@@ -286,7 +287,9 @@ void setup() {
   initTime();
 
   // Initialiser WebSocket
-  webSocket.begin(WS_SERVER, WS_PORT, WS_PATH);
+  // webSocket.begin(WS_SERVER, WS_PORT, WS_PATH);
+  // Secure WebSocket for host with SSL
+  webSocket.beginSSL(WS_SERVER, WS_PORT, WS_PATH);
   webSocket.onEvent(webSocketEvent);
   webSocket.setReconnectInterval(5000);
 

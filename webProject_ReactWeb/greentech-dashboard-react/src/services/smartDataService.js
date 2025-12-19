@@ -1,12 +1,14 @@
 import axios from 'axios';
 import AuthService from './authService';
 
-const API_URL = 'http://localhost:8080/api/v1';
-// const API_URL = process.env.REACT_APP_API_URL + '/v1';
+// const API_URL = 'http://localhost:8080/api/v1';
+
+const API_URL = process.env.REACT_APP_API_URL + '/v1';
 
 
-const TRASH_API_URL = 'http://localhost:8080/api';
-// const TRASH_API_URL = process.env.REACT_APP_API_URL + '/api';
+// const TRASH_API_URL = 'http://localhost:8080/api';
+
+const TRASH_API_URL = process.env.REACT_APP_API_URL;
 
 
 const axiosInstance = axios.create({
@@ -119,10 +121,12 @@ class TrashDataService {
     return mapping[trashType] || 'organic';
   }
 
-  // Calculate total weight from trash logs
+  // Calculate total weight from trash logs (converts g to kg)
   calculateMonitorWeight(trashLogs) {
     if (!trashLogs || trashLogs.length === 0) return 0;
-    return trashLogs.reduce((sum, log) => sum + (log.weight || 0), 0);
+    // ESP32 sends weight in grams, convert to kg by dividing by 1000
+    const totalGrams = trashLogs.reduce((sum, log) => sum + (log.weight || 0), 0);
+    return totalGrams / 1000;
   }
 
   // Get all trash monitors
@@ -152,7 +156,9 @@ class TrashDataService {
 
   calculateTotal(dataList) {
     if (!dataList || dataList.length === 0) return 0;
-    return dataList.reduce((sum, item) => sum + (item.weight || 0), 0);
+    // ESP32 sends weight in grams, convert to kg by dividing by 1000
+    const totalGrams = dataList.reduce((sum, item) => sum + (item.weight || 0), 0);
+    return totalGrams / 1000;
   }
 }
 
@@ -266,11 +272,11 @@ class VehicleDataService {
   getTodayMetrics() {
     return axiosInstance.get(`/vehicle/today`);
   }
-  
+
   // No history endpoint for vehicle yet, using fallback or static
   getHistoryMetrics(days) {
     // Return empty promise to avoid errors, logic in Dashboard will handle empty
-    return Promise.resolve({ data: [] }); 
+    return Promise.resolve({ data: [] });
   }
 
   // Submit manual vehicle data
@@ -338,8 +344,8 @@ class VehicleDataService {
 
 export const energyDataService = new EnergyDataService();
 export const trashDataService = new TrashDataService();
-trashDataService.getHistoryMetrics = function(days) {
-    return axiosInstance.get(`/trash/history/${days}`);
+trashDataService.getHistoryMetrics = function (days) {
+  return axiosInstance.get(`/trash/history/${days}`);
 };
 export const gasDataService = new GasDataService();
 export const vehicleDataService = new VehicleDataService();

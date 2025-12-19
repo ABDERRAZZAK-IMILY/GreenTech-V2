@@ -38,6 +38,7 @@ public class TrashService {
     public TrashResponseDTO saveReading(TrashRequestDTO dto) {
 
         String macAddress = dto.getMacAddress();
+
         if (macAddress == null || macAddress.trim().isEmpty()) {
             log.warn("Received trash data without MAC address, generating default");
             macAddress = "UNKNOWN-" + System.currentTimeMillis();
@@ -50,17 +51,14 @@ public class TrashService {
         final String finalMacAddress = macAddress;
 
         TrashMonitor monitor = trashMonitorRepository.findByMacAddress(finalMacAddress)
-                .orElseGet(() -> {
-                    log.info("Creating new TrashMonitor for MAC address: {}", finalMacAddress);
-                    TrashMonitor newMonitor = new TrashMonitor();
-                    newMonitor.setMacAddress(finalMacAddress);
-                    newMonitor.setLocation("Auto-registered");
-                    newMonitor.setSensorId("SENSOR-" + finalMacAddress.replace(":", ""));
-                    newMonitor.setStatus(Status.ONLINE);
-                    newMonitor.setTrashType(TrashType.ORGANIC);
-                    newMonitor.setTimestamp(LocalDateTime.now());
-                    newMonitor.setTrash(new ArrayList<>());
-                    return trashMonitorRepository.save(newMonitor);
+                .orElseThrow(() -> {
+                    log.warn(
+                            "Received data from unregistered device with MAC address: {}. Device must be registered manually first.",
+                            finalMacAddress);
+                    return new IllegalArgumentException(
+                            "Capteur non enregistré. L'adresse MAC '" + finalMacAddress
+                                    + "' n'existe pas dans le système. " +
+                                    "Veuillez d'abord créer le capteur manuellement dans le tableau de bord.");
                 });
 
         Trash entity = mapper.toEntity(dto);
@@ -70,7 +68,6 @@ public class TrashService {
         trashMonitorRepository.save(monitor);
         return mapper.toResponse(savedEntity);
     }
-
 
     public TrashResponseDTO saveManualEntry(TrashRequestDTO dto) {
         log.info("Saving manual trash entry: {} kg", dto.getWeight());

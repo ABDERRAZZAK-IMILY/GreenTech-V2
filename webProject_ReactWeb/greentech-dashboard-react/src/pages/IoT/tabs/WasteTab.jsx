@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { showNotification } from '../../../utils/notifications';
 
 import { trashDataService } from '../../../services/smartDataService';
+import { getAllDepartments } from '../../../services/departmentSerice';
 
 const WasteTab = () => {
   const [sensors, setSensors] = useState([]);
@@ -38,8 +39,12 @@ const WasteTab = () => {
     macAddress: '',
     trashType: 'ORGANIC',
     status: 'ONLINE',
-    co2Impact: 0
+    co2Impact: 0,
+    departmentId: ''
   });
+
+  // Departments state
+  const [departments, setDepartments] = useState([]);
 
   // Waste subtypes configuration
   const wasteSubtypesConfig = {
@@ -137,9 +142,22 @@ const WasteTab = () => {
   // Initialize filter and subtypes on component mount
   useEffect(() => {
     fetchWasteData(); // Initial fetch
+    fetchDepartments(); // Fetch departments for the form
     const interval = setInterval(fetchWasteData, 5000); // Update every 5 seconds
     return () => clearInterval(interval);
   }, []);
+
+  // Fetch departments from backend
+  const fetchDepartments = async () => {
+    try {
+      const response = await getAllDepartments();
+      if (response && response.data) {
+        setDepartments(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    }
+  };
 
   // Load manual entry history from localStorage on mount
   useEffect(() => {
@@ -341,7 +359,8 @@ const WasteTab = () => {
       macAddress: '',
       trashType: trashTypeMap[activeFilter] || 'ORGANIC',
       status: 'ONLINE',
-      co2Impact: 0
+      co2Impact: 0,
+      departmentId: ''
     });
     setShowAddModal(true);
   };
@@ -369,8 +388,14 @@ const WasteTab = () => {
 
     try {
       // Prepare data for backend
+      // Build location string with department name
+      const selectedDept = departments.find(d => d.id === newSensorForm.departmentId);
+      const locationWithDept = selectedDept
+        ? `${newSensorForm.location} - ${selectedDept.name}`
+        : newSensorForm.location;
+
       const monitorData = {
-        location: newSensorForm.location,
+        location: locationWithDept,
         sensorId: newSensorForm.sensorId,
         macAddress: newSensorForm.macAddress,
         trashType: newSensorForm.trashType,
@@ -1191,6 +1216,36 @@ const WasteTab = () => {
                     onChange={(e) => setNewSensorForm({ ...newSensorForm, location: e.target.value })}
                     required
                   />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="departmentId">
+                    <i className="fas fa-building" /> Département
+                  </label>
+                  <select
+                    id="departmentId"
+                    value={newSensorForm.departmentId}
+                    onChange={(e) => setNewSensorForm({ ...newSensorForm, departmentId: e.target.value })}
+                    style={{
+                      padding: '10px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      color: 'white',
+                      width: '100%'
+                    }}
+                    required
+                  >
+                    <option value="">-- Sélectionner un département --</option>
+                    {departments.map(dept => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </option>
+                    ))}
+                  </select>
+                  <small style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>
+                    Le capteur sera lié à ce département
+                  </small>
                 </div>
 
                 <div className="form-group">

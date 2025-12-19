@@ -3,11 +3,14 @@ package com.greentechinnovators.backend.seeder;
 import com.greentechinnovators.backend.Enums.Role;
 import com.greentechinnovators.backend.entity.User;
 import com.greentechinnovators.backend.repository.UserRepository;
+import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class Userseed implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -35,22 +38,7 @@ public class Userseed implements CommandLineRunner {
                     "https://static.vecteezy.com/system/resources/previews/019/879/186/large_2x/user-icon-on-transparent-background-free-png.png"
             );
             userRepository.save(admin);
-            System.out.println(" Admin created: admin@greentech.com / admin123");
-        }
-
-        if (!userRepository.existsByEmail("imily@greentech.com")) {
-            User user = new User(
-                    "imily",
-                    "imily@greentech.com",
-                    passwordEncoder.encode("user123"),
-                    Role.USER,
-                    "IT",
-                    "developer",
-                    "https://static.vecteezy.com/system/resources/previews/019/879/186/large_2x/user-icon-on-transparent-background-free-png.png"
-            );
-            userRepository.save(user);
-
-                System.out.println(" User created: imily@greentech.com / user123");
+            log.info(" Admin created: admin@greentech.com / admin123");
         }
     }
 }

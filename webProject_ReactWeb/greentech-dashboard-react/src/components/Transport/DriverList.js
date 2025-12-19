@@ -7,7 +7,7 @@ import useDriverStore from '../../State/useDriverStore';
 
 const DriverList = () => {
 
-    const { drivers, fetchDrivers } = useDriverStore();
+    const { drivers, fetchDrivers, setFocusedLocation } = useDriverStore();
     const [showEditModal, setShowEditModal] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
     const [driverData, setDriverData] = useState(null);
@@ -24,10 +24,18 @@ const DriverList = () => {
     const closeAddModal = () => {
         setShowAddModal(false);
     };
-    const handleTrackDriver = (id) => console.log("Track", id);
+    const handleTrackDriver = (driver) => {
+        if (driver.lat && driver.longe) {
+            // Call the store action
+            setFocusedLocation(driver.lat, driver.longe);
+            // Optional: Scroll to top if map is at the top
+            window.scrollTo({ top: 500, behavior: 'smooth' });
+        } else {
+            alert("Ce chauffeur n'a pas de coordonnées GPS valides.");
+        }
+    };
     const handleEditDriver = (id) => {
         const driver = drivers.find(d => d.id === id);
-        console.log(driver);
         setDriverData(driver);
         setShowEditModal(true);
     };
@@ -35,15 +43,6 @@ const DriverList = () => {
         transporService.deleteVehicle(id)
     }
 
-    const getStatusStyles = (status) => {
-        return status === 'moving'
-            ? "bg-green-900/30 text-green-400 border-green-800"
-            : "bg-gray-700/50 text-gray-300 border-gray-600";
-    };
-
-    const getStatusIconColor = (status) => {
-        return status === 'moving' ? "text-green-500" : "text-gray-400";
-    };
 
     return (
         <div className="p-6 min-h-screen text-gray-100">
@@ -88,7 +87,7 @@ const DriverList = () => {
                         <div className="flex gap-2 justify-end pt-2 border-t border-gray-700">
                             <button
                                 className="flex-1 bg-blue-900/30 text-blue-400 hover:bg-blue-900/50 py-2 rounded text-sm font-medium transition-colors border border-blue-900/50"
-                                onClick={() => handleTrackDriver(driver.id)}
+                                onClick={() => handleTrackDriver(driver)}
                             >
                                 <i className="fas fa-crosshairs mr-1" /> Localiser
                             </button>

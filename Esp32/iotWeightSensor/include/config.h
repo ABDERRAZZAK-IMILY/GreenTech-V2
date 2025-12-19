@@ -12,13 +12,13 @@
 
 // ==================== CONFIGURATION WIFI ====================
 // Modifiez ces valeurs selon votre reseau
-#define WIFI_SSID "Cafe ryad gzoula_2.4G"
-#define WIFI_PASSWORD "90807060"
+#define WIFI_SSID "Youcode"
+#define WIFI_PASSWORD "Youcode@2024"
 
 // ==================== CONFIGURATION WEBSOCKET ====================
 // Adresse IP du serveur Spring Boot
-#define WS_SERVER "192.168.1.251"
-#define WS_PORT 8080
+#define WS_SERVER "greentech-api-p5dm.onrender.com"
+#define WS_PORT 443
 #define WS_PATH "/iot/trash"
 
 // ==================== CONFIGURATION HX711 (Capteur de poids) ====================
