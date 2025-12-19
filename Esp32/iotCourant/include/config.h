@@ -17,8 +17,8 @@
 
 // ==================== CONFIGURATION WEBSOCKET ====================
 // Adresse IP du serveur Spring Boot
-#define WS_SERVER "192.168.1.251"
-#define WS_PORT 8080
+#define WS_SERVER "greentech-api-p5dm.onrender.com"
+#define WS_PORT 443
 #define WS_PATH "/iot/energy"
 
 // ==================== CONFIGURATION SCT-013-000 ====================
