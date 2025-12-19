@@ -22,7 +22,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSoc
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/iot/trash").setAllowedOriginPatterns("*").withSockJS();
+        registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
 
         registry.addEndpoint("/ws-native").setAllowedOriginPatterns("*");
     }
@@ -43,7 +43,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSoc
         registry.addHandler(energyIotHandler, "/iot/energy")
                 .setAllowedOrigins("*");
 
-        registry.addHandler(trashIotHandler, "/iot/trash/data")
+        registry.addHandler(trashIotHandler, "/iot/trash/")
                 .setAllowedOrigins("*");
 
     }
