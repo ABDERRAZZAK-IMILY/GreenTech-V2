@@ -8,9 +8,9 @@ export const employeeData = {
   totalEmployees: 85,
   co2Saved: 245, // kg
   badges: [
-    { id: 1, name: 'Éco-Warrior', icon: '🌿', unlocked: true },
-    { id: 2, name: 'Transport Vert', icon: '🚴', unlocked: true },
-    { id: 3, name: 'Recycleur Pro', icon: '♻️', unlocked: true },
+    { id: 1, name: 'Éco-Warrior', icon: '🌿', unlocked: false },
+    { id: 2, name: 'Transport Vert', icon: '🚴', unlocked: false },
+    { id: 3, name: 'Recycleur Pro', icon: '♻️', unlocked: false },
     { id: 4, name: 'Économie d\'Énergie', icon: '💡', unlocked: false },
     { id: 5, name: 'Champion CO2', icon: '🏆', unlocked: false },
     { id: 6, name: 'Mentor Écologique', icon: '🎓', unlocked: false },
