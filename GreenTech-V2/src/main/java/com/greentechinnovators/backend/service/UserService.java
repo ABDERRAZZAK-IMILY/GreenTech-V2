@@ -76,11 +76,22 @@ public class UserService {
 
             departmentRepository.save(dept);
         }
-        emailService.sendAccountCreatedEmail(
-                request.getEmail(),
-                request.getName(),
-                password
-        );
+
+        try {
+            emailService.sendAccountCreatedEmail(
+                    request.getEmail(),
+                    request.getName(),
+                    password
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to send account created email: " + e.getMessage());
+        }
+//        emailService.sendAccountCreatedEmail(
+//                request.getEmail(),
+//                request.getName(),
+//                password
+//        );
+
         UserGamificationStats stats = UserGamificationStats.builder()
                 .userId(savedUser.getId())
                 .totalPoints(0)
