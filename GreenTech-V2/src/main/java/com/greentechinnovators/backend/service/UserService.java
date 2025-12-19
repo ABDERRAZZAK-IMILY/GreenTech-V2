@@ -39,7 +39,6 @@ public class UserService {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email is already in use");
         }
-
         int randompassword = 100 + (int)(Math.random() * 1000);
         String password = "GreenTech"+ randompassword ;
         String generatedPassword = passwordEncoder.encode(password);
