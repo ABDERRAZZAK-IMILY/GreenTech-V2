@@ -78,5 +78,16 @@ class TransportService {
             throw error;
         }
     }
+    async totaleFootPrintToday() {
+        try {
+            const response = await axios.get(`${API_URL}/total/footPrint/today`, {
+                headers: this.getAuthHeader()
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching total distance today:', error);
+            throw error;
+        }
+    }
 }
 export default new TransportService();
