@@ -16,18 +16,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // STOMP endpoint with SockJS support for browser clients
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
+        registry.addEndpoint("/ws").setAllowedOriginPatterns("*");
 
-        // STOMP endpoint without SockJS for ESP32 and native clients
         registry.addEndpoint("/ws-native").setAllowedOriginPatterns("*");
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        // Messages prefixed with /app go to controller
         registry.setApplicationDestinationPrefixes("/app");
-        // Messages prefixed with /topic go to subscribers
         registry.enableSimpleBroker("/topic");
     }
 }
