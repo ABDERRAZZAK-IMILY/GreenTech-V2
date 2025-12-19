@@ -32,7 +32,7 @@ public class UserService {
 
     public List<UserProfileDTO> getAllUsers() {
         return userRepository.findAll().stream()
-                .filter(user -> user.getRole() != Role.ADMIN && user.getDepartment().equals("General"))
+                .filter(user -> user.getRole() != Role.ADMIN)
                 .map(this::mapToProfileDTO)
                 .collect(Collectors.toList());
     }
@@ -87,11 +87,6 @@ public class UserService {
         } catch (Exception e) {
             System.err.println("Failed to send account created email: " + e.getMessage());
         }
-        // emailService.sendAccountCreatedEmail(
-        // request.getEmail(),
-        // request.getName(),
-        // password
-        // );
 
         UserGamificationStats stats = UserGamificationStats.builder()
                 .userId(savedUser.getId())
@@ -172,9 +167,22 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
+        // Remove user from department if exists
+        if (user.getDepartment() != null && !user.getDepartment().isEmpty()) {
+            departmentRepository.findByName(user.getDepartment())
+                    .ifPresent(dept -> {
+                        if (dept.getUsers() != null) {
+                            dept.getUsers().removeIf(u -> u.getId().equals(userId));
+                            departmentRepository.save(dept);
+                        }
+                    });
+        }
+
+        // Delete gamification stats
         gamificationStatsRepository.findByUserId(userId)
                 .ifPresent(gamificationStatsRepository::delete);
 
+        // Delete the user
         userRepository.delete(user);
     }
 
