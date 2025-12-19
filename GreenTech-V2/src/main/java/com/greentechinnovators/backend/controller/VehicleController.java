@@ -34,10 +34,17 @@ public class VehicleController {
         vehicleService.deleteById(id);
     }
     @GetMapping("/total/distance/today")
-    public ResponseEntity<?> today() {
-        Double totalDistance = vehicleService.TotalDistanceTraveledToday();
+    public ResponseEntity<?> todayDistance() {
+        Double totalDistance = vehicleService.totalDistanceTraveledToday();
         HashMap<String, Object> map = new HashMap<>();
         map.put("totalDistance", totalDistance);
+        return ResponseEntity.ok(map);
+    }
+    @GetMapping("/total/footPrint/today")
+    public ResponseEntity<?> todayFootPrint() {
+        Double FootPrint = vehicleService.dailyCarbonFootPrint();
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("totalFootPrint", FootPrint);
         return ResponseEntity.ok(map);
     }
 }

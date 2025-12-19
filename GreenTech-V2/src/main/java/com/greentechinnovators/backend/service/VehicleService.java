@@ -29,6 +29,7 @@ public class VehicleService {
     private final VehicleMapper mapper;
     private final VehicleLogRepository vehicleLogRepository;
     private final UserRepository  userRepository;
+    private final CarbonFootprintService  carbonFootprintService;
 
     private final CarbonFootprintService carbonService;
 
@@ -117,7 +118,7 @@ public class VehicleService {
         return dist;
     }
 
-    public Double TotalDistanceTraveledToday() {
+    public Double totalDistanceTraveledToday() {
         List<Vehicle> vehicles = vehicleRepository.findAll();
         return vehicles.stream()
                 .map(vehicle -> {
@@ -131,5 +132,8 @@ public class VehicleService {
                 })
                 .mapToDouble(this::calculateSingleCarDistance)
                 .sum();
+    }
+    public Double dailyCarbonFootPrint() {
+        return carbonFootprintService.calculateTransportFootprint(totalDistanceTraveledToday()) ;
     }
 }
