@@ -1,8 +1,10 @@
 import axios from 'axios';
 import authService from './authService';
 
-const API_URL = 'http://localhost:8080/api/v1/marketplace';
-// const API_URL = process.env.REACT_APP_API_URL + '/v1/marketplace';
+// const API_URL = 'http://localhost:8080/api/v1/marketplace';
+
+
+const API_URL = process.env.REACT_APP_API_URL + '/v1/marketplace';
 
 class MarketplaceService {
   
@@ -109,7 +111,7 @@ class MarketplaceService {
   // Create an order (purchase a product)
   async createOrder(orderData) {
     try {
-      const response = await axios.post(`http://localhost:8080/api/v1/marketplace/orders`, orderData, {
+      const response = await axios.post(process.env.REACT_APP_API_URL + `/v1/marketplace/orders`, orderData, {
         headers: this.getAuthHeader()
       });
       return response.data;
@@ -122,7 +124,7 @@ class MarketplaceService {
   // Admin: Get all orders
   async getAllOrders() {
     try {
-      const response = await axios.get(`http://localhost:8080/api/v1/marketplace/orders`, {
+      const response = await axios.get( process.env.REACT_APP_API_URL +`/v1/marketplace/orders`, {
         headers: this.getAuthHeader()
       });
       return response.data;
@@ -135,7 +137,7 @@ class MarketplaceService {
   // Get order by ID
   async getOrderById(orderId) {
     try {
-      const response = await axios.get(`http://localhost:8080/api/v1/marketplace/orders/${orderId}`, {
+      const response = await axios.get(process.env.REACT_APP_API_URL + `/v1/marketplace/orders/${orderId}`, {
         headers: this.getAuthHeader()
       });
       return response.data;
@@ -148,7 +150,7 @@ class MarketplaceService {
   // Get user's orders
   async getUserOrders(userId) {
     try {
-      const response = await axios.get(`http://localhost:8080/api/v1/users/${userId}/orders`, {
+      const response = await axios.get(process.env.REACT_APP_API_URL + `/v1/users/${userId}/orders`, {
         headers: this.getAuthHeader()
       });
       return response.data;
@@ -161,7 +163,7 @@ class MarketplaceService {
   // Get current user's orders
   async getMyOrders() {
     try {
-      const response = await axios.get(`http://localhost:8080/api/v1/marketplace/my-orders`, {
+      const response = await axios.get(process.env.REACT_APP_API_URL + `/v1/marketplace/my-orders`, {
         headers: this.getAuthHeader()
       });
       return response.data;
@@ -175,7 +177,7 @@ class MarketplaceService {
   async updateOrderStatus(orderId, status) {
     try {
       const response = await axios.put(
-        `http://localhost:8080/api/v1/marketplace/orders/${orderId}/status`,
+        `${process.env.REACT_APP_API_URL}/v1/marketplace/orders/${orderId}/status`,
         { status },
         { headers: this.getAuthHeader() }
       );

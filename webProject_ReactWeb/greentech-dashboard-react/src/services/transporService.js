@@ -2,7 +2,11 @@ import axios from "axios";
 import AuthService from './authService';
 
 
-const API_URL = 'http://localhost:8080/api/vehicle';
+// const API_URL = 'http://localhost:8080/api/vehicle';
+
+const API_URL = process.env.REACT_APP_API_URL + '/vehicle';
+
+
 
 class TransportService {
     // Get authorization header with token

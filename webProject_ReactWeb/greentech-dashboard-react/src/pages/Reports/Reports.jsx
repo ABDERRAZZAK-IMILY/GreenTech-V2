@@ -107,9 +107,9 @@ const [reportFiles, setReportFiles] = useState([]);
       // 🔥 Step 2 : L-APPEL "DA9A WAHDA" (En parallèle)
       // Promise.all kay-lancer les 3 requêtes f nafs l-wa9t bla maytssanna whda tsali
       await Promise.all([
-        axios.get('http://localhost:8080/api/reports/monthly'),       // Report 1: PDF
-        axios.get('http://localhost:8080/api/reports/generate-csv'),  // Report 2: CSV
-        axios.get('http://localhost:8080/api/reports/generate-excel') // Report 3: Excel
+        axios.get( process.env.REACT_APP_API_URL + '/reports/monthly'),       // Report 1: PDF
+        axios.get(process.env.REACT_APP_API_URL + '/reports/generate-csv'),  // Report 2: CSV
+        axios.get(process.env.REACT_APP_API_URL + '/reports/generate-excel') // Report 3: Excel
       ]);
 
       // Melli kolchi yjaweb b "OK"
@@ -138,7 +138,7 @@ const [reportFiles, setReportFiles] = useState([]);
 // 1. Function bach tjib la liste mn Backend
   const fetchReports = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/reports/list');
+      const response = await axios.get(process.env.REACT_APP_API_URL + '/reports/list');
       // Nratbouhom: Jdid howa lwll
       const sorted = response.data.sort((a, b) => b.lastModified - a.lastModified);
       setReportFiles(sorted);
@@ -157,7 +157,7 @@ const [reportFiles, setReportFiles] = useState([]);
     try {
       showNotification(`Téléchargement de ${fileName}...`, 'info');
       
-      const response = await axios.get(`http://localhost:8080/api/reports/download/${fileName}`, {
+      const response = await axios.get( process.env.REACT_APP_API_URL + `/reports/download/${fileName}`, {
         responseType: 'blob', 
       });
 

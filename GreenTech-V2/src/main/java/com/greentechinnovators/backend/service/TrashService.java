@@ -38,6 +38,7 @@ public class TrashService {
     public TrashResponseDTO saveReading(TrashRequestDTO dto) {
 
         String macAddress = dto.getMacAddress();
+
         if (macAddress == null || macAddress.trim().isEmpty()) {
             log.warn("Received trash data without MAC address, generating default");
             macAddress = "UNKNOWN-" + System.currentTimeMillis();

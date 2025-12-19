@@ -9,7 +9,7 @@ export const useNotifications = (onSensorAlert, onMarketplaceUpdate) => {
   useEffect(() => {
     const connectWebSocket = () => {
       try {
-        const ws = new WebSocket('ws://localhost:8080/notifications');
+        const ws = new WebSocket('ws://' + process.env.REACT_APP_API_URL + '/notifications');
         wsRef.current = ws;
 
         ws.onopen = () => {

@@ -275,7 +275,7 @@ const Dashboard = () => {
 
     // Setup WebSocket for real-time energy updates
     const connectEnergyWs = () => {
-      const energyWs = new WebSocket('ws://localhost:8080/iot/energy');
+      const energyWs = new WebSocket('ws://' + process.env.REACT_APP_API_URL + '/iot/energy');
       energyWsRef.current = energyWs;
 
       energyWs.onopen = () => {
@@ -316,7 +316,7 @@ const Dashboard = () => {
 
     // Setup WebSocket for real-time trash updates
     const connectTrashWs = () => {
-      const trashWs = new WebSocket('ws://localhost:8080/iot/trash');
+      const trashWs = new WebSocket('ws://' + process.env.REACT_APP_API_URL + '/iot/trash');
       trashWsRef.current = trashWs;
 
       trashWs.onopen = () => {
