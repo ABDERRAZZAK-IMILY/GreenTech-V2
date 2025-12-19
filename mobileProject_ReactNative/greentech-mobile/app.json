@@ -11,7 +11,8 @@
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
-    },"android": {
+    },
+    "android": {
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
@@ -25,11 +26,19 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "GreenTech needs your location to track eco-friendly transport in real-time.",
         "NSLocationAlwaysUsageDescription": "GreenTech needs your location to track eco-friendly transport in real-time.",
         "NSLocationWhenInUseUsageDescription": "GreenTech needs your location to track eco-friendly transport in real-time.",
-        "UIBackgroundModes": ["location", "fetch"]
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ]
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c773a627-dd69-4c50-806c-48c8a471c08b"
       }
     }
   },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
+  "web": {
+    "favicon": "./assets/favicon.png"
   }
+}

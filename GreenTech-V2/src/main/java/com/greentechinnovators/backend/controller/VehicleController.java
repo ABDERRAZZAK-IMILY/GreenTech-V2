@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -31,5 +32,12 @@ public class VehicleController {
     @DeleteMapping("delete/{id}")
     public void DeleteById(@PathVariable String id) {
         vehicleService.deleteById(id);
+    }
+    @GetMapping("/total/distance/today")
+    public ResponseEntity<?> today() {
+        Double totalDistance = vehicleService.TotalDistanceTraveledToday();
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("totalDistance", totalDistance);
+        return ResponseEntity.ok(map);
     }
 }

@@ -11,5 +11,5 @@ export const getBackendUrl = () => {
     }
 
     // Fallback sur localhost
-    return 'https://greentech-api-p5dm.onrender.com/';
+    return 'https://greentech-api-p5dm.onrender.com';
 };

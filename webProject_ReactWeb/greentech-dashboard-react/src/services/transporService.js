@@ -16,10 +16,13 @@ class TransportService {
     }
     // Add a new vehicle
     async addVehicle(vehicleData) {
+        console.log(API_URL);
+        
         try {
             const response = await axios.post(`${API_URL}/add`, vehicleData, {
                 headers: this.getAuthHeader()
             });
+            
             return response.data;
         } catch (error) {
             console.error('Error adding vehicle:', error);
@@ -64,6 +67,16 @@ class TransportService {
             throw error;
         }
     }
-
+    async totaleDistanceToday() {
+        try {
+            const response = await axios.get(`${API_URL}/total/distance/today`, {
+                headers: this.getAuthHeader()
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching total distance today:', error);
+            throw error;
+        }
+    }
 }
 export default new TransportService();
