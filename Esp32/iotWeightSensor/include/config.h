@@ -17,9 +17,9 @@
 
 // ==================== CONFIGURATION WEBSOCKET ====================
 // Adresse IP du serveur Spring Boot
-#define WS_SERVER "wss://greentech-api-p5dm.onrender.com"
+#define WS_SERVER "greentech-api-p5dm.onrender.com"
 #define WS_PORT 443
-#define WS_PATH "/ws-native"
+#define WS_PATH "/iot/trash"
 
 // ==================== CONFIGURATION HX711 (Capteur de poids) ====================
 #define HX711_DOUT_PIN 16           // GPIO pour donnees HX711 (RX2)
