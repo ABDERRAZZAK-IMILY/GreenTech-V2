@@ -1,5 +1,6 @@
 package com.greentechinnovators.backend.service;
 
+import com.greentechinnovators.backend.Enums.Role;
 import com.greentechinnovators.backend.dto.user.CreateUserRequestDTO;
 import com.greentechinnovators.backend.dto.user.UpdateProfileRequestDTO;
 import com.greentechinnovators.backend.dto.user.UserProfileDTO;
@@ -28,8 +29,10 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final DepartmentRepository departmentRepository;
+
     public List<UserProfileDTO> getAllUsers() {
         return userRepository.findAll().stream()
+                .filter(user -> user.getRole() != Role.ADMIN && user.getDepartment().equals("General"))
                 .map(this::mapToProfileDTO)
                 .collect(Collectors.toList());
     }
@@ -39,8 +42,9 @@ public class UserService {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email is already in use");
         }
-        int randompassword = 100 + (int)(Math.random() * 1000);
-        String password = "GreenTech"+ randompassword ;
+
+        int randompassword = 100 + (int) (Math.random() * 1000);
+        String password = "GreenTech" + randompassword;
         String generatedPassword = passwordEncoder.encode(password);
 
         User user = User.builder()
@@ -53,7 +57,6 @@ public class UserService {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-
 
         User savedUser = userRepository.save(user);
 
@@ -80,16 +83,15 @@ public class UserService {
             emailService.sendAccountCreatedEmail(
                     request.getEmail(),
                     request.getName(),
-                    password
-            );
+                    password);
         } catch (Exception e) {
             System.err.println("Failed to send account created email: " + e.getMessage());
         }
-//        emailService.sendAccountCreatedEmail(
-//                request.getEmail(),
-//                request.getName(),
-//                password
-//        );
+        // emailService.sendAccountCreatedEmail(
+        // request.getEmail(),
+        // request.getName(),
+        // password
+        // );
 
         UserGamificationStats stats = UserGamificationStats.builder()
                 .userId(savedUser.getId())
@@ -117,17 +119,16 @@ public class UserService {
 
         userRepository.save(user);
     }
+
     public UserProfileDTO getUserById(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         return mapToProfileDTO(user);
     }
 
-
     public UserProfileDTO getUserProfile(String userId) {
         return getUserById(userId);
     }
-
 
     @Transactional
     public UserProfileDTO updateUserProfile(String userId, UpdateProfileRequestDTO request) {
@@ -137,7 +138,7 @@ public class UserService {
         if (request.getName() != null && !request.getName().isBlank()) {
             user.setName(request.getName());
         }
-        
+
         if (request.getEmail() != null && !request.getEmail().isBlank()) {
             userRepository.findByEmail(request.getEmail())
                     .ifPresent(existingUser -> {
@@ -147,37 +148,35 @@ public class UserService {
                     });
             user.setEmail(request.getEmail());
         }
-        
+
         if (request.getDepartment() != null) {
             user.setDepartment(request.getDepartment());
         }
-        
+
         if (request.getJobTitle() != null) {
             user.setJobTitle(request.getJobTitle());
         }
-        
+
         if (request.getProfilePicture() != null) {
             user.setProfilePicture(request.getProfilePicture());
         }
 
         user.setUpdatedAt(LocalDateTime.now());
         User updatedUser = userRepository.save(user);
-        
+
         return mapToProfileDTO(updatedUser);
     }
-
 
     @Transactional
     public void deleteUser(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        
+
         gamificationStatsRepository.findByUserId(userId)
                 .ifPresent(gamificationStatsRepository::delete);
-        
+
         userRepository.delete(user);
     }
-
 
     private UserProfileDTO mapToProfileDTO(User user) {
         UserGamificationStats stats = gamificationStatsRepository.findByUserId(user.getId())
