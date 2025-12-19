@@ -5,7 +5,7 @@ import { getVehiculeDestance } from "../services/LocaltionService";
 
 const TotaleTraveledDestance = () => {
     const [totalDistance, setTotalDistance] = useState(0);
-    useEffect(() => {
+useEffect(() => {
         const fetchDistanceData = async () => {
             try {
                 const distance = await getVehiculeDestance();
@@ -13,10 +13,14 @@ const TotaleTraveledDestance = () => {
             } catch (error) {
                 console.log(error);
             }
-        }
-        fetchDistanceData();
-    }, []);
+        };
 
+        fetchDistanceData();
+
+        const intervalId = setInterval(fetchDistanceData, 2000);
+
+        return () => clearInterval(intervalId);
+    }, []);
     return (
         <View style={styles.distanceCard}>
             <Text style={styles.distanceLabel}>Distance Parcourue</Text>
