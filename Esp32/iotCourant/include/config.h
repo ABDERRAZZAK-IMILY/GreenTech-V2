@@ -12,8 +12,8 @@
 
 // ==================== CONFIGURATION WIFI ====================
 // Modifiez ces valeurs selon votre réseau
-#define WIFI_SSID "Youcode"
-#define WIFI_PASSWORD "Youcode@2024"
+#define WIFI_SSID "Palais Bouregreg"
+#define WIFI_PASSWORD "PALAIS2021"
 
 // ==================== CONFIGURATION WEBSOCKET ====================
 // Adresse IP du serveur Spring Boot
