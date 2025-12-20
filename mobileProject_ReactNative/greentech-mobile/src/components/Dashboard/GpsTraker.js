@@ -15,13 +15,33 @@ import { ActivityIndicator } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TotaleTraveledDestance from '../TotaleTraveledDestance';
 
+
 const GpsTraker = () => {
     const [isTracking, setIsTracking] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [permissionGranted, setPermissionGranted] = useState(false);
+    const [isDriver, setIsDriver] = useState(false);
 
     // Référence pour l'intervalle
     const trackingIntervalRef = useRef(null);
+    useEffect(() => {
+        const checkDriver = async () => {
+            try {
+                const userId = await AsyncStorage.getItem('userId');
+                const vehicule = await findVehivle(userId);
+                if (vehicule) {
+                    setIsDriver(true);
+                } else {
+                    setIsDriver(false);
+                }
+            } catch (error) {
+                setIsDriver(false)
+            }
+        };
+        console.log(isDriver);
+        
+        checkDriver();
+    }, []);
 
     useEffect(() => {
         initializeApp();
@@ -42,14 +62,14 @@ const GpsTraker = () => {
             setIsLoading(false);
             return;
         }
-        
+
         // Demander les permissions
         const permResult = await requestLocationPermissions();
         if (!permResult.success) {
             setIsLoading(false);
             return;
         }
-        
+
         setPermissionGranted(true);
         setIsLoading(false);
     };
@@ -97,7 +117,7 @@ const GpsTraker = () => {
             // Obtenir la position actuelle
             const position = await getCurrentPosition();
             const userId = await AsyncStorage.getItem('userId');
-            const vehicule  = await findVehivle(userId);
+            const vehicule = await findVehivle(userId);
             
             // Envoyer au backend
             if (vehicule && position) {
@@ -123,7 +143,7 @@ const GpsTraker = () => {
 
     return (
         <View style={styles.trackingCard}>
-            <TotaleTraveledDestance/>
+            <TotaleTraveledDestance />
             <View style={styles.trackingHeader}>
                 <Ionicons name="car-sport" size={24} color={colors.accent} />
                 <Text style={styles.trackingTitle}>Mode Conducteur</Text>
@@ -134,10 +154,19 @@ const GpsTraker = () => {
             </Text>
 
             <TouchableOpacity
-                style={[styles.trackButton, isTracking ? styles.stopBtn : styles.startBtn]}
+                style={[
+                    styles.trackButton,
+                    isTracking ? styles.stopBtn : styles.startBtn,
+                    !isDriver && styles.disabledBtn, // optional disabled style
+                ]}
                 onPress={isTracking ? stopTracking : startTracking}
+                disabled={!isDriver}
             >
-                <Ionicons name={isTracking ? "stop-circle" : "play-circle"} size={24} color="white" />
+                <Ionicons
+                    name={isTracking ? "stop-circle" : "play-circle"}
+                    size={24}
+                    color="white"
+                />
                 <Text style={styles.btnText}>
                     {isTracking ? "Arrêter le trajet" : "Commencer le trajet"}
                 </Text>

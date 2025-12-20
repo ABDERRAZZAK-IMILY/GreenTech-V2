@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import './EmployeeDashboard.css';
 import gamificationService from '../../services/gamificationService';
+
+// Helper component for Glass Cards to reduce repetition
+const GlassCard = ({ children, className = '' }) => (
+  <div className={`bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-xl hover:shadow-2xl hover:translate-y-[-5px] transition-all duration-300 ${className}`}>
+    {children}
+  </div>
+);
 
 const EmployeeDashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month'); // week, month, year
@@ -58,7 +64,6 @@ const EmployeeDashboard = () => {
   // Calculate CO2 saved (estimation based on actions)
   const getCO2Saved = () => {
     if (!userStats) return 0;
-    // Estimation: each action saves approximately 3.2 kg CO2
     return Math.round((userStats.totalActions || 0) * 3.2);
   };
 
@@ -97,7 +102,7 @@ const EmployeeDashboard = () => {
     return { approved, pending, rejected, total: mySubmissions.length };
   };
 
-  // Static badges data (can be made dynamic later)
+  // Static badges data
   const badges = [
     { id: 1, name: 'Éco-Warrior', icon: '🌿', unlocked: (userStats?.totalActions || 0) >= 10 },
     { id: 2, name: 'Transport Vert', icon: '🚴', unlocked: (userStats?.totalActions || 0) >= 20 },
@@ -110,32 +115,26 @@ const EmployeeDashboard = () => {
   // Loading state
   if (loading) {
     return (
-      <section className="employee-dashboard">
-        <div className="loading-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
-          <div className="loading-spinner">
-            <i className="fas fa-spinner fa-spin" style={{ fontSize: '48px', color: 'var(--accent-color)' }}></i>
-            <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>Chargement du tableau de bord...</p>
-          </div>
-        </div>
-      </section>
+      <div className="flex flex-col items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mb-4"></div>
+        <p className="text-slate-400">Chargement du tableau de bord...</p>
+      </div>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <section className="employee-dashboard">
-        <div className="error-container" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
-          <i className="fas fa-exclamation-triangle" style={{ fontSize: '48px', color: '#ef4444' }}></i>
-          <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            style={{ marginTop: '16px', padding: '10px 20px', background: 'var(--accent-color)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
-          >
-            Réessayer
-          </button>
-        </div>
-      </section>
+      <div className="flex flex-col items-center justify-center h-96 text-center">
+        <i className="fas fa-exclamation-triangle text-5xl text-red-500 mb-4"></i>
+        <p className="text-slate-400 mb-4">{error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors shadow-lg"
+        >
+          Réessayer
+        </button>
+      </div>
     );
   }
 
@@ -148,202 +147,223 @@ const EmployeeDashboard = () => {
   const nextLevelPoints = (userStats?.level || 1) * 1000;
 
   return (
-    <section className="employee-dashboard">
+    <section className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-8 text-white">
+      
       {/* Header Section */}
-      <div className="employee-header">
-        <div className="employee-welcome">
-          <h1>Bonjour, {userStats?.userName || 'Utilisateur'} 👋</h1>
-          <p>Continuez vos actions écologiques !</p>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-white">
+            Bonjour, {userStats?.userName || 'Utilisateur'} 👋
+          </h1>
+          <p className="text-slate-400 text-lg">Continuez vos actions écologiques !</p>
         </div>
-        <div className="employee-level-card">
-          <div className="level-info">
-            <div className="level-badge">
-              <i className="fas fa-star"></i>
+
+        <GlassCard className="w-full lg:w-auto min-w-[350px]">
+          <div className="flex justify-between items-center gap-6 mb-4">
+            <div className="flex items-center gap-3 text-emerald-400 font-bold text-lg">
+              <i className="fas fa-star text-2xl"></i>
               <span>Niveau {userStats?.level || 1}</span>
             </div>
-            <div className="level-points">
+            <div className="text-sm font-semibold text-white">
               {(userStats?.currentPoints || 0).toLocaleString()} / {nextLevelPoints.toLocaleString()} points
             </div>
           </div>
-          <div className="level-progress">
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${progressPercentage}%` }}></div>
-            </div>
+          
+          <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden shadow-inner">
+            <div 
+              className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.4)] transition-all duration-500 ease-out"
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
           </div>
-        </div>
+        </GlassCard>
       </div>
 
       {/* Stats Grid */}
-      <div className="stats-grid">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
         {/* Points Card */}
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #feca57 0%, #ff9f40 100%)' }}>
-            <i className="fas fa-coins"></i>
+        <GlassCard className="flex items-start gap-5">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-amber-300 to-orange-500 shadow-lg shrink-0">
+            <i className="fas fa-coins text-2xl text-white"></i>
           </div>
-          <div className="stat-content">
-            <h3>Mes Points</h3>
-            <div className="stat-value">{(userStats?.currentPoints || 0).toLocaleString()}</div>
-            <div className="stat-subtitle">Points disponibles</div>
+          <div>
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-1">Mes Points</h3>
+            <div className="text-3xl font-bold text-white mb-1">{(userStats?.currentPoints || 0).toLocaleString()}</div>
+            <div className="text-sm text-slate-500">Points disponibles</div>
           </div>
-        </div>
+        </GlassCard>
 
         {/* Rank Card */}
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-            <i className="fas fa-trophy"></i>
+        <GlassCard className="flex items-start gap-5">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shrink-0">
+            <i className="fas fa-trophy text-2xl text-white"></i>
           </div>
-          <div className="stat-content">
-            <h3>Classement</h3>
-            <div className="stat-value">#{rank || '-'}</div>
-            <div className="stat-subtitle">Sur {total} employés</div>
-            <div className="rank-progress">
-              <div className="rank-bar">
-                <div className="rank-fill" style={{ width: `${rankPercentage}%` }}></div>
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-1">Classement</h3>
+            <div className="text-3xl font-bold text-white mb-1">#{rank || '-'}</div>
+            <div className="text-sm text-slate-500 mb-3">Sur {total} employés</div>
+            
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-500" style={{ width: `${rankPercentage}%` }}></div>
               </div>
-              <span>Top {Math.round(rankPercentage)}%</span>
+              <span className="text-xs font-bold text-indigo-400 whitespace-nowrap">Top {Math.round(rankPercentage)}%</span>
             </div>
           </div>
-        </div>
+        </GlassCard>
 
         {/* CO2 Impact Card */}
-        <div className="stat-card large-card">
-          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #0f4c3a 0%, #2a9d6f 100%)' }}>
-            <i className="fas fa-leaf"></i>
+        <GlassCard className="flex items-start gap-5">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-emerald-800 to-emerald-500 shadow-lg shrink-0">
+            <i className="fas fa-leaf text-2xl text-white"></i>
           </div>
-          <div className="stat-content">
-            <h3>Mon Impact CO2</h3>
-            <div className="stat-value">{co2Saved} kg</div>
-            <div className="stat-subtitle">CO2 économisé</div>
-            <div className="impact-equivalents">
-              <div className="equivalent-item">
-                <i className="fas fa-tree"></i>
+          <div>
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-1">Mon Impact CO2</h3>
+            <div className="text-3xl font-bold text-white mb-1">{co2Saved} kg</div>
+            <div className="text-sm text-slate-500 mb-3">CO2 économisé</div>
+            
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <i className="fas fa-tree text-emerald-500"></i>
                 <span>{Math.round(co2Saved / 22)} arbres plantés</span>
               </div>
-              <div className="equivalent-item">
-                <i className="fas fa-car"></i>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <i className="fas fa-car text-emerald-500"></i>
                 <span>{Math.round(co2Saved / 0.12)} km évités</span>
               </div>
             </div>
           </div>
-        </div>
+        </GlassCard>
       </div>
 
       {/* Badges Section */}
-      <div className="badges-section">
-        <div className="section-header">
-          <h2>
-            <i className="fas fa-medal"></i>
+      <GlassCard>
+        <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+          <h2 className="text-xl font-bold text-white flex items-center gap-3">
+            <i className="fas fa-medal text-emerald-400"></i>
             Mes Badges
           </h2>
-          <span className="badge-count">{badges.filter(b => b.unlocked).length} / {badges.length}</span>
+          <span className="text-sm font-semibold text-slate-400 bg-white/5 px-3 py-1 rounded-full border border-white/10">
+            {badges.filter(b => b.unlocked).length} / {badges.length}
+          </span>
         </div>
-        <div className="badges-grid">
+        
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {badges.map(badge => (
-            <div key={badge.id} className={`badge-item ${badge.unlocked ? 'unlocked' : 'locked'}`}>
-              <div className="badge-icon">{badge.icon}</div>
-              <div className="badge-name">{badge.name}</div>
-              {!badge.unlocked && <i className="fas fa-lock lock-icon"></i>}
+            <div 
+              key={badge.id} 
+              className={`relative flex flex-col items-center gap-3 p-4 rounded-xl border border-white/10 bg-white/5 transition-all duration-300 hover:-translate-y-1 
+                ${badge.unlocked ? 'border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'opacity-50 grayscale'}`}
+            >
+              <div className="text-4xl drop-shadow-md">{badge.icon}</div>
+              <div className="text-xs font-semibold text-center text-white">{badge.name}</div>
+              {!badge.unlocked && (
+                <i className="fas fa-lock absolute top-2 right-2 text-xs text-slate-500"></i>
+              )}
             </div>
           ))}
         </div>
-      </div>
+      </GlassCard>
 
       {/* Submissions Status Section */}
-      <div className="transport-section">
-        <div className="section-header">
-          <h2>
-            <i className="fas fa-tasks"></i>
+      <GlassCard>
+        <div className="mb-6 border-b border-white/10 pb-4">
+          <h2 className="text-xl font-bold text-white flex items-center gap-3">
+            <i className="fas fa-tasks text-emerald-400"></i>
             État de mes Soumissions
           </h2>
         </div>
-        <div className="transport-grid">
-          <div className="transport-card">
-            <div className="transport-label">Soumissions Totales</div>
-            <div className="transport-value">{submissionStats.total}</div>
-            <div className="transport-detail">
-              <i className="fas fa-paper-plane" style={{ color: '#667eea' }}></i>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Total */}
+          <div className="bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/10 transition-colors">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Soumissions Totales</div>
+            <div className="text-3xl font-bold text-white mb-2">{submissionStats.total}</div>
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <i className="fas fa-paper-plane text-indigo-400"></i>
               Actions soumises
             </div>
           </div>
 
-          <div className="transport-card">
-            <div className="transport-label">En Attente</div>
-            <div className="transport-value" style={{ color: '#f59e0b' }}>{submissionStats.pending}</div>
-            <div className="transport-detail">
-              <i className="fas fa-clock" style={{ color: '#f59e0b' }}></i>
+          {/* Pending */}
+          <div className="bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/10 transition-colors">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">En Attente</div>
+            <div className="text-3xl font-bold text-amber-500 mb-2">{submissionStats.pending}</div>
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <i className="fas fa-clock text-amber-500"></i>
               En cours de validation
             </div>
           </div>
 
-          <div className="transport-card highlight">
-            <div className="transport-label">Approuvées</div>
-            <div className="transport-value" style={{ color: '#22c55e' }}>{submissionStats.approved}</div>
-            <div className="transport-detail">
-              <i className="fas fa-check-circle" style={{ color: '#22c55e' }}></i>
+          {/* Approved */}
+          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-5 hover:bg-emerald-500/20 transition-colors">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Approuvées</div>
+            <div className="text-3xl font-bold text-emerald-400 mb-2">{submissionStats.approved}</div>
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <i className="fas fa-check-circle text-emerald-400"></i>
               Validées par l'admin
             </div>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
-      {/* Performance Chart */}
-      <div className="performance-section">
-        <div className="section-header">
-          <h2>
-            <i className="fas fa-chart-line"></i>
+      {/* Performance Chart / Stats */}
+      <GlassCard>
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b border-white/10 pb-4">
+          <h2 className="text-xl font-bold text-white flex items-center gap-3">
+            <i className="fas fa-chart-line text-emerald-400"></i>
             Mon Évolution
           </h2>
-          <div className="period-selector">
-            <button
-              className={`period-btn ${selectedPeriod === 'week' ? 'active' : ''}`}
-              onClick={() => setSelectedPeriod('week')}
-            >
-              Semaine
-            </button>
-            <button
-              className={`period-btn ${selectedPeriod === 'month' ? 'active' : ''}`}
-              onClick={() => setSelectedPeriod('month')}
-            >
-              Mois
-            </button>
-            <button
-              className={`period-btn ${selectedPeriod === 'year' ? 'active' : ''}`}
-              onClick={() => setSelectedPeriod('year')}
-            >
-              Année
-            </button>
+          
+          <div className="flex bg-white/5 p-1 rounded-lg">
+            {['week', 'month', 'year'].map((period) => (
+              <button
+                key={period}
+                onClick={() => setSelectedPeriod(period)}
+                className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-all duration-300 capitalize
+                  ${selectedPeriod === period 
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md' 
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+              >
+                {period === 'week' ? 'Semaine' : period === 'month' ? 'Mois' : 'Année'}
+              </button>
+            ))}
           </div>
         </div>
-        <div className="performance-stats">
-          <div className="performance-item">
-            <div className="perf-icon" style={{ background: '#feca57' }}>
-              <i className="fas fa-coins"></i>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-5 hover:-translate-y-1 transition-transform">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-400 text-white shadow-md">
+              <i className="fas fa-coins text-xl"></i>
             </div>
-            <div className="perf-data">
-              <div className="perf-label">Points Gagnés</div>
-              <div className="perf-value">{periodStats.points}</div>
-            </div>
-          </div>
-          <div className="performance-item">
-            <div className="perf-icon" style={{ background: '#2a9d6f' }}>
-              <i className="fas fa-leaf"></i>
-            </div>
-            <div className="perf-data">
-              <div className="perf-label">CO2 Économisé</div>
-              <div className="perf-value">{periodStats.co2} kg</div>
+            <div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Points Gagnés</div>
+              <div className="text-2xl font-bold text-white">{periodStats.points}</div>
             </div>
           </div>
-          <div className="performance-item">
-            <div className="perf-icon" style={{ background: '#667eea' }}>
-              <i className="fas fa-check-circle"></i>
+
+          <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-5 hover:-translate-y-1 transition-transform">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-600 text-white shadow-md">
+              <i className="fas fa-leaf text-xl"></i>
             </div>
-            <div className="perf-data">
-              <div className="perf-label">Actions Réalisées</div>
-              <div className="perf-value">{periodStats.actions}</div>
+            <div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">CO2 Économisé</div>
+              <div className="text-2xl font-bold text-white">{periodStats.co2} kg</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-5 hover:-translate-y-1 transition-transform">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-indigo-500 text-white shadow-md">
+              <i className="fas fa-check-circle text-xl"></i>
+            </div>
+            <div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Actions Réalisées</div>
+              <div className="text-2xl font-bold text-white">{periodStats.actions}</div>
             </div>
           </div>
         </div>
-      </div>
+      </GlassCard>
+      
     </section>
   );
 };
